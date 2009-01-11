@@ -2,6 +2,17 @@
 #define __COMPAT_H__
 
 #include <stdint.h>
+#include "config.h"
+
+
+
+#ifndef HAVE_STRNDUP
+
+#include <sys/types.h>
+char *strndup(char const *s, size_t n);
+
+#endif
+
 
 #ifdef __APPLE__
 #include <machine/endian.h>

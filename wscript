@@ -1,10 +1,11 @@
 #!./waf-1.5.2
 
+
 VERSION='0.1'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
-SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c'
+SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c strndup.c'
 
 def set_options(opt):
   pass
@@ -14,15 +15,9 @@ def configure(conf):
   # default environment
   conf.setenv('default')
   conf.env['CFLAGS']='-O2'
-
-  # debug environment
-  env = conf.env.copy()
-  env.set_variant('debug')
-  conf.set_env_name('debug', env)
-
-  # call the debug environment
-  conf.setenv('debug')
-  conf.env['CFLAGS']='-O0 -g3 -ggdb'
+  # Check for strndup (not present on OSX
+  conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h')
+  conf.write_config_header('config.h')
 
 def build(bld):
   sol_serv = bld.new_task_gen()
