@@ -120,11 +120,11 @@ int add_player_to_channel(struct channel * chan, struct player * pl)
  * over the network.
  *
  * @param ch the channel we are going to convert to a data block
- * @param data a pointer to an unallocated data block
+ * @param data a pointer to an already allocated data block
  *
- * @return the number of bytes that have been allocated/written
+ * @return the number of bytes that have been written
  */
-int channel_to_data(struct channel *ch, char **data)
+int channel_to_data(struct channel *ch, char *data)
 {
 	int size = 4 + 2 + 2 + 4 + 2 + 2
 	        + strlen(ch->name) +1
@@ -132,8 +132,7 @@ int channel_to_data(struct channel *ch, char **data)
 		+ strlen(ch->desc) +1;
 	char *ptr;
 
-	*data = (char *)calloc(size, sizeof(char));
-	ptr = *data;
+	ptr = data;
 
 	*(uint32_t *)ptr = ch->id;		ptr += 4;
 	*(uint16_t *)ptr = ch->flags;		ptr += 2;
@@ -146,4 +145,20 @@ int channel_to_data(struct channel *ch, char **data)
 	strcpy(ptr, ch->desc);			ptr += (strlen(ch->desc) +1);
 
 	return size;
+}
+
+/**
+ * Compute the size the channel will take once converted
+ * to raw data
+ *
+ * @param ch the channel
+ *
+ * @return the size the channel will take
+ */
+int channel_to_data_size(struct channel *ch)
+{
+	return 4 + 2 + 2 + 4 + 2 + 2
+	        + strlen(ch->name) +1
+		+ strlen(ch->topic) +1
+		+ strlen(ch->desc) +1;
 }

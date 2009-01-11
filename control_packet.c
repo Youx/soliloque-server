@@ -6,10 +6,12 @@
 #include <string.h>
 
 #include "server.h"
+#include "channel.h"
 #include "acknowledge_packet.h"
+#include "array.h"
 
 extern struct server *ts_server;
-
+extern int socket_desc;
 /**
  * Reply to a c_req_chans by sending packets containing
  * a data dump of the channels.
@@ -17,11 +19,40 @@ extern struct server *ts_server;
  * @param pl the player we send the channel list to
  * @param s the server we will get the channels from
  *
- * TODO
+ * TODO : split the channels over packets
  */
 void s_resp_chans(struct player *pl, struct server *s)
 {
+	char *data;
+	int data_size = 0;
+	struct channel *ch;
+	char *ptr;
+	int ch_size;
+	/* compute the size of the packet */
+	data_size += 24;	/* header */
+	data_size += 4;		/* number of channels in packet */
+	ar_each(struct channel *, ch, s->chans)
+		data_size += channel_to_data_size(ch);
+	ar_end_each;
 
+	/* initialize the packet */
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+	*(uint32_t *)ptr = 0x0006bef0;			ptr+=4;		/* */
+	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
+	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
+	*(uint32_t *)ptr = 0x00000000;			ptr+=4;		/* packet counter */
+	/* packet version */				ptr+=4;
+	/* empty checksum */				ptr+=4;
+	*(uint32_t *)ptr = s->chans->used_slots;	ptr+=4;		/* number of channels sent */
+	/* dump the channels to the packet */
+	ar_each(struct channel *, ch, s->chans)
+		ch_size = channel_to_data_size(ch);
+		channel_to_data(ch, ptr);
+		ptr+=ch_size;
+	ar_end_each;
+	printf("size of all channels : %i\n", data_size);
+	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 }
 
 /**
