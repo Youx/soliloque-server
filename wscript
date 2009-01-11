@@ -16,7 +16,7 @@ def configure(conf):
   conf.setenv('default')
   conf.env['CFLAGS']='-O2'
   # Check for strndup (not present on OSX
-  conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h')
+  conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
   conf.write_config_header('config.h')
 
 def build(bld):
