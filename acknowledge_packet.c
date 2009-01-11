@@ -5,7 +5,12 @@
 extern struct server *ts_server;
 extern int socket_desc;
 
-
+/**
+ * Send an acknowledge packet to a player
+ * ACK packets consist of just a 16 bytes header
+ *
+ * @param pl the player
+ */
 void send_acknowledge(struct player *pl)
 {
 	char data[16];

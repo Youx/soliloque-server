@@ -1,3 +1,7 @@
+/**
+ * CRC32 implementation, copied from zlib
+ * http://www.zlib.net
+ */
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
@@ -5,7 +9,6 @@
 #include <stdlib.h>
 
 #include "compat.h"
-
 
 void crc32_table(uint32_t poly, uint32_t * table)
 {
