@@ -1,9 +1,9 @@
-/*
+/**
  *  connection_packet.c
  *  sol-server
  *
  *  Created by Hugo Camboulive on 21/12/08.
- *  Copyright 2008 Université du Maine - IUP MIME. All rights reserved.
+ *  Copyright 2008 Hugo Camboulive
  *
  */
 
@@ -13,6 +13,7 @@
 #include <resolv.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 #include "packet_tools.h"
 #include "server.h"
@@ -21,82 +22,59 @@
 extern struct server *ts_server;
 extern int socket_desc;
 
+/**
+ * Send a packet to the player, indicating that his connection
+ * was accepted.
+ *
+ * @param pl the player we send this packet to
+ */
 static void server_accept_connection(struct player *pl)
 {
-	/* Packet : 
-16 : header
-4 : checksum
-1 : size of server name
-29 : server name
-1 : size of server machine
-29 : server machine
-8 : server version (4x2)
-4 : 01 00 00 00
-8 : ef 1f 00 00 00 00 00 00
-2 : 05 00
-16 : 07 ff ff 0f fe ff fe ff 03 fe 00 00 00 00 00 e0
-4 : 7f 7c 3e 00
-4 : d4 00 00 00
-8 : 00 00 00 6c 50 28 00 d4
-8 : 00 00 00 00 00 00 00 00
-00 00
-94 00
-04 00
-00 00
-4e 00 00 00
-90 00
-04 00 00 00
-90 00
-4a 00 00 00
-90 00
-10 00 00 00
-4 : private ID
-4 : public ID
-1 : size of welcome message
-255 : welcome message
-======
-436
-*/
-	char data[436];
+	char *data = (char *)calloc(436, sizeof(char));
 	char *ptr = data;
-	bzero(data, 436);
-	*(uint32_t *)ptr = 0x0004bef4;     ptr += 4;
-	/* private and public ID */
-	*(uint32_t *)ptr = pl->private_id; ptr += 4;
-	*(uint32_t *)ptr = pl->public_id;  ptr += 4;
-	*(uint32_t *)ptr = 0x00000000;     ptr += 4;
-	ptr +=4; /* skip checksum */
-	*ptr = 14;                         ptr++;
-	memcpy(ptr, "Nom du serveur", 14);     ptr += 29;
-	*ptr = 18;                         ptr++;
-	memcpy(ptr, "Machine du serveur", 18); ptr += 29;
-	/* version serveur */
-	*(uint16_t *)ptr = 2;                ptr += 2;
-	*(uint16_t *)ptr = 0;                ptr += 2;
-	*(uint16_t *)ptr = 20;               ptr += 2;
-	*(uint16_t *)ptr = 1;                ptr += 2;
-	/* error code : 1 = OK, 2 = server offline */
-	*(uint32_t *)ptr = 1;                ptr += 4;
-	/* garbage data */
-
-
-	ptr += 80;
-	/* private id & public ID */
-	*(uint32_t *)ptr = pl->private_id; ptr += 4;
-	*(uint32_t *)ptr = pl->public_id;  ptr += 4;
-	/* welcome message */
-	*ptr = 26;                         ptr++;
-	memcpy(ptr, "Bienvenue sur mon serveur.", 26); ptr += 255;
+	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*(uint32_t *)ptr = 0x00000000;			ptr += 4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr +=4;
+	*ptr = 14;					ptr++;		/* Length of server name */
+	memcpy(ptr, "Nom du serveur", 14);		ptr += 29;	/* Server name */
+	*ptr = 18;					ptr++;		/* Length of server machine */
+	memcpy(ptr, "Machine du serveur", 18);		ptr += 29;	/* Server machine */
+	/* Server version */
+	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */
+	*(uint16_t *)ptr = 0;				ptr += 2;	/* Server version (major 2) */
+	*(uint16_t *)ptr = 20;				ptr += 2;	/* Server version (minor 1) */
+	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
+	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
+	/* garbage data */				ptr += 80;
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*ptr = 26;					ptr++;		/* Length of welcome message */
+	memcpy(ptr, "Bienvenue sur mon serveur.", 26); ptr += 255;	/* Welcome message */
 
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
-	printf("ptr - data = %i\n", ptr - data);
-	assert(ptr - data == 436);
 	/* Send packet */
 	sendto(socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
-
+	free(data);
 }
 
+/**
+ * Handle a connection attempt from a player :
+ * - check the crc
+ * - check server/user password (TODO)
+ * - check if the player is already connected (TODO)
+ * - initialize the player, add it to the pool
+ * - notify the player if he has been accepted (or not TODO)
+ * - notify the other players (TODO)
+ * - move the player to the default channel (TODO)
+ *
+ * @param data the connection packet
+ * @param len the length of the connection packet
+ * @param cli_addr the adress of the client
+ * @param cli_len the length of cli_addr
+ */
 void handle_player_connect(char *data, unsigned int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
 {
 	struct player *pl;

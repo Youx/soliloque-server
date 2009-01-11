@@ -1,9 +1,9 @@
-/*
+/**
  *  array.c
  *  sol-server
  *
  *  Created by Hugo Camboulive on 28/11/08.
- *  Copyright 2008 Université du Maine - IUP MIME. All rights reserved.
+ *  Copyright 2008 Hugo Camboulive.
  *
  */
 #include <stdlib.h>
@@ -16,8 +16,12 @@
 int tmp_arr_iterator;
 
 /**
-	* Find the next available slot in the array
-*/
+ * Find the next available slot in the array.
+ *
+ * @param a the array
+ *
+ * @return the first slot available, or -1 if the array is already full
+ */
 int ar_next_available(const struct array *a)
 {
 	int i;
@@ -29,8 +33,11 @@ int ar_next_available(const struct array *a)
 }
 
 /**
-* Insert an element into the array, resizing if needed
-*/
+ * Insert an element into the array, resizing if needed
+ *
+ * @param a the array
+ * @param elem a generic pointer to an element
+ */
 void ar_insert(struct array *a, void * elem)
 {
 	int i;
@@ -43,8 +50,10 @@ void ar_insert(struct array *a, void * elem)
 }
 
 /**
-* Grow an array to twice its current size
-*/
+ * Grow an array to twice its current size
+ *
+ * @param a the array that needs to be grown
+ */
 void ar_grow(struct array *a)
 {
 	a->total_slots *= 2;
@@ -53,6 +62,10 @@ void ar_grow(struct array *a)
 
 /**
  * Create a new empty array of a given size.
+ *
+ * @param size the initial size of the array
+ *
+ * @return the allocated array
  */
 struct array * ar_new(int size)
 {
@@ -67,6 +80,10 @@ struct array * ar_new(int size)
 /**
  * Remove the entry at the given index in the array
  * and shrinks the array if necessary.
+ * Shrinking is not implemented yet.
+ *
+ * @param a the array
+ * @param index the index of the element that has to be removed
  */
 void ar_remove_index(struct array *a, int index)
 {
@@ -78,10 +95,18 @@ void ar_remove_index(struct array *a, int index)
 	 * if too many slots are unused */
 }
 
+/**
+ * Remove the element from the array
+ * and shrinks the array if necessary.
+ * This function is a wrapper around ar_remove_index.
+ *
+ * @param a the array
+ * @param el a generic pointer to an element
+ */
 void ar_remove(struct array *a, void *el) 
 {
 	int i;
-	
+
 	for(i=0 ; i<a->total_slots ; i++) {
 		if(a->array[i] == el) {
 			ar_remove_index(a, i);
