@@ -91,18 +91,14 @@ void handle_control_type_packet(char * data, int len, struct sockaddr_in * cli_a
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
 
-	struct player *pl;
-
 	printf("Control packet!!!\n");
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
 	func = get_f0_function(code);
 	if(func != NULL) {
 		printf("Function with code : 0x%"PRIx32" is valid and implemented.\n", *(uint32_t *)code);
-		if(pl != 0) {
-			/* Execute */
-			(*func)(data, len, cli_addr, cli_len);
-		}
+		/* Execute */
+		(*func)(data, len, cli_addr, cli_len);
 	} else {
 		printf("Function with code : 0x%"PRIx32" is invalid or is not implemented yet.\n", *(uint32_t *)code);
 	}

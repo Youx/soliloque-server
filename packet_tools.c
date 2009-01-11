@@ -8,6 +8,7 @@
  */
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "packet_tools.h"
 #include "compat.h"
