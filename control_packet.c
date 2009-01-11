@@ -4,6 +4,7 @@
 #include <sys/socket.h>
 #include <resolv.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "server.h"
 #include "channel.h"

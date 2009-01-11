@@ -23,7 +23,7 @@
 
 #include <string.h>
 #include <sys/types.h>
-
+#include <stdlib.h>
 
 char *
 strndup (char const *s, size_t n)
