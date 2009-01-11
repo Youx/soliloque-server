@@ -9,6 +9,7 @@
 #include "channel.h"
 #include "acknowledge_packet.h"
 #include "array.h"
+#include "packet_tools.h"
 
 extern struct server *ts_server;
 extern int socket_desc;
@@ -51,6 +52,9 @@ void s_resp_chans(struct player *pl, struct server *s)
 		channel_to_data(ch, ptr);
 		ptr+=ch_size;
 	ar_end_each;
+
+	packet_add_crc_d(data, data_size);
+
 	printf("size of all channels : %i\n", data_size);
 	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 }

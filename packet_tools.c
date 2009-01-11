@@ -66,7 +66,7 @@ char packet_check_crc(char *data, unsigned int len, unsigned int offset)
  * @param data the packet
  * @param len the length of the packet
  */
-void packed_add_crc_d(char *data, unsigned int len)
+void packet_add_crc_d(char *data, unsigned int len)
 {
 	packet_add_crc(data, len, 24);
 }
