@@ -36,26 +36,28 @@ struct player * new_player_from_data(char *data, int len, struct sockaddr_in * c
 	ptr += 16;
 	ptr += 4;
 	strncpy(client, ptr+1, *ptr);
-	client[*ptr]=0;
+	client[(int)*ptr]=0;
 	ptr += 30;
 	strncpy(machine, ptr+1, *ptr);
-	machine[*ptr]=0;
+	machine[(int)*ptr]=0;
 	ptr += 30;
 	/* not used yet */
 	ptr += 10;
 	
 	strncpy(login, ptr+1, *ptr);
-	login[*ptr]=0;
+	login[(int)*ptr]=0;
 	ptr += 30;
 	strncpy(password, ptr+1, *ptr);
-	password[*ptr]=0;
+	password[(int)*ptr]=0;
 	ptr += 30;
 	strncpy(nickname, ptr+1, *ptr);
-	nickname[*ptr]=0;
+	nickname[(int)*ptr]=0;
 	ptr += 30;
 	
 	printf("Client : %s\nMachine : %s\nLogin : %s\nPassword : %s\nNickname : %s\n", client, machine, login, password, nickname);
 	/* Initialize player */
 	pl = new_player(nickname, login, machine);
+  pl->cli_addr = cli_addr;
+  pl->cli_len = cli_len;
 	return pl;
 }

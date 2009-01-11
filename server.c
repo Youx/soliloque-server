@@ -105,7 +105,7 @@ struct channel * get_default_channel(struct server * serv)
 	struct channel *new_chan, *tmp_chan;
 	
 	ar_each(struct channel *, tmp_chan, serv->chans)
-		if(tmp_chan->flags & CHANNEL_FLAG_DEFAULT != 0)
+		if(tmp_chan->flags & CHANNEL_FLAG_DEFAULT)
 			return tmp_chan;
 	ar_end_each
 
@@ -145,6 +145,18 @@ int add_player(struct server * serv, struct player * pl)
 	return add_player_to_channel(def_chan, pl);
 }
 
+struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id)
+{
+	struct player *pl;
+
+	ar_each(struct player *, pl, s->players)
+		if(pl->public_id == pub_id && pl->private_id == priv_id) {
+			return pl;
+		}
+	ar_end_each;
+
+	return NULL;
+}
 
 /**
  * Prints information about the server (channels, etc)

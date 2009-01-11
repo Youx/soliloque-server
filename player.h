@@ -41,6 +41,10 @@ struct player {
 	
 	/* the channel the player is in */
 	struct channel * in_chan;
+
+  /* communication */
+  struct sockaddr_in * cli_addr;
+  unsigned int cli_len;
 };
 
 struct player * new_player();

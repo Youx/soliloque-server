@@ -9,6 +9,9 @@ struct server {
 	struct array *players;
 	
 	char password[30];
+	char server_name[30];
+	char machine[30];
+	uint16_t version[4]/* = {2,0,20,1}*/;
 };
 
 
@@ -22,7 +25,7 @@ struct channel * get_default_channel(struct server * serv);
 
 /* Server - player functions */
 int add_player(struct server * serv, struct player * pl);
-
+struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id);
 
 void print_server(struct server * s);
 
