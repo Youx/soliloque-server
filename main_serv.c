@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include "server.h"
 #include "connection_packet.h"
+#include "control_packet.h"
 #include "acknowledge_packet.h"
 
 
@@ -65,13 +66,21 @@ void handle_connection_type_packet(char * data, int len, struct sockaddr_in * cl
 packet_function get_f0_function(unsigned char * code)
 {
 	/* Function packets */
-	if(code[3] == 0) /* 0 = server packet, 1 = client packet*/
-		return NULL;
-	else
+	if(code[3] == 0) { /* 0 = server packet, 1 = client packet*/
+		switch(code[2]) {
+			case 0x05:
+				return &c_req_chans;
+			case 0xc9:
+			case 0xd1:
+			default:
+				return NULL;
+		}
+	} else {
 		if(f0_callbacks[code[2]])
 			return f0_callbacks[code[2]];
 		else
 			return NULL;
+	}
 }
 
 
