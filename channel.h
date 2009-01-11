@@ -56,7 +56,7 @@ int add_player_to_channel(struct channel * chan, struct player * player);
 
 void print_channel(struct channel * chan);
 
-int channel_to_data(struct channel *ch, char *data);
+int channel_to_data(struct channel *ch, char **data);
 
 
 #endif

@@ -140,7 +140,7 @@ int channel_to_data(struct channel *ch, char **data)
 	*(uint16_t *)ptr = ch->codec;		ptr += 2;
 	*(uint32_t *)ptr = 0xFFFFFFFF;		ptr += 4;
 	*(uint16_t *)ptr = ch->sort_order;	ptr += 2;
-	*(uint16_t *)ptr = max_users;		ptr += 2;
+	*(uint16_t *)ptr = ch->max_users;	ptr += 2;
 	strcpy(ptr, ch->name);			ptr += (strlen(ch->name) +1);
 	strcpy(ptr, ch->topic);			ptr += (strlen(ch->topic) +1);
 	strcpy(ptr, ch->desc);			ptr += (strlen(ch->desc) +1);
