@@ -68,7 +68,7 @@ char packet_check_crc(char *data, unsigned int len, unsigned int offset)
  */
 void packet_add_crc_d(char *data, unsigned int len)
 {
-	packet_add_crc(data, len, 24);
+	packet_add_crc(data, len, 20);
 }
 
 /**

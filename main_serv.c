@@ -135,11 +135,11 @@ void handle_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned
 			handle_control_type_packet(data, len, cli_addr, cli_len);
 			break;
 			/* acknowledge */
-		case 0xf1be:
+		case 0xbef1:
 			handle_ack_type_packet(data, len, cli_addr, cli_len);
 			break;
 			/* audio data */
-		case 0xf3be:
+		case 0xbef3:
 			handle_data_type_packet(data, len, cli_addr, cli_len);
 			break;
 			/* connection and keepalives */
