@@ -80,3 +80,40 @@ struct player * new_player_from_data(char *data, int len, struct sockaddr_in * c
 	free(client); free(machine); free(nickname); free(login); free(password);
 	return pl;
 }
+
+/**
+ * Converts a player to raw data to be transmitted
+ *
+ * @param pl the player to convert
+ * @param data the data to write into (already allocated)
+ *
+ * @return the number of bytes written into data
+ */
+int player_to_data(struct player *pl, char *data)
+{
+	int size = player_to_data_size(pl);
+	char *ptr = data;
+
+	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* public ID */
+	*(uint32_t *)ptr = pl->in_chan->id;		ptr+=4;		/* channel ID */
+	*(uint16_t *)ptr = pl->chan_privileges;		ptr+=2;		/* player chan privileges */
+	*(uint16_t *)ptr = pl->global_flags;		ptr+=2;		/* player global flags */
+	*(uint16_t *)ptr = pl->player_attributes;	ptr+=2;		/* player attributes */
+	*ptr = strlen(name);				ptr++;		/* player name size */
+	strncpy(ptr, pl>-name, 29);			ptr+=29;	/* player name */
+
+	return size;
+}
+
+/**
+ * Compute the number of bytes a player is going to take
+ * once converted to raw data.
+ *
+ * @param pl the player
+ *
+ * @return the number of bytes that will be needed
+ */
+int player_to_data_size(struct player *pl)
+{
+	return 4+4+2+2+2+1+29;
+}

@@ -8,9 +8,9 @@
 
 /* Channel privileges */
 #define CHANNEL_PRIV_CHANADMIN  1
-#define CHANNEL_PRIV_OP   			2
-#define CHANNEL_PRIV_VOICE  		4
-#define CHANNEL_PRIV_AUTOOP 		8
+#define CHANNEL_PRIV_OP   	2
+#define CHANNEL_PRIV_VOICE  	4
+#define CHANNEL_PRIV_AUTOOP 	8
 #define CHANNEL_PRIV_AUTOVOICE  16
 
 /* Global flags */
@@ -20,10 +20,10 @@
 
 /* Player attributes */
 /* TODO: what are 1 and 2 ??? */
-#define PL_ATTR_BLOCK_WHISPER 4
-#define PL_ATTR_AWAY        	8
-#define PL_ATTR_MUTE_MIC      16
-#define PL_ATTR_MUTE_SPK      32
+#define PL_ATTR_BLOCK_WHISPER	4
+#define PL_ATTR_AWAY		8
+#define PL_ATTR_MUTE_MIC	16
+#define PL_ATTR_MUTE_SPK	32
 
 
 struct player {
@@ -42,13 +42,14 @@ struct player {
 	/* the channel the player is in */
 	struct channel * in_chan;
 
-  /* communication */
-  struct sockaddr_in * cli_addr;
-  unsigned int cli_len;
+	/* communication */
+	struct sockaddr_in * cli_addr;
+	unsigned int cli_len;
 };
 
 struct player * new_player();
 struct player * new_default_player();
 struct player * new_player_from_data(char *data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len);
-
+int player_to_data(struct player *pl, char *data);
+int player_to_data_size(struct player *pl);
 #endif
