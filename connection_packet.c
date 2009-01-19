@@ -35,7 +35,7 @@ static void server_accept_connection(struct player *pl)
 	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*(uint32_t *)ptr = 0x00000000;			ptr += 4;	/* Packet counter */
+	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
 	/* Checksum initialize at the end */		ptr +=4;
 	*ptr = 14;					ptr++;		/* Length of server name */
 	memcpy(ptr, "Nom du serveur", 14);		ptr += 29;	/* Server name */
@@ -57,6 +57,7 @@ static void server_accept_connection(struct player *pl)
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
 	sendto(socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f4_s_counter++;
 	free(data);
 }
 

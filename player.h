@@ -50,6 +50,8 @@ struct player {
 	/* packet counters */
 	unsigned int f0_c_counter;
 	unsigned int f0_s_counter;
+	unsigned int f1_c_counter;
+	unsigned int f1_s_counter;
 	unsigned int f4_c_counter;
 	unsigned int f4_s_counter;
 };
