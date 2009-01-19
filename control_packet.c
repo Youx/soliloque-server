@@ -5,6 +5,7 @@
 #include <resolv.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "server.h"
 #include "channel.h"

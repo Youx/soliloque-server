@@ -207,9 +207,14 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
  */
 void print_server(struct server * s)
 {
-	struct channel * tmp_chan;
-	
+	struct channel *tmp_chan;
+	struct player *tmp_pl;
+
 	ar_each(struct channel *, tmp_chan, s->chans)
 		print_channel(tmp_chan);
+	ar_end_each;
+
+	ar_each(struct player *, tmp_pl, s->players)
+		print_player(tmp_pl);
 	ar_end_each;
 }

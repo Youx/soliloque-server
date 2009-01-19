@@ -77,6 +77,7 @@ struct player * new_player_from_data(char *data, int len, struct sockaddr_in * c
 	pl->cli_addr = cli_addr;
 	pl->cli_len = cli_len;
 
+	printf("machine : %s, login : %s, nickname : %s\n", pl->machine, pl->client, pl->name);
 	free(client); free(machine); free(nickname); free(login); free(password);
 	return pl;
 }
@@ -116,4 +117,9 @@ int player_to_data(struct player *pl, char *data)
 int player_to_data_size(struct player *pl)
 {
 	return 4+4+2+2+2+1+29;
+}
+
+void print_player(struct player *pl)
+{
+	printf("Player : 0x%p\n", pl);
 }

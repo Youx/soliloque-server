@@ -2,6 +2,7 @@
 #define __PLAYER_H__
 
 #include "compat.h"
+#include "channel.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <resolv.h>
@@ -40,7 +41,7 @@ struct player {
 	uint16_t player_attributes;
 	
 	/* the channel the player is in */
-	struct channel * in_chan;
+	struct channel *in_chan;
 
 	/* communication */
 	struct sockaddr_in * cli_addr;
@@ -52,4 +53,5 @@ struct player * new_default_player();
 struct player * new_player_from_data(char *data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len);
 int player_to_data(struct player *pl, char *data);
 int player_to_data_size(struct player *pl);
+void print_player(struct player *pl);
 #endif
