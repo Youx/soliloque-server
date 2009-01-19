@@ -95,3 +95,56 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in * cl
 	/* Send a message to all players saying that a new player arrived (0xf0be6400) */
 }
 
+/**
+ * Send a keepalive back to the client to confirm we have received his
+ *
+ * @param s the server
+ * @param pl the player to send this to
+ * @param ka_id the counter of the keepalived we received
+ */
+void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
+{
+	char *data = (char *)calloc(24, sizeof(char));
+	char *ptr = data;
+
+	*(uint32_t *)ptr = 0x0002bef4;			ptr+=4;	/* Function field */
+	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
+	*(uint32_t *)ptr = pl->f4_s_counter;		ptr+=4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr+=4;
+	*(uint32_t *)ptr = ka_id;			ptr+=4;	/* ID of the keepalive to confirm */
+
+	sendto(socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f4_s_counter++;
+	free(data);
+}
+
+/**
+ * Handle a keepalive sent by the client
+ * - check the crc
+ * - send a keepalive back to the client
+ *
+ * @param data the connection packet
+ * @param len the length of the connection packet
+ * @param cli_addr the adress of the client
+ * @param cli_len the length of cli_addr
+ */
+void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+{
+	struct player *pl;
+	uint32_t pub_id, priv_id, ka_id;
+	/* Check crc */
+	if(!packet_check_crc(data, len, 16))
+		return;
+	/* Retrieve the player */
+	priv_id = *(uint32_t *)(data+4);
+	pub_id = *(uint32_t *)(data+8);
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	if(pl == NULL) {
+		printf("pl == NULL. Why????\n");
+	}
+	/* Get the counter */
+	ka_id = *(uint32_t *)(data+12);
+	/* Send the keepalive response */
+	s_resp_keepalive(ts_server, pl, ka_id);
+}

@@ -62,6 +62,13 @@ void handle_connection_type_packet(char * data, int len, struct sockaddr_in * cl
 		/* Client requesting a connection */
 		case 3:
 			handle_player_connect(data, len, cli_addr, cli_len);
+			break;
+		case 1:
+			handle_player_keepalive(data, len, cli_addr, cli_len);
+			break;
+		default:
+			printf("Could not handle connection packet.\n");
+
 	}
 }
 
