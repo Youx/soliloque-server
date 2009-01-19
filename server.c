@@ -52,12 +52,13 @@ int add_channel(struct server * serv, struct channel * chan)
 	/* Find the next available ID */
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	ar_each(struct channel *, tmp_chan, serv->chans)
-		used_ids[tmp_chan->id] = 1;
+		used_ids[tmp_chan->id-1] = 1;	/* id -1  -> ID start at 1 */
 	ar_end_each;
 
 	new_id = 0;
 	while(used_ids[new_id] == 1)
 		new_id++;
+	new_id+=1;	/* ID start at 1 */
 	
 	/* set ID and insert into that slot */
 	chan->id = new_id;
@@ -161,13 +162,13 @@ int add_player(struct server * serv, struct player * pl)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
 	ar_each(struct channel *, tmp_chan, serv->chans)
-		used_ids[tmp_chan->id] = 1;
+		used_ids[tmp_chan->id-1] = 1;	/* ID start at 1 */
 	ar_end_each;
 
 	new_id = 0;
 	while(used_ids[new_id] == 1)
 		new_id++;
-	pl->public_id = new_id;
+	pl->public_id = new_id+1;	/* ID start at 1 */
 	
 	/* Find the next available private ID */
 	pl->private_id = random();
