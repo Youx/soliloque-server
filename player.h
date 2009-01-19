@@ -44,7 +44,7 @@ struct player {
 	struct channel *in_chan;
 
 	/* communication */
-	struct sockaddr_in * cli_addr;
+	struct sockaddr_in *cli_addr;
 	unsigned int cli_len;
 
 	/* packet counters */
@@ -56,6 +56,7 @@ struct player {
 	unsigned int f4_s_counter;
 };
 
+void destroy_player(struct player *p);
 struct player * new_player();
 struct player * new_default_player();
 struct player * new_player_from_data(char *data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len);

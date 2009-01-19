@@ -4,6 +4,20 @@
 #include <stdio.h>
 #include <sys/socket.h>
 
+
+/**
+ * Destroys a player and free its memory
+ *
+ * @param p the player we want to destroy
+ */
+void destroy_player(struct player *p)
+{
+	/* not always initialized */
+	if(p->cli_addr)
+		free(p->cli_addr);
+	free(p);
+}
+
 /**
  * Allocate and initialize a new player.
  * 
@@ -81,7 +95,9 @@ struct player * new_player_from_data(char *data, int len, struct sockaddr_in * c
 	
 	/* Initialize player */
 	pl = new_player(nickname, login, machine);
-	pl->cli_addr = cli_addr;
+	/* Alloc adresses */
+	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
+	memcpy(pl->cli_addr, cli_addr, cli_len);
 	pl->cli_len = cli_len;
 
 	printf("machine : %s, login : %s, nickname : %s\n", pl->machine, pl->client, pl->name);
