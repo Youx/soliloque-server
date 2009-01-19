@@ -44,7 +44,7 @@ void s_resp_chans(struct player *pl, struct server *s)
 	*(uint32_t *)ptr = 0x0006bef0;			ptr+=4;		/* */
 	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = 0x00000000;			ptr+=4;		/* packet counter */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
 	/* packet version */				ptr+=4;
 	/* empty checksum */				ptr+=4;
 	*(uint32_t *)ptr = s->chans->used_slots;	ptr+=4;		/* number of channels sent */
@@ -59,6 +59,8 @@ void s_resp_chans(struct player *pl, struct server *s)
 
 	printf("size of all channels : %i\n", data_size);
 	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -90,7 +92,7 @@ void s_resp_players(struct player *pl, struct server *s)
 	*(uint32_t *)ptr = 0x0007bef0;			ptr+=4;
 	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = 0x00000000;			ptr+=4;		/* packet counter */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
 	/* packet version */				ptr+=4;
 	/* empty checksum */				ptr+=4;
 	*(uint32_t *)ptr = s->players->used_slots;	ptr+=4;
@@ -105,6 +107,7 @@ void s_resp_players(struct player *pl, struct server *s)
 
 	printf("size of all players : %i\n", data_size);
 	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
 	free(data);
 }
 
@@ -120,7 +123,7 @@ void s_resp_unknown(struct player *pl, struct server *s)
 	*(uint32_t *)ptr = 0x0008bef0;			ptr+=4;
 	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = 0x00000000;			ptr+=4;		/* packet counter */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
 	/* packet version */				ptr+=4;
 	/* empty checksum */				ptr+=4;
 	/* empty data ??? */				ptr+=256;
@@ -131,6 +134,7 @@ void s_resp_unknown(struct player *pl, struct server *s)
 	packet_add_crc_d(data, data_size);
 
 	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
 	free(data);
 }
 

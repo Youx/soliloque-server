@@ -21,6 +21,10 @@ struct player * new_player(char *nickname, char *login, char *machine)
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
 	strcpy(p->client, login);
+	p->f0_s_counter = 1;
+	p->f0_c_counter = 1;
+	p->f4_s_counter = 1;
+	p->f4_c_counter = 1;
 	return p;
 }
 

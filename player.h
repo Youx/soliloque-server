@@ -46,6 +46,12 @@ struct player {
 	/* communication */
 	struct sockaddr_in * cli_addr;
 	unsigned int cli_len;
+
+	/* packet counters */
+	unsigned int f0_c_counter;
+	unsigned int f0_s_counter;
+	unsigned int f4_c_counter;
+	unsigned int f4_s_counter;
 };
 
 struct player * new_player();
