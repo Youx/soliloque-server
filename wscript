@@ -27,4 +27,4 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
-  sol_serv.cflags = '-O2 -Wall -D_GNU_SOURCE'
+  sol_serv.cflags = '-O2 -ggdb -Wall -D_GNU_SOURCE'
