@@ -17,9 +17,10 @@ struct player * new_player(char *nickname, char *login, char *machine)
 {
 	struct player * p;
 	
-	p = (struct player *)malloc(sizeof(struct player));
-	
-	
+	p = (struct player *)calloc(1, sizeof(struct player));
+	strcpy(p->name, nickname);
+	strcpy(p->machine, machine);
+	strcpy(p->client, login);
 	return p;
 }
 
@@ -100,8 +101,8 @@ int player_to_data(struct player *pl, char *data)
 	*(uint16_t *)ptr = pl->chan_privileges;		ptr+=2;		/* player chan privileges */
 	*(uint16_t *)ptr = pl->global_flags;		ptr+=2;		/* player global flags */
 	*(uint16_t *)ptr = pl->player_attributes;	ptr+=2;		/* player attributes */
-	*ptr = strlen(name);				ptr++;		/* player name size */
-	strncpy(ptr, pl>-name, 29);			ptr+=29;	/* player name */
+	*ptr = strlen(pl->name);			ptr++;		/* player name size */
+	strncpy(ptr, pl->name, 29);			ptr+=29;	/* player name */
 
 	return size;
 }
