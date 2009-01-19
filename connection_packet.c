@@ -32,24 +32,24 @@ static void server_accept_connection(struct player *pl)
 {
 	char *data = (char *)calloc(436, sizeof(char));
 	char *ptr = data;
-	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
-	/* Checksum initialize at the end */		ptr +=4;
+	*(uint32_t *)ptr = 0x0004bef4;			ptr+=4;	/* Function field */
+	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
+	*(uint32_t *)ptr = pl->f4_s_counter;		ptr+=4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr+=4;
 	*ptr = 14;					ptr++;		/* Length of server name */
-	memcpy(ptr, "Nom du serveur", 14);		ptr += 29;	/* Server name */
+	memcpy(ptr, "Nom du serveur", 14);		ptr+=29;	/* Server name */
 	*ptr = 18;					ptr++;		/* Length of server machine */
-	memcpy(ptr, "Machine du serveur", 18);		ptr += 29;	/* Server machine */
+	memcpy(ptr, "Machine du serveur", 18);		ptr+=29;	/* Server machine */
 	/* Server version */
-	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */
-	*(uint16_t *)ptr = 0;				ptr += 2;	/* Server version (major 2) */
-	*(uint16_t *)ptr = 20;				ptr += 2;	/* Server version (minor 1) */
-	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
-	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
-	/* garbage data */				ptr += 80;
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*(uint16_t *)ptr = 2;				ptr+=2;	/* Server version (major 1) */
+	*(uint16_t *)ptr = 0;				ptr+=2;	/* Server version (major 2) */
+	*(uint16_t *)ptr = 20;				ptr+=2;	/* Server version (minor 1) */
+	*(uint16_t *)ptr = 1;				ptr+=2;	/* Server version (minor 2) */
+	*(uint32_t *)ptr = 1;				ptr+=4;	/* Error code (1 = OK, 2 = Server Offline */
+	/* garbage data */				ptr+=80;
+	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
 	*ptr = 26;					ptr++;		/* Length of welcome message */
 	memcpy(ptr, "Bienvenue sur mon serveur.", 26); ptr += 255;	/* Welcome message */
 
