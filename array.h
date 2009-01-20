@@ -31,4 +31,5 @@ void ar_insert(struct array *a, void *elem);
 void ar_grow(struct array *a);
 void ar_remove_index(struct array *a, int index);
 void ar_remove(struct array *a, void *el);
+int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **res);
 #endif

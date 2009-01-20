@@ -114,30 +114,49 @@ void ar_remove(struct array *a, void *el)
 	}
 }	
 
-#if 0
+int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **res)
+{
+	int i=0;
+	int nb_elem = 0;
+	int el_counter = 0;
 
-struct array * arr_test;
+	if(a->used_slots <= start_at)
+		return 0;
+
+	for(i=0 ; i<a->total_slots ; i++) {
+		if(a->array[i] != NULL) {
+			if(nb_elem >= start_at && nb_elem < start_at+max_elem) {
+				res[nb_elem - start_at] = a->array[i];
+				el_counter++;
+			}
+			nb_elem++;
+		}
+	}
+	return el_counter;
+}
+
+#ifdef TEST_ARRAY
 
 int main()
 {
 	uint32_t i, j;
+	struct array * arr_test;
+	void *test[4] = {NULL, NULL, NULL, NULL};
+	int res;
 
-	arr_test = ar_new(10);
-	for(i=0;i<10;i++)
-		printf("%i\n", arr_test->array[i]);
+	arr_test = ar_new(100);
 
-	printf("Should now work..\n");
-	for(i=0;i<10;i++)
-		ar_grow(arr_test);
-	printf("new size = %i\n", arr_test->total_slots);
 	for(i=0 ; i<arr_test->total_slots ; i++) {
-		j = ar_next_available(arr_test);
-		printf("next available = %i\n", j);
 		ar_insert(arr_test, (void *)i+1);
 	}
 	for(i=0 ; i<arr_test->total_slots ; i++) {
-		arr_test->array[i] = 1;
+		printf("%i\n", arr_test->array[i]);
 	}
+	res = ar_get_n_elems_start_at(arr_test, 4, 98, test);
+	for(i=0;i<4;i++) {
+		printf("%i\n", test[i]);
+	}
+	printf("NB elem : %i\n", res);
 }
 
 #endif
