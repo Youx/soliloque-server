@@ -70,44 +70,52 @@ void s_resp_chans(struct player *pl, struct server *s)
  * @param pl the player we send the player list to
  * @param s the server we will get the players from
  *
- * TODO : split the players over packets
+ * TODO : split the players over packets (max 10 par paquets)
  */
 void s_resp_players(struct player *pl, struct server *s)
 {
 	char *data;
 	int data_size = 0;
-	struct player *p;
 	char *ptr;
 	int p_size;
+	int nb_players;
+	struct player *pls[10];
+	int i;
+	int players_copied;
 	/* compute the size of the packet */
 	data_size += 24;	/* header */
 	data_size += 4;		/* number of players in packet */
-	ar_each(struct player *, p, s->players)
-		data_size += player_to_data_size(p);
-	ar_end_each;
+	data_size += 10*player_to_data_size(NULL); /* players */
 
-	/* initialize the packet */
+	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
-	ptr = data;
-	*(uint32_t *)ptr = 0x0007bef0;			ptr+=4;
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
-	/* packet version */				ptr+=4;
-	/* empty checksum */				ptr+=4;
-	*(uint32_t *)ptr = s->players->used_slots;	ptr+=4;
-	/* dump the players to the packet */
-	ar_each(struct player *, p, s->players)
-		p_size = player_to_data_size(p);
-		player_to_data(p, ptr);
-		ptr+=p_size;
-	ar_end_each;
+	while(nb_players > 0) {
+		bzero(data, data_size * sizeof(char));
+		ptr = data;
+		/* initialize the packet */
+		*(uint32_t *)ptr = 0x0007bef0;				ptr+=4;
+		*(uint32_t *)ptr = pl->private_id;			ptr+=4;		/* player private id */
+		*(uint32_t *)ptr = pl->public_id;			ptr+=4;		/* player public id */
+		*(uint32_t *)ptr = pl->f0_s_counter;			ptr+=4;		/* packet counter */
+		/* packet version */					ptr+=4;
+		/* empty checksum */					ptr+=4;
+		*(uint32_t *)ptr = MIN(10, nb_players);			ptr+=4;
+		/* dump the players to the packet */
+		bzero(pls, 10*sizeof(struct player *));
+		players_copied = ar_get_n_elems_start_at(s->players, 10, s->players->used_slots-nb_players, (void**)pls);
+		for(i=0 ; i< players_copied; i++) {
+			p_size = player_to_data_size(pls[i]);
+			player_to_data(pls[i], ptr);
+			ptr+=p_size;
+		}
+		packet_add_crc_d(data, data_size);
 
-	packet_add_crc_d(data, data_size);
-
-	printf("size of all players : %i\n", data_size);
-	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
-	pl->f0_s_counter++;
+		printf("size of all players : %i\n", data_size);
+		sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+		pl->f0_s_counter++;
+		/* decrement the number of players to send */
+		nb_players -= MIN(10, nb_players);
+	}
 	free(data);
 }
 

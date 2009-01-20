@@ -139,7 +139,7 @@ int player_to_data(struct player *pl, char *data)
  */
 int player_to_data_size(struct player *pl)
 {
-	return 4+4+2+2+2+1+29;
+	return 4+4+2+2+2+1+29; /* 44 */
 }
 
 void print_player(struct player *pl)
