@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <sys/utsname.h>
 #include <stdio.h>
+#include <semaphore.h>
 
 #include <openssl/sha.h>
 
@@ -90,6 +91,9 @@ struct server *new_server()
 	serv->stats = new_sstat();
 	serv->privileges = new_sp();
 	get_machine_name(serv);
+
+	/* Initialize the semaphore for packets that have to be sent */
+	sem_init(&serv->send_packets, 0, 0);
 
 	return serv;
 }

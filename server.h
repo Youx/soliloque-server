@@ -27,6 +27,7 @@
 
 #include <pthread.h>
 #include <poll.h>
+#include <semaphore.h>
 
 #define ERROR_IF(cond) \
 	if(cond) { \
@@ -63,6 +64,7 @@ struct server {
         struct pollfd socket_poll;
 	pthread_t main_thread;
 	struct config *conf;
+	sem_t send_packets;
 };
 
 
