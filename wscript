@@ -5,7 +5,7 @@ VERSION='0.1'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
-SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c strndup.c'
+SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c strndup.c audio_packet.c'
 
 def set_options(opt):
   pass
