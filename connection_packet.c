@@ -113,6 +113,8 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 	*(uint32_t *)ptr = pl->f4_s_counter;		ptr+=4;	/* Packet counter */
 	/* Checksum initialize at the end */		ptr+=4;
 	*(uint32_t *)ptr = ka_id;			ptr+=4;	/* ID of the keepalive to confirm */
+	/* Add CRC */
+	packet_add_crc(data, 24, 16);
 
 	sendto(socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
