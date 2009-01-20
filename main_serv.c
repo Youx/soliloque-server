@@ -202,6 +202,7 @@ int main()
 				break;
 			default:
 				printf("Packet received (pollres = %i)\n", pollres);
+				cli_len = sizeof(cli_addr);
 				n = recvfrom(socket_desc, data, MAX_MSG, 0,
 						(struct sockaddr *) &cli_addr, &cli_len);
 				if(n == -1) {
