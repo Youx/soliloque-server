@@ -11,7 +11,7 @@
 #include "connection_packet.h"
 #include "control_packet.h"
 #include "acknowledge_packet.h"
-
+#include "audio_packet.h"
 
 #define MAX_MSG 1024
 
@@ -128,7 +128,10 @@ void handle_ack_type_packet(char * data, int len, struct sockaddr_in * cli_addr,
 
 void handle_data_type_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
 {
+	int res;
 	printf("(II) Packet : Audio data.\n");
+	res = audio_received(data, len);
+	printf("(II) Return value : %i.\n", res);
 }
 
 
