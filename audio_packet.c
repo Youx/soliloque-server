@@ -76,10 +76,9 @@ int audio_received(char *in, int len)
 		/* private ID */				ptr+=4;		/* empty yet */
 		/* public ID */					ptr+=4;		/* empty yet */
 		*(uint16_t *)ptr = *(uint16_t *)(in+12);	ptr+=2;		/* counter */
-		*(uint16_t *)ptr = *(uint16_t *)(in+14);	ptr+=2;		/* unknown */
+		*(uint16_t *)ptr = *(uint16_t *)(in+14);	ptr+=2;		/* conversation counter */
 		*(uint32_t *)ptr = pub_id;			ptr+=4;		/* ID of sender */
 								ptr+=2;		/* another counter?? */
-		printf(" ptr - data = %i.\n", ptr-data);
 		memcpy(ptr, in+16, audio_block_size);		ptr+=audio_block_size;
 		
 		for(i=0 ; i<ch_in->max_users ; i++) {

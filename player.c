@@ -144,5 +144,9 @@ int player_to_data_size(struct player *pl)
 
 void print_player(struct player *pl)
 {
-	printf("Player : 0x%p\n", pl);
+	printf("Player : %s\n", pl->name);
+	printf("\tpublic ID  : 0x%x\n", pl->public_id);
+	printf("\tprivate ID : 0x%x\n", pl->private_id);
+	printf("\tmachine    : %s\n", pl->machine);
+	printf("\tclient     : %s\n", pl->client);
 }
