@@ -18,6 +18,7 @@
 #include "packet_tools.h"
 #include "server.h"
 #include "player.h"
+#include "control_packet.h"
 
 extern struct server *ts_server;
 extern int socket_desc;
@@ -93,6 +94,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in * cl
 	/* Send server information to the player (0xf4be0400) */
 	server_accept_connection(pl);
 	/* Send a message to all players saying that a new player arrived (0xf0be6400) */
+	s_notify_new_player(pl, ts_server);
 }
 
 /**
