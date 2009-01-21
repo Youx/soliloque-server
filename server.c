@@ -155,14 +155,14 @@ int add_player(struct server * serv, struct player * pl)
 	struct channel * def_chan;
 	char * used_ids;
 	int new_id;
-	struct channel * tmp_chan;
+	struct player * tmp_pl;
 	
 	def_chan = get_default_channel(serv);
 	
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
-	ar_each(struct channel *, tmp_chan, serv->chans)
-		used_ids[tmp_chan->id-1] = 1;	/* ID start at 1 */
+	ar_each(struct player *, tmp_pl, serv->players)
+		used_ids[tmp_pl->public_id-1] = 1;	/* ID start at 1 */
 	ar_end_each;
 
 	new_id = 0;

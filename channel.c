@@ -107,8 +107,8 @@ int add_player_to_channel(struct channel * chan, struct player * pl)
 	for(i=0 ; i<chan->max_users ; i++) {
 		if(chan->players[i] == NULL) {
 			chan->players[i] = pl;
+			return 1;
 		}
-		return 1;
 	}
 	chan->current_users--;
 	pl->in_chan = NULL;
