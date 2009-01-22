@@ -145,8 +145,6 @@ void s_notify_player_left(struct server *s, struct player *p)
  *
  * @param pl the player we send the player list to
  * @param s the server we will get the players from
- *
- * TODO : split the players over packets (max 10 par paquets)
  */
 void s_resp_players(struct player *pl, struct server *s)
 {
@@ -169,16 +167,17 @@ void s_resp_players(struct player *pl, struct server *s)
 		bzero(data, data_size * sizeof(char));
 		ptr = data;
 		/* initialize the packet */
-		*(uint32_t *)ptr = 0x0007bef0;				ptr+=4;
-		*(uint32_t *)ptr = pl->private_id;			ptr+=4;		/* player private id */
-		*(uint32_t *)ptr = pl->public_id;			ptr+=4;		/* player public id */
-		*(uint32_t *)ptr = pl->f0_s_counter;			ptr+=4;		/* packet counter */
-		/* packet version */					ptr+=4;
-		/* empty checksum */					ptr+=4;
-		*(uint32_t *)ptr = MIN(10, nb_players);			ptr+=4;
+		*(uint32_t *)ptr = 0x0007bef0;			ptr+=4;
+		*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
+		*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
+		*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
+		/* packet version */				ptr+=4;
+		/* empty checksum */				ptr+=4;
+		*(uint32_t *)ptr = MIN(10, nb_players);		ptr+=4;
 		/* dump the players to the packet */
 		bzero(pls, 10*sizeof(struct player *));
-		players_copied = ar_get_n_elems_start_at(s->players, 10, s->players->used_slots-nb_players, (void**)pls);
+		players_copied = ar_get_n_elems_start_at(s->players, 10, 
+				s->players->used_slots-nb_players, (void**)pls);
 		for(i=0 ; i< players_copied; i++) {
 			p_size = player_to_data_size(pls[i]);
 			player_to_data(pls[i], ptr);

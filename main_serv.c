@@ -37,7 +37,8 @@ static void test_init_server()
 	add_channel(ts_server, new_predef_channel());
 	add_channel(ts_server, new_predef_channel());
 	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server, new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
+	add_channel(ts_server,
+			new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
 
 	/* Add players */
 	/*
