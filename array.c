@@ -25,7 +25,8 @@ int tmp_arr_iterator;
 int ar_next_available(const struct array *a)
 {
 	int i;
-	for(i=0 ; i< a->total_slots ; i++) {
+
+	for (i=0 ; i < a->total_slots ; i++) {
 		if(a->array[i] == NULL)
 			return i;
 	}
@@ -38,11 +39,11 @@ int ar_next_available(const struct array *a)
  * @param a the array
  * @param elem a generic pointer to an element
  */
-void ar_insert(struct array *a, void * elem)
+void ar_insert(struct array *a, void *elem)
 {
 	int i;
 
-	if(a->used_slots == a->total_slots)
+	if (a->used_slots == a->total_slots)
 		ar_grow(a);
 	i = ar_next_available(a);
 	a->array[i] = elem;
@@ -57,7 +58,7 @@ void ar_insert(struct array *a, void * elem)
 void ar_grow(struct array *a)
 {
 	a->total_slots *= 2;
-	a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots) );
+	a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
 }
 
 /**
@@ -67,9 +68,9 @@ void ar_grow(struct array *a)
  *
  * @return the allocated array
  */
-struct array * ar_new(int size)
+struct array *ar_new(int size)
 {
-	struct array * a;
+	struct array *a;
 	a = (struct array *)calloc(sizeof(struct array), 1);
 	a->total_slots = size;
 	a->used_slots = 0;
@@ -87,7 +88,7 @@ struct array * ar_new(int size)
  */
 void ar_remove_index(struct array *a, int index)
 {
-	if(a->array[index] != NULL) {
+	if (a->array[index] != NULL) {
 		a->array[index] = NULL; /* clear the pointer */
 		a->used_slots--;
 	}
@@ -107,25 +108,36 @@ void ar_remove(struct array *a, void *el)
 {
 	int i;
 
-	for(i=0 ; i<a->total_slots ; i++) {
-		if(a->array[i] == el) {
+	for (i=0 ; i < a->total_slots ; i++) {
+		if (a->array[i] == el) {
 			ar_remove_index(a, i);
 		}
 	}
 }	
 
+/**
+ * Retrieves a given number of elements, starting at a given index
+ * and put it into the array.
+ *
+ * @param a the array we will be picking elements from
+ * @param max_elem the maximum number of elements we will take
+ * @param start_at the number of element before  the ones we will pick
+ * @param res the array we will put elements in
+ *
+ * @return the number of elements that were put into res (0 if none)
+ */
 int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **res)
 {
 	int i=0;
 	int nb_elem = 0;
 	int el_counter = 0;
 
-	if(a->used_slots <= start_at)
+	if (a->used_slots <= start_at)
 		return 0;
 
-	for(i=0 ; i<a->total_slots ; i++) {
-		if(a->array[i] != NULL) {
-			if(nb_elem >= start_at && nb_elem < start_at+max_elem) {
+	for (i=0 ; i < a->total_slots ; i++) {
+		if (a->array[i] != NULL) {
+			if (nb_elem >= start_at && nb_elem < (start_at + max_elem)) {
 				res[nb_elem - start_at] = a->array[i];
 				el_counter++;
 			}
@@ -140,20 +152,20 @@ int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **
 int main()
 {
 	uint32_t i, j;
-	struct array * arr_test;
+	struct array *arr_test;
 	void *test[4] = {NULL, NULL, NULL, NULL};
 	int res;
 
 	arr_test = ar_new(100);
 
-	for(i=0 ; i<arr_test->total_slots ; i++) {
+	for (i = 0 ; i < arr_test->total_slots ; i++) {
 		ar_insert(arr_test, (void *)i+1);
 	}
-	for(i=0 ; i<arr_test->total_slots ; i++) {
+	for (i = 0 ; i < arr_test->total_slots ; i++) {
 		printf("%i\n", arr_test->array[i]);
 	}
 	res = ar_get_n_elems_start_at(arr_test, 4, 98, test);
-	for(i=0;i<4;i++) {
+	for (i = 0 ; i < 4 ; i++) {
 		printf("%i\n", test[i]);
 	}
 	printf("NB elem : %i\n", res);

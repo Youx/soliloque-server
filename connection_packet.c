@@ -33,26 +33,26 @@ static void server_accept_connection(struct player *pl)
 {
 	char *data = (char *)calloc(436, sizeof(char));
 	char *ptr = data;
-	*(uint32_t *)ptr = 0x0004bef4;			ptr+=4;	/* Function field */
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
-	*(uint32_t *)ptr = pl->f4_s_counter;		ptr+=4;	/* Packet counter */
-	/* Checksum initialize at the end */		ptr+=4;
-	*ptr = 14;					ptr++;		/* Length of server name */
-	memcpy(ptr, "Nom du serveur", 14);		ptr+=29;	/* Server name */
-	*ptr = 18;					ptr++;		/* Length of server machine */
-	memcpy(ptr, "Machine du serveur", 18);		ptr+=29;	/* Server machine */
+	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr += 4;
+	*ptr = 14;					ptr += 1;	/* Length of server name */
+	memcpy(ptr, "Nom du serveur", 14);		ptr += 29;	/* Server name */
+	*ptr = 18;					ptr += 1;	/* Length of server machine */
+	memcpy(ptr, "Machine du serveur", 18);		ptr += 29;	/* Server machine */
 	/* Server version */
-	*(uint16_t *)ptr = 2;				ptr+=2;	/* Server version (major 1) */
-	*(uint16_t *)ptr = 0;				ptr+=2;	/* Server version (major 2) */
-	*(uint16_t *)ptr = 20;				ptr+=2;	/* Server version (minor 1) */
-	*(uint16_t *)ptr = 1;				ptr+=2;	/* Server version (minor 2) */
-	*(uint32_t *)ptr = 1;				ptr+=4;	/* Error code (1 = OK, 2 = Server Offline */
-	/* garbage data */				ptr+=80;
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
-	*ptr = 26;					ptr++;		/* Length of welcome message */
-	memcpy(ptr, "Bienvenue sur mon serveur.", 26); ptr += 255;	/* Welcome message */
+	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */
+	*(uint16_t *)ptr = 0;				ptr += 2;	/* Server version (major 2) */
+	*(uint16_t *)ptr = 20;				ptr += 2;	/* Server version (minor 1) */
+	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
+	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
+	/* garbage data */				ptr += 80;
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*ptr = 26;					ptr += 1;	/* Length of welcome message */
+	memcpy(ptr, "Bienvenue sur mon serveur.", 26);	ptr += 255;	/* Welcome message */
 
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
@@ -77,11 +77,11 @@ static void server_accept_connection(struct player *pl)
  * @param cli_addr the adress of the client
  * @param cli_len the length of cli_addr
  */
-void handle_player_connect(char *data, unsigned int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	struct player *pl;
 	/* Check crc */
-	if(!packet_check_crc(data, len, 16))
+	if (!packet_check_crc(data, len, 16))
 		return;
 	/* If registered, check if player exists, else check server password */
 
@@ -109,12 +109,12 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 	char *data = (char *)calloc(24, sizeof(char));
 	char *ptr = data;
 
-	*(uint32_t *)ptr = 0x0002bef4;			ptr+=4;	/* Function field */
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;	/* Public ID */
-	*(uint32_t *)ptr = pl->f4_s_counter;		ptr+=4;	/* Packet counter */
-	/* Checksum initialize at the end */		ptr+=4;
-	*(uint32_t *)ptr = ka_id;			ptr+=4;	/* ID of the keepalive to confirm */
+	*(uint32_t *)ptr = 0x0002bef4;			ptr += 4;	/* Function field */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
+	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr += 4;
+	*(uint32_t *)ptr = ka_id;			ptr += 4;	/* ID of the keepalive to confirm */
 	/* Add CRC */
 	packet_add_crc(data, 24, 16);
 
@@ -133,7 +133,7 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
  * @param cli_addr the adress of the client
  * @param cli_len the length of cli_addr
  */
-void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	struct player *pl;
 	uint32_t pub_id, priv_id, ka_id;
@@ -141,14 +141,14 @@ void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in * 
 	if(!packet_check_crc(data, len, 16))
 		return;
 	/* Retrieve the player */
-	priv_id = *(uint32_t *)(data+4);
-	pub_id = *(uint32_t *)(data+8);
+	priv_id = *(uint32_t *)(data + 4);
+	pub_id = *(uint32_t *)(data + 8);
 	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-	if(pl == NULL) {
+	if (pl == NULL) {
 		printf("pl == NULL. Why????\n");
 	}
 	/* Get the counter */
-	ka_id = *(uint32_t *)(data+12);
+	ka_id = *(uint32_t *)(data + 12);
 	/* Send the keepalive response */
 	s_resp_keepalive(ts_server, pl, ka_id);
 }

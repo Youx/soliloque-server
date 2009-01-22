@@ -41,18 +41,18 @@ void s_resp_chans(struct player *pl, struct server *s)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint32_t *)ptr = 0x0006bef0;			ptr+=4;		/* */
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
-	/* packet version */				ptr+=4;
-	/* empty checksum */				ptr+=4;
-	*(uint32_t *)ptr = s->chans->used_slots;	ptr+=4;		/* number of channels sent */
+	*(uint32_t *)ptr = 0x0006bef0;			ptr += 4;	/* */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
+	/* packet version */				ptr += 4;
+	/* empty checksum */				ptr += 4;
+	*(uint32_t *)ptr = s->chans->used_slots;	ptr += 4;	/* number of channels sent */
 	/* dump the channels to the packet */
 	ar_each(struct channel *, ch, s->chans)
 		ch_size = channel_to_data_size(ch);
 		channel_to_data(ch, ptr);
-		ptr+=ch_size;
+		ptr += ch_size;
 	ar_end_each;
 
 	packet_add_crc_d(data, data_size);
@@ -75,23 +75,23 @@ void s_notify_new_player(struct player *pl, struct server *s)
 	char *data, *ptr;
 	int data_size;
 
-	data_size = 24+player_to_data_size(pl);
+	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0064bef0;		ptr+=4;
-	/* public and private ID */		ptr+=8;	/* done later */
-	/* counter */				ptr+=4;	/* done later */
-	/* packet version */			ptr+=4; /* empty for now */
-	/* empty checksum */			ptr+=4; /* done later */
+	*(uint32_t *)ptr = 0x0064bef0;		ptr += 4;
+	/* public and private ID */		ptr += 8;	/* done later */
+	/* counter */				ptr += 4;	/* done later */
+	/* packet version */			ptr += 4;	/* empty for now */
+	/* empty checksum */			ptr += 4;	/* done later */
 	player_to_data(pl, ptr);
 	
 	/* customize and send for each player on the server */
 	ar_each(struct player *, tmp_pl, s->players)
-		if(tmp_pl != pl) {
-			*(uint32_t *)(data+4) = tmp_pl->private_id;
-			*(uint32_t *)(data+8) = tmp_pl->public_id;
-			*(uint32_t *)(data+12) = tmp_pl->f0_s_counter;
+		if (tmp_pl != pl) {
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
 			sendto(socket_desc, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
@@ -116,20 +116,20 @@ void s_notify_player_left(struct server *s, struct player *p)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0065bef0;		ptr+=4;		/* function code */
-	/* private ID */			ptr+=4;		/* filled later */
-	/* public ID */				ptr+=4;		/* filled later */
-	*(uint32_t *)ptr = p->f0_s_counter;	ptr+=4;		/* packet counter */
-	/* packet version */			ptr+=4;		/* not done yet */
-	/* empty checksum */			ptr+=4;		/* filled later */
-	*(uint32_t *)ptr = p->public_id;	ptr+=4;		/* ID of player who left */
-	*(uint32_t *)ptr = 1;			ptr+=4;		/* visible notification */
-	/* 32 bytes of garbage?? */		ptr+=32;	/* maybe some message ? */
+	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = p->f0_s_counter;	ptr += 4;	/* packet counter */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = p->public_id;	ptr += 4;	/* ID of player who left */
+	*(uint32_t *)ptr = 1;			ptr += 4;	/* visible notification */
+	/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
 
 	ar_each(struct player *, tmp_pl, s->players)
-			*(uint32_t *)(data+4) = tmp_pl->private_id;
-			*(uint32_t *)(data+8) = tmp_pl->public_id;
-			*(uint32_t *)(data+12) = tmp_pl->f0_s_counter;
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
 			sendto(socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
@@ -159,29 +159,29 @@ void s_resp_players(struct player *pl, struct server *s)
 	/* compute the size of the packet */
 	data_size += 24;	/* header */
 	data_size += 4;		/* number of players in packet */
-	data_size += 10*player_to_data_size(NULL); /* players */
+	data_size += 10 * player_to_data_size(NULL); /* players */
 
 	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
-	while(nb_players > 0) {
+	while (nb_players > 0) {
 		bzero(data, data_size * sizeof(char));
 		ptr = data;
 		/* initialize the packet */
-		*(uint32_t *)ptr = 0x0007bef0;			ptr+=4;
-		*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
-		*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-		*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
-		/* packet version */				ptr+=4;
-		/* empty checksum */				ptr+=4;
-		*(uint32_t *)ptr = MIN(10, nb_players);		ptr+=4;
+		*(uint32_t *)ptr = 0x0007bef0;			ptr += 4;
+		*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
+		*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
+		*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
+		/* packet version */				ptr += 4;
+		/* empty checksum */				ptr += 4;
+		*(uint32_t *)ptr = MIN(10, nb_players);		ptr += 4;
 		/* dump the players to the packet */
-		bzero(pls, 10*sizeof(struct player *));
-		players_copied = ar_get_n_elems_start_at(s->players, 10, 
+		bzero(pls, 10 * sizeof(struct player *));
+		players_copied = ar_get_n_elems_start_at(s->players, 10,
 				s->players->used_slots-nb_players, (void**)pls);
-		for(i=0 ; i< players_copied; i++) {
+		for (i = 0 ; i < players_copied ; i++) {
 			p_size = player_to_data_size(pls[i]);
 			player_to_data(pls[i], ptr);
-			ptr+=p_size;
+			ptr += p_size;
 		}
 		packet_add_crc_d(data, data_size);
 
@@ -203,16 +203,16 @@ void s_resp_unknown(struct player *pl, struct server *s)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 	/* initialize the packet */
-	*(uint32_t *)ptr = 0x0008bef0;			ptr+=4;
-	*(uint32_t *)ptr = pl->private_id;		ptr+=4;		/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr+=4;		/* packet counter */
-	/* packet version */				ptr+=4;
-	/* empty checksum */				ptr+=4;
-	/* empty data ??? */				ptr+=256;
-	*ptr = 0x6e;					ptr++;
-	*ptr = 0x61;					ptr++;
-							ptr++;
+	*(uint32_t *)ptr = 0x0008bef0;			ptr += 4;
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;		/* player private id */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;		/* player public id */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;		/* packet counter */
+	/* packet version */				ptr += 4;
+	/* empty checksum */				ptr += 4;
+	/* empty data ??? */				ptr += 256;
+	*ptr = 0x6e;					ptr += 1;
+	*ptr = 0x61;					ptr += 1;
+							ptr += 1;
 
 	packet_add_crc_d(data, data_size);
 
@@ -238,7 +238,7 @@ void *c_req_chans(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
 	memcpy(&pub_id, data+8, 4);
 	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 
-	if(pl != NULL) {
+	if (pl != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		s_resp_chans(pl, ts_server);	/* list of channels */
 		usleep(250000);
@@ -263,10 +263,10 @@ void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
 	uint32_t pub_id, priv_id;
 	struct player *pl;
 
-	memcpy(&priv_id, data+4, 4);
-	memcpy(&pub_id, data+8, 4);
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
 	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-	if(pl != NULL) {
+	if (pl != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		/* send a notification to all players */
 		s_notify_player_left(ts_server, pl);

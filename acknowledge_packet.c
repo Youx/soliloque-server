@@ -21,7 +21,7 @@ void send_acknowledge(struct player *pl)
 	*(uint32_t *)ptr = pl->public_id;	ptr+=4;
 	*(uint32_t *)ptr = pl->f1_s_counter;	ptr+=4;
 
-	assert(ptr - data == 16);
+	assert (ptr - data == 16);
 
 	sendto(socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f1_s_counter++;

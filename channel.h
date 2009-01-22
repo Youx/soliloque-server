@@ -22,25 +22,26 @@ struct channel {
 	uint16_t sort_order;
 	uint16_t max_users;
 	
-	char * name;
-	char * topic;
-	char * desc;
+	char *name;
+	char *topic;
+	char *desc;
 
 	uint16_t current_users;
-	struct player ** players;
-	struct server * in_server;
+	struct player **players;
+	struct server *in_server;
 };
 
 
 
 /* Channel functions */
-struct channel * new_channel(char * name, char * topic, char * desc, uint16_t flags, uint16_t codec, uint16_t sort_order, uint16_t max_users);
-struct channel * new_predef_channel();
-int destroy_channel(struct channel * chan);
+struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
+		uint16_t codec, uint16_t sort_order, uint16_t max_users);
+struct channel *new_predef_channel();
+int destroy_channel(struct channel *chan);
 
-int add_player_to_channel(struct channel * chan, struct player * player);
+int add_player_to_channel(struct channel *chan, struct player *player);
 
-void print_channel(struct channel * chan);
+void print_channel(struct channel *chan);
 
 int channel_to_data(struct channel *ch, char *data);
 int channel_to_data_size(struct channel *ch);

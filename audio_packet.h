@@ -15,7 +15,6 @@
 #define CODEC_SPEEX_19_6  11
 #define CODEC_SPEEX_25_9  12
 
-
 int audio_received(char *in, int len);
 
 #endif

@@ -9,5 +9,4 @@
 
 void send_acknowledge(struct player *pl);
 
-
 #endif

@@ -10,7 +10,7 @@
  *
  * @return 1 on success
  */
-int destroy_channel(struct channel * chan)
+int destroy_channel(struct channel *chan)
 {
 	/* TODO : relocate players to another channel maybe? */
 	free(chan->name);
@@ -35,10 +35,10 @@ int destroy_channel(struct channel * chan)
  *
  * @return the newly allocated and initialized channel
  */
-struct channel * 
-new_channel(char * name, char * topic, char * desc, uint16_t flags, uint16_t codec, uint16_t sort_order, uint16_t max_users)
+struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
+		uint16_t codec, uint16_t sort_order, uint16_t max_users)
 {
-	struct channel * chan;
+	struct channel *chan;
 	chan = (struct channel *)malloc(sizeof(struct channel));
 	
 	chan->current_users = 0;
@@ -62,7 +62,7 @@ new_channel(char * name, char * topic, char * desc, uint16_t flags, uint16_t cod
  *
  * @return a test channel.
  */
-struct channel * new_predef_channel()
+struct channel *new_predef_channel()
 {
 	uint16_t flags = CHANNEL_FLAG_REGISTERED;
 	return new_channel("Channel name", "Channel topic", "Channel description", flags, CODEC_SPEEX_19_6, 0, 16);
@@ -73,9 +73,9 @@ struct channel * new_predef_channel()
  * Prints a channel's information.
  * @param chan a channel
  */
-void print_channel(struct channel * chan)
+void print_channel(struct channel *chan)
 {
-	if(chan == NULL) {
+	if (chan == NULL) {
 		printf("Channel NULL\n");
 	} else {
 		printf("Channel ID %i\n", chan->id);
@@ -97,15 +97,15 @@ void print_channel(struct channel * chan)
  * @return 1 if the insertion succeeded, 
  * 	   0 if it failed (maximum number of users in channel already reached
  */
-int add_player_to_channel(struct channel * chan, struct player * pl)
+int add_player_to_channel(struct channel *chan, struct player *pl)
 {
 	int i;
 	
 	pl->in_chan = chan;
 	chan->current_users++;
 	
-	for(i=0 ; i<chan->max_users ; i++) {
-		if(chan->players[i] == NULL) {
+	for (i = 0 ; i < chan->max_users ; i++) {
+		if (chan->players[i] == NULL) {
 			chan->players[i] = pl;
 			return 1;
 		}
@@ -127,9 +127,9 @@ int add_player_to_channel(struct channel * chan, struct player * pl)
 int channel_to_data(struct channel *ch, char *data)
 {
 	int size = 4 + 2 + 2 + 4 + 2 + 2
-	        + strlen(ch->name) +1
-		+ strlen(ch->topic) +1
-		+ strlen(ch->desc) +1;
+	        + strlen(ch->name) + 1
+		+ strlen(ch->topic) + 1
+		+ strlen(ch->desc) + 1;
 	char *ptr;
 
 	ptr = data;
@@ -158,7 +158,7 @@ int channel_to_data(struct channel *ch, char *data)
 int channel_to_data_size(struct channel *ch)
 {
 	return 4 + 2 + 2 + 4 + 2 + 2
-	        + strlen(ch->name) +1
-		+ strlen(ch->topic) +1
-		+ strlen(ch->desc) +1;
+	        + strlen(ch->name) + 1
+		+ strlen(ch->topic) + 1
+		+ strlen(ch->desc) + 1;
 }

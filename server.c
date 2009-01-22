@@ -9,9 +9,9 @@
  *
  * @return the new server
  */
-struct server * new_server()
+struct server *new_server()
 {
-	struct server * serv;
+	struct server *serv;
 	serv = (struct server *)malloc(sizeof(struct server));
 	
 	serv->chans = ar_new(4);
@@ -30,20 +30,19 @@ struct server * new_server()
  *
  * TODO: add the network callback to notify all players a channel has been added.
  */
-int add_channel(struct server * serv, struct channel * chan)
+int add_channel(struct server *serv, struct channel *chan)
 {
 	uint32_t new_id;
 	struct channel *tmp_chan;
-	
-	char * used_ids;
+	char *used_ids;
 	
 	/* If there is no channel, make this channel the default one */
-	if(serv->chans->used_slots == 0)
+	if (serv->chans->used_slots == 0)
 		chan->flags |= (CHANNEL_FLAG_DEFAULT | CHANNEL_FLAG_REGISTERED);
 		
 	/* If this channel is the default one, remove the flag from the channel that previously has it.
 	 *  = Only one channel can have the default flag */
-	if(chan->flags & CHANNEL_FLAG_DEFAULT) {
+	if (chan->flags & CHANNEL_FLAG_DEFAULT) {
 		ar_each(struct channel *, tmp_chan, serv->chans)
 			tmp_chan->flags &= (0xFFFF ^ CHANNEL_FLAG_DEFAULT);
 		ar_end_each;
@@ -52,13 +51,13 @@ int add_channel(struct server * serv, struct channel * chan)
 	/* Find the next available ID */
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	ar_each(struct channel *, tmp_chan, serv->chans)
-		used_ids[tmp_chan->id-1] = 1;	/* id -1  -> ID start at 1 */
+		used_ids[tmp_chan->id - 1] = 1;	/* id -1  -> ID start at 1 */
 	ar_end_each;
 
 	new_id = 0;
 	while(used_ids[new_id] == 1)
 		new_id++;
-	new_id+=1;	/* ID start at 1 */
+	new_id += 1;	/* ID start at 1 */
 	
 	/* set ID and insert into that slot */
 	chan->id = new_id;
@@ -82,9 +81,9 @@ int add_channel(struct server * serv, struct channel * chan)
  *
  * @return the channel we retrieved, a NULL pointer if it failed.
  */
-struct channel * get_channel_by_id(struct server * serv, uint32_t id)
+struct channel *get_channel_by_id(struct server *serv, uint32_t id)
 {
-	struct channel * tmp_chan;
+	struct channel *tmp_chan;
 	
 	ar_each(struct channel *, tmp_chan, serv->chans)
 		if(tmp_chan->id == id)
@@ -103,9 +102,9 @@ struct channel * get_channel_by_id(struct server * serv, uint32_t id)
  *
  * @return 1 on success, 0 if the channel wasn't found
  */
-int destroy_channel_by_id(struct server * serv, uint32_t id)
+int destroy_channel_by_id(struct server *serv, uint32_t id)
 {
-	struct channel * tmp_chan;
+	struct channel *tmp_chan;
 	
 	ar_each(struct channel *, tmp_chan, serv->chans)
 		if(tmp_chan->id == id) {
@@ -126,12 +125,12 @@ int destroy_channel_by_id(struct server * serv, uint32_t id)
  *
  * @return the default channel of the server
  */
-struct channel * get_default_channel(struct server * serv)
+struct channel *get_default_channel(struct server *serv)
 {
 	struct channel *new_chan, *tmp_chan;
 	
 	ar_each(struct channel *, tmp_chan, serv->chans)
-		if(tmp_chan->flags & CHANNEL_FLAG_DEFAULT)
+		if (tmp_chan->flags & CHANNEL_FLAG_DEFAULT)
 			return tmp_chan;
 	ar_end_each;
 
@@ -150,32 +149,31 @@ struct channel * get_default_channel(struct server * serv)
  *
  * @return 1 if the insertion suceeded, 0 if it failed
  */
-int add_player(struct server * serv, struct player * pl)
+int add_player(struct server *serv, struct player *pl)
 {
-	struct channel * def_chan;
-	char * used_ids;
+	struct channel *def_chan;
+	char *used_ids;
 	int new_id;
-	struct player * tmp_pl;
+	struct player *tmp_pl;
 	
 	def_chan = get_default_channel(serv);
 	
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
 	ar_each(struct player *, tmp_pl, serv->players)
-		used_ids[tmp_pl->public_id-1] = 1;	/* ID start at 1 */
+		used_ids[tmp_pl->public_id - 1] = 1;	/* ID start at 1 */
 	ar_end_each;
 
 	new_id = 0;
-	while(used_ids[new_id] == 1)
+	while (used_ids[new_id] == 1)
 		new_id++;
-	pl->public_id = new_id+1;	/* ID start at 1 */
-	
+	pl->public_id = new_id + 1;	/* ID start at 1 */
+
 	/* Find the next available private ID */
 	pl->private_id = random();
-	
-	/* find next slot in the array */
+	/* Find next slot in the array */
 	ar_insert(serv->players, pl);
-	
+
 	return add_player_to_channel(def_chan, pl);
 }
 
@@ -193,7 +191,7 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 	struct player *pl;
 
 	ar_each(struct player *, pl, s->players)
-		if(pl->public_id == pub_id && pl->private_id == priv_id) {
+		if (pl->public_id == pub_id && pl->private_id == priv_id) {
 			return pl;
 		}
 	ar_end_each;
@@ -214,20 +212,21 @@ void remove_player(struct server *s, struct player *p)
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
 	/* remove from the channel */
-	for(i=0 ; i < p->in_chan->max_users ; i++) {
-		if(p->in_chan->players[i] == p)
+	for (i=0 ; i < p->in_chan->max_users ; i++) {
+		if (p->in_chan->players[i] == p)
 			p->in_chan->players[i] = NULL;
 	}
 	p->in_chan->current_users--;
 	/* free the memory */
 	destroy_player(p);
 }
+
 /**
  * Prints information about the server (channels, etc)
  *
  * @param s the server
  */
-void print_server(struct server * s)
+void print_server(struct server *s)
 {
 	struct channel *tmp_chan;
 	struct player *tmp_pl;

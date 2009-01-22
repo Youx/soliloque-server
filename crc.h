@@ -9,7 +9,7 @@
 
 #include "compat.h"
 
-uint32_t crc_32(void * str, int length, uint32_t poly);
+uint32_t crc_32(void *str, int length, uint32_t poly);
 
 #endif
 

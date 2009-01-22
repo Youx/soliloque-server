@@ -25,17 +25,16 @@
 #include <sys/types.h>
 #include <stdlib.h>
 
-char *
-strndup (char const *s, size_t n)
+char *strndup (char const *s, size_t n)
 {
 	int i;
 	char *res;
 
-	for(i=0 ; i<n ; i++) {
-		if(s[i] == 0)
+	for (i = 0 ; i < n ; i++) {
+		if (s[i] == 0)
 			break;
 	}
-	res = calloc(i+1, sizeof(char));
+	res = calloc(i + 1, sizeof(char));
 	return memcpy(res, s, i);
 }
 #endif /* HAVE_STRNDUP */

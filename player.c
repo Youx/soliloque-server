@@ -13,7 +13,7 @@
 void destroy_player(struct player *p)
 {
 	/* not always initialized */
-	if(p->cli_addr)
+	if (p->cli_addr)
 		free(p->cli_addr);
 	free(p);
 }
@@ -27,9 +27,9 @@ void destroy_player(struct player *p)
  *
  * @return the initialized player
  */
-struct player * new_player(char *nickname, char *login, char *machine)
+struct player *new_player(char *nickname, char *login, char *machine)
 {
-	struct player * p;
+	struct player *p;
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
 	strcpy(p->name, nickname);
@@ -49,7 +49,7 @@ struct player * new_player(char *nickname, char *login, char *machine)
  * 
  * @return the test player
  */
-struct player * new_default_player()
+struct player *new_default_player()
 {
 	return new_player("Nickname", "Login", "Test Machine 0.0");
 }
@@ -64,7 +64,7 @@ struct player * new_default_player()
  *
  * @return the allocated player
  */
-struct player * new_player_from_data(char *data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	struct player *pl;
 	char *client;
@@ -81,16 +81,16 @@ struct player * new_player_from_data(char *data, int len, struct sockaddr_in * c
 	/* Bypass header */				ptr += 16;
 	/* Bypass checksum */				ptr += 4;
 	/* Copy the strings to a null terminated format */
-	tmp_size = MIN(29, *ptr);			ptr++;		/* size of client */
+	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of client */
 	client = strndup(ptr, tmp_size);		ptr += 29;	/* client */
-	tmp_size = MIN(29, *ptr);			ptr++;		/* size of machine */
+	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of machine */
 	machine = strndup(ptr, tmp_size);		ptr += 29;	/* machine */
 	/* not used yet */				ptr += 10;
-	tmp_size = MIN(29, *ptr);			ptr++;		/* size of login */
+	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of login */
 	login = strndup(ptr, tmp_size);			ptr += 29;	/* login */
-	tmp_size = MIN(29, *ptr);			ptr++;		/* size of password */
+	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of password */
 	password = strndup(ptr, tmp_size);		ptr += 29;	/* password */
-	tmp_size = MIN(29, *ptr);			ptr++;		/* size of nickname */
+	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of nickname */
 	nickname = strndup(ptr, tmp_size);		ptr += 29;	/* nickname */
 	
 	/* Initialize player */
@@ -118,13 +118,13 @@ int player_to_data(struct player *pl, char *data)
 	int size = player_to_data_size(pl);
 	char *ptr = data;
 
-	*(uint32_t *)ptr = pl->public_id;		ptr+=4;		/* public ID */
-	*(uint32_t *)ptr = pl->in_chan->id;		ptr+=4;		/* channel ID */
-	*(uint16_t *)ptr = pl->chan_privileges;		ptr+=2;		/* player chan privileges */
-	*(uint16_t *)ptr = pl->global_flags;		ptr+=2;		/* player global flags */
-	*(uint16_t *)ptr = pl->player_attributes;	ptr+=2;		/* player attributes */
-	*ptr = strlen(pl->name);			ptr++;		/* player name size */
-	strncpy(ptr, pl->name, 29);			ptr+=29;	/* player name */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* public ID */
+	*(uint32_t *)ptr = pl->in_chan->id;		ptr += 4;	/* channel ID */
+	*(uint16_t *)ptr = pl->chan_privileges;		ptr += 2;	/* player chan privileges */
+	*(uint16_t *)ptr = pl->global_flags;		ptr += 2;	/* player global flags */
+	*(uint16_t *)ptr = pl->player_attributes;	ptr += 2;	/* player attributes */
+	*ptr = strlen(pl->name);			ptr += 1;	/* player name size */
+	strncpy(ptr, pl->name, 29);			ptr += 29;	/* player name */
 
 	return size;
 }
@@ -139,7 +139,7 @@ int player_to_data(struct player *pl, char *data)
  */
 int player_to_data_size(struct player *pl)
 {
-	return 4+4+2+2+2+1+29; /* 44 */
+	return 4 + 4 + 2 + 2 + 2 + 1 + 29; /* 44 */
 }
 
 void print_player(struct player *pl)

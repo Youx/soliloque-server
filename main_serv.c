@@ -16,10 +16,10 @@
 #define MAX_MSG 1024
 
 /* functions */
-//void *(*callbacks[255])(char * data); 
-typedef void *(*packet_function)(char *data, unsigned int len, struct sockaddr_in * cli_addr, unsigned int cli_len);
+typedef void *(*packet_function)(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
 
 packet_function f0_callbacks[255];
+
 int socket_desc;
 
 /* context of the server */
@@ -50,44 +50,42 @@ static void test_init_server()
 
 static void init_callbacks()
 {
-	bzero(f0_callbacks, sizeof(void *(char*, unsigned int, struct sockaddr_in *, unsigned int)));
+	bzero(f0_callbacks, 255 * sizeof(packet_function));
 	f0_callbacks[0x2c] = &c_req_leave;	/* client wants to leave */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }
 
-void handle_connection_type_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
-
 	printf("(II) Packet : Connection.\n");
-	switch( ((uint16_t *)data)[1] ) {
-		/* Client requesting a connection */
-		case 3:
-			handle_player_connect(data, len, cli_addr, cli_len);
-			break;
-		case 1:
-			handle_player_keepalive(data, len, cli_addr, cli_len);
-			break;
-		default:
-			printf("(WW) Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
-
+	switch (((uint16_t *)data)[1]) {
+	/* Client requesting a connection */
+	case 3:
+		handle_player_connect(data, len, cli_addr, cli_len);
+		break;
+	case 1:
+		handle_player_keepalive(data, len, cli_addr, cli_len);
+		break;
+	default:
+		printf("(WW) Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
 	}
 }
 
 packet_function get_f0_function(unsigned char * code)
 {
 	/* Function packets */
-	if(code[3] == 0) { /* 0 = server packet, 1 = client packet*/
-		switch(code[2]) {
-			case 0x05:
-				return &c_req_chans;
-			case 0xc9:
-			case 0xd1:
-			default:
-				return NULL;
+	if (code[3] == 0) { /* 0 = server packet, 1 = client packet*/
+		switch (code[2]) {
+		case 0x05:
+			return &c_req_chans;
+		case 0xc9:
+		case 0xd1:
+		default:
+			return NULL;
 		}
 	} else {
-		if(f0_callbacks[code[2]])
+		if (f0_callbacks[code[2]])
 			return f0_callbacks[code[2]];
 		else
 			return NULL;
@@ -106,7 +104,7 @@ packet_function get_f0_function(unsigned char * code)
 		printf("(WW) %s", strerror(errno)); \
 	}
 
-void handle_control_type_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
@@ -115,7 +113,7 @@ void handle_control_type_packet(char * data, int len, struct sockaddr_in * cli_a
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
 	func = get_f0_function(code);
-	if(func != NULL) {
+	if (func != NULL) {
 		/* Execute */
 		(*func)(data, len, cli_addr, cli_len);
 	} else {
@@ -123,12 +121,12 @@ void handle_control_type_packet(char * data, int len, struct sockaddr_in * cli_a
 	}
 }
 
-void handle_ack_type_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	printf("(II) Packet : ACK.\n");
 }
 
-void handle_data_type_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	int res;
 	printf("(II) Packet : Audio data.\n");
@@ -136,29 +134,27 @@ void handle_data_type_packet(char * data, int len, struct sockaddr_in * cli_addr
 	printf("(II) Return value : %i.\n", res);
 }
 
-
 /* Manage an incoming packet */
-void handle_packet(char * data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len)
+void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
 	/* first a few tests */
-	switch( ((uint16_t *)data)[0] ) {
-		case 0xbef0:		/* commands */
-			handle_control_type_packet(data, len, cli_addr, cli_len);
-			break;
-		case 0xbef1:		/* acknowledge */
-			handle_ack_type_packet(data, len, cli_addr, cli_len);
-			break;
-		case 0xbef2: 		/* audio data */
-			handle_data_type_packet(data, len, cli_addr, cli_len);
-			break;
-		case 0xbef4:		/* connection and keepalives */
-			handle_connection_type_packet(data, len, cli_addr, cli_len);
-			break;
-		default:
-			printf("(WW) Unvalid packet type field : 0x%x.\n", ((uint16_t *)data)[0]);
+	switch (((uint16_t *)data)[0]) {
+	case 0xbef0:		/* commands */
+		handle_control_type_packet(data, len, cli_addr, cli_len);
+		break;
+	case 0xbef1:		/* acknowledge */
+		handle_ack_type_packet(data, len, cli_addr, cli_len);
+		break;
+	case 0xbef2: 		/* audio data */
+		handle_data_type_packet(data, len, cli_addr, cli_len);
+		break;
+	case 0xbef4:		/* connection and keepalives */
+		handle_connection_type_packet(data, len, cli_addr, cli_len);
+		break;
+	default:
+		printf("(WW) Unvalid packet type field : 0x%x.\n", ((uint16_t *)data)[0]);
 	}
 }
-
 
 int main()
 {
@@ -189,26 +185,26 @@ int main()
 	test_init_server();
 
 	/* main loop */
-	while(1) {
+	while (1) {
 		/* infinite timeout, wait for data to be available */
 		pollres = poll(&socket_poll, 1, -1);
 		switch(pollres) {
-			case 0:
-				printf("(EE) Time limit expired\n");
-				break;
-			case -1:
-				printf("(EE) Error occured while polling : %s\n", strerror(errno));
-				break;
-			default:
-				cli_len = sizeof(cli_addr);
-				n = recvfrom(socket_desc, data, MAX_MSG, 0,
-						(struct sockaddr *) &cli_addr, &cli_len);
-				if(n == -1) {
-					fprintf(stderr, "(EE) %s\n", strerror(errno));
-				} else {
-					printf("(II) %i bytes received.\n", n);
-					handle_packet(data, n, &cli_addr, cli_len);
-				}
+		case 0:
+			printf("(EE) Time limit expired\n");
+			break;
+		case -1:
+			printf("(EE) Error occured while polling : %s\n", strerror(errno));
+			break;
+		default:
+			cli_len = sizeof(cli_addr);
+			n = recvfrom(socket_desc, data, MAX_MSG, 0,
+					(struct sockaddr *) &cli_addr, &cli_len);
+			if (n == -1) {
+				fprintf(stderr, "(EE) %s\n", strerror(errno));
+			} else {
+				printf("(II) %i bytes received.\n", n);
+				handle_packet(data, n, &cli_addr, cli_len);
+			}
 		}
 
 	}

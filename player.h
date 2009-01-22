@@ -57,9 +57,9 @@ struct player {
 };
 
 void destroy_player(struct player *p);
-struct player * new_player();
-struct player * new_default_player();
-struct player * new_player_from_data(char *data, int len, struct sockaddr_in * cli_addr, unsigned int cli_len);
+struct player *new_player();
+struct player *new_default_player();
+struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
 int player_to_data(struct player *pl, char *data);
 int player_to_data_size(struct player *pl);
 void print_player(struct player *pl);
