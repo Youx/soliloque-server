@@ -27,6 +27,7 @@ struct channel * get_default_channel(struct server * serv);
 /* Server - player functions */
 struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id);
 int add_player(struct server * serv, struct player * pl);
+void remove_player(struct server *s, struct player *p);
 
 void print_server(struct server * s);
 

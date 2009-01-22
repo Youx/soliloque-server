@@ -202,6 +202,27 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 }
 
 /**
+ * Remove a player from the server & channels.
+ *
+ * @param s the server we will remove the player from
+ * @param p the player that will be removed
+ */
+void remove_player(struct server *s, struct player *p)
+{
+	int i;
+
+	/* remove from the server */
+	ar_remove(s->players, (void *)p);
+	/* remove from the channel */
+	for(i=0 ; i < p->in_chan->max_users ; i++) {
+		if(p->in_chan->players[i] == p)
+			p->in_chan->players[i] = NULL;
+	}
+	p->in_chan->current_users--;
+	/* free the memory */
+	destroy_player(p);
+}
+/**
  * Prints information about the server (channels, etc)
  *
  * @param s the server

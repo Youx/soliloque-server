@@ -101,7 +101,43 @@ void s_notify_new_player(struct player *pl, struct server *s)
 	free(data);
 }
 
+/**
+ * Send a "player disconnected" message to all players.
+ *
+ * @param s the server
+ * @param p the player who left
+ */
+void s_notify_player_left(struct server *s, struct player *p)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 64;
 
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0065bef0;		ptr+=4;		/* function code */
+	/* private ID */			ptr+=4;		/* filled later */
+	/* public ID */				ptr+=4;		/* filled later */
+	*(uint32_t *)ptr = p->f0_s_counter;	ptr+=4;		/* packet counter */
+	/* packet version */			ptr+=4;		/* not done yet */
+	/* empty checksum */			ptr+=4;		/* filled later */
+	*(uint32_t *)ptr = p->public_id;	ptr+=4;		/* ID of player who left */
+	*(uint32_t *)ptr = 1;			ptr+=4;		/* visible notification */
+	/* 32 bytes of garbage?? */		ptr+=32;	/* maybe some message ? */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data+4) = tmp_pl->private_id;
+			*(uint32_t *)(data+8) = tmp_pl->public_id;
+			*(uint32_t *)(data+12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			sendto(socket_desc, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
 
 /**
  * Reply to a c_req_chans by sending packets containing
@@ -213,3 +249,30 @@ void *c_req_chans(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
 	}
 	return NULL;
 }
+
+/**
+ * Handles a disconnection request.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the client
+ * @param cli_len the size of cli_addr
+ * // F0 BE 2C 01
+ */
+void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	uint32_t pub_id, priv_id;
+	struct player *pl;
+
+	memcpy(&priv_id, data+4, 4);
+	memcpy(&pub_id, data+8, 4);
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	if(pl != NULL) {
+		send_acknowledge(pl);		/* ACK */
+		/* send a notification to all players */
+		s_notify_player_left(ts_server, pl);
+	}
+	remove_player(ts_server, pl);
+	return NULL;
+}
+

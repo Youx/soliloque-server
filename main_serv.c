@@ -50,6 +50,7 @@ static void test_init_server()
 static void init_callbacks()
 {
 	bzero(f0_callbacks, sizeof(void *(char*, unsigned int, struct sockaddr_in *, unsigned int)));
+	f0_callbacks[0x2c] = &c_req_leave;	/* client wants to leave */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }
