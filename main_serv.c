@@ -54,6 +54,7 @@ static void init_callbacks()
 	f0_callbacks[0x2c] = &c_req_leave;		/* client wants to leave */
 	f0_callbacks[0x2d] = &c_req_kick_server;	/* client wants to leave */
 	f0_callbacks[0x2e] = &c_req_kick_channel;	/* client wants to leave */
+	f0_callbacks[0x2f] = &c_req_switch_channel;	/* client wants to switch */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }

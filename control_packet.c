@@ -424,3 +424,81 @@ void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_a
 
 	return NULL;
 }
+
+/**
+ * Send a "player switched channel" notification to all players.
+ *
+ * @param s the server
+ * @param pl the player who switched
+ * @param to the channel he is moving to
+ */
+void s_notify_switch_channel(struct server *s, struct player *pl, struct channel *to)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 38;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0067bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player who switched */
+	*(uint32_t *)ptr = 1;			ptr += 4;	/* ??? */
+	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
+	*(uint16_t *)ptr = 0;			ptr += 2;	/* 1 = no pass, 0 = pass */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			sendto(socket_desc, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a request from a client to switch to another channel.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the sender
+ * @param cli_len the size of cli_addr
+ */
+void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	struct channel *to;
+	uint32_t to_id;
+	char pass[30];
+	uint32_t pub_id, priv_id;
+	struct player *pl;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	memcpy(&to_id, data + 24, 4);
+	to = get_channel_by_id(ts_server, to_id);
+	bzero(pass, 30);
+	strncpy(pass, data + 29, MIN(29, data[28]));
+
+	if (pl != NULL && to != NULL) {
+		send_acknowledge(pl);		/* ACK */
+		//if (strcmp(pass, to->password) == 0) {
+			printf("Player switching to channel %s.\n", to->name);
+			if (move_player(pl, to)) {
+				s_notify_switch_channel(ts_server, pl, to);
+				/* TODO change privileges */
+			}
+		//}
+		print_server(ts_server);
+	}
+	return NULL;
+}
