@@ -25,6 +25,7 @@ struct channel {
 	char *name;
 	char *topic;
 	char *desc;
+	char password[30];
 
 	uint16_t current_users;
 	struct player **players;

@@ -41,6 +41,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	struct channel *chan;
 	chan = (struct channel *)malloc(sizeof(struct channel));
 	
+	bzero(chan->password, 30);
 	chan->current_users = 0;
 	chan->players = (struct player **)malloc(sizeof(struct player *) * max_users);
 	
