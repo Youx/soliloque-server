@@ -334,8 +334,9 @@ void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_ad
 	target = get_player_by_public_id(ts_server, target_id);
 
 	if (pl != NULL && target != NULL) {
+		send_acknowledge(pl);		/* ACK */
 		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
-			reason = strndup(data + 29, MAX(29, data[28]));
+			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
 			s_notify_kick_server(ts_server, pl, target, reason);
 			remove_player(ts_server, pl);
@@ -345,8 +346,6 @@ void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_ad
 
 	return NULL;
 }
-
-
 
 /**
  * Send a "player kicked from channel" notification to all players.
@@ -361,23 +360,23 @@ void s_notify_kick_channel(struct server *s, struct player *kicker, struct playe
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
-	int data_size = 64;
+	int data_size = 68;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0066bef0;		ptr += 4;	/* function code */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = kicked->public_id;	ptr += 4;	/* ID of player who left */
-	*(uint32_t *)ptr = kicker->public_id;	ptr += 4;	/* kicker ID */
-	*(uint32_t *)ptr = kicked_to->id;	ptr += 4;	/* channel the player is moved to */
-	*(uint16_t *)ptr = 0;			ptr += 2;	/* visible notification : kicked */
-	*(uint8_t *)ptr = strlen(reason);	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, strlen(reason));	ptr += 29;	/* reason message */
+	*(uint32_t *)ptr = 0x0066bef0;			ptr += 4;	/* function code */
+	/* private ID */				ptr += 4;	/* filled later */
+	/* public ID */					ptr += 4;	/* filled later */
+	/* packet counter */				ptr += 4;	/* filled later */
+	/* packet version */				ptr += 4;	/* not done yet */
+	/* empty checksum */				ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = kicked->public_id;		ptr += 4;	/* ID of player who left */
+	*(uint32_t *)ptr = kicker->public_id;		ptr += 4;	/* kicker ID */
+	*(uint32_t *)ptr = kicked_to->id;		ptr += 4;	/* channel the player is moved to */
+	*(uint16_t *)ptr = 0;				ptr += 2;	/* visible notification : kicked */
+	*(uint8_t *)ptr = (uint8_t)strlen(reason);	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, strlen(reason));		ptr += 29;	/* reason message */
 
 	ar_each(struct player *, tmp_pl, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -410,12 +409,15 @@ void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_a
 	def_chan = get_default_channel(ts_server);
 
 	if (pl != NULL && target != NULL) {
-		if(pl->chan_privileges & CHANNEL_PRIV_CHANADMIN &&
+		send_acknowledge(pl);		/* ACK */
+		if ((pl->chan_privileges & CHANNEL_PRIV_CHANADMIN || pl->global_flags & GLOBAL_FLAG_SERVERADMIN) &&
 				pl->in_chan == target->in_chan) {
-			reason = strndup(data + 29, MAX(29, data[28]));
+			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
 			s_notify_kick_channel(ts_server, pl, target, reason, def_chan);
 			move_player(pl, def_chan);
+			/* TODO update player channel privileges etc... */
+
 			free(reason);
 		}
 	}

@@ -111,9 +111,10 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
 
-	printf("(II) Packet : Control.\n");
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
+	printf("(II) Packet : Control (0x%x).\n", *(uint32_t *)code);
+
 	func = get_f0_function(code);
 	if (func != NULL) {
 		/* Execute */
