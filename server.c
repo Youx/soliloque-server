@@ -200,6 +200,27 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 }
 
 /**
+ * Retrieve a player with its public id.
+ *
+ * @param s the server
+ * @param pub_id the public id of the player
+ *
+ * @return the player if it was found, a NULL pointer if it failed.
+ */
+struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
+{
+	struct player *pl;
+
+	ar_each(struct player *, pl, s->players)
+		if (pl->public_id == pub_id) {
+			return pl;
+		}
+	ar_end_each;
+
+	return NULL;
+}
+
+/**
  * Remove a player from the server & channels.
  *
  * @param s the server we will remove the player from

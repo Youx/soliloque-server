@@ -275,3 +275,73 @@ void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
 	return NULL;
 }
 
+
+/**
+ * Send a "player kicked" notification to all players.
+ *
+ * @param s the server
+ * @param kicker the player who kicked
+ * @param kicked the player kicked from the server
+ * @param reason the reason the player was kicked
+ */
+void s_notify_kick_server(struct server *s, struct player *kicker, struct player *kicked, char *reason)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 64;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = kicked->public_id;	ptr += 4;	/* ID of player who left */
+	*(uint16_t *)ptr = 2;			ptr += 2;	/* visible notification : kicked */
+	*(uint32_t *)ptr = kicker->public_id;	ptr += 4;	/* kicker ID */
+	*(uint8_t *)ptr = strlen(reason);	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, strlen(reason));	ptr += 29;	/* reason message */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			sendto(socket_desc, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handles a server kick request.
+ */
+void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	uint32_t pub_id, priv_id, target_id;
+	char *reason;
+	struct player *pl, *target;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	memcpy(&target_id, data + 24, 4);
+	target = get_player_by_public_id(ts_server, target_id);
+
+	if (pl != NULL && target != NULL) {
+		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+			reason = strndup(data + 29, MAX(29, data[28]));
+			printf("Reason for kicking player %s : %s\n", target->name, reason);
+			s_notify_kick_server(ts_server, pl, target, reason);
+			remove_player(ts_server, pl);
+			free(reason);
+		}
+	}
+
+	return NULL;
+}
