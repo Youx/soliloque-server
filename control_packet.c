@@ -270,8 +270,8 @@ void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
 		send_acknowledge(pl);		/* ACK */
 		/* send a notification to all players */
 		s_notify_player_left(ts_server, pl);
+		remove_player(ts_server, pl);
 	}
-	remove_player(ts_server, pl);
 	return NULL;
 }
 
