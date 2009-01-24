@@ -243,6 +243,42 @@ void remove_player(struct server *s, struct player *p)
 }
 
 /**
+ * Move a player from its current channel to another.
+ *
+ * @param s the server
+ * @param p the player we are moving
+ * @param to the channel we are moving him to
+ */
+int move_player(struct player *p, struct channel *to)
+{
+	struct channel *old;
+	int i;
+
+	if (p->in_chan == NULL) {
+		return add_player_to_channel(to, p);
+	}
+
+	if (to->current_users >= to->max_users)
+		return 0;
+
+	/* remove from the old channel */
+	old = p->in_chan;
+	for(i = 0 ; i < old->max_users ; i++) {
+		if(old->players[i] == p)
+			old->players[i] = NULL;
+	}
+	old->current_users--;
+	/* put inside the new channel */
+	p->in_chan = to;
+	for(i = 0 ; i < to->max_users ; i++) {
+		if (to->players[i] == NULL)
+			to->players[i] = p;
+	}
+	to->current_users++;
+	return 1;
+}
+
+/**
  * Prints information about the server (channels, etc)
  *
  * @param s the server

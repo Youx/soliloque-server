@@ -53,6 +53,7 @@ static void init_callbacks()
 	bzero(f0_callbacks, 255 * sizeof(packet_function));
 	f0_callbacks[0x2c] = &c_req_leave;		/* client wants to leave */
 	f0_callbacks[0x2d] = &c_req_kick_server;	/* client wants to leave */
+	f0_callbacks[0x2e] = &c_req_kick_channel;	/* client wants to leave */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }

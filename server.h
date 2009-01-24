@@ -32,6 +32,7 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 struct player *get_player_by_public_id(struct server *s, uint32_t pub_id);
 int add_player(struct server *serv, struct player *pl);
 void remove_player(struct server *s, struct player *p);
+int move_player(struct player *p, struct channel *to);
 
 void print_server(struct server *s);
 
