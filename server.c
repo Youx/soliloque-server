@@ -16,6 +16,7 @@ struct server *new_server()
 	
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
+	serv->bans = ar_new(4);
 	
 	return serv;
 }
@@ -275,6 +276,28 @@ int move_player(struct player *p, struct channel *to)
 			to->players[i] = p;
 	}
 	to->current_users++;
+	return 1;
+}
+
+int add_ban(struct server *s, struct ban *b)
+{
+	struct ban *tmp_b;
+	char *used_ids;
+	int new_id;
+
+	/* Find the next available public ID */
+	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
+	ar_each(struct ban *, tmp_b, s->bans)
+		used_ids[tmp_b->id - 1] = 1;	/* ID start at 1 */
+	ar_end_each;
+
+	new_id = 0;
+	while (used_ids[new_id] == 1)
+		new_id++;
+	b->id = new_id + 1;	/* ID start at 1 */
+	free(used_ids);
+
+	ar_insert(s->bans, (void *)b);
 	return 1;
 }
 

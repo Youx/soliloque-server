@@ -1,6 +1,7 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
+#include "ban.h"
 #include "channel.h"
 #include "player.h"
 #include "array.h"
@@ -8,7 +9,8 @@
 struct server {
 	struct array *chans;
 	struct array *players;
-	
+	struct array *bans;
+
 	char password[30];
 	char server_name[30];
 	char machine[30];
@@ -33,6 +35,9 @@ struct player *get_player_by_public_id(struct server *s, uint32_t pub_id);
 int add_player(struct server *serv, struct player *pl);
 void remove_player(struct server *s, struct player *p);
 int move_player(struct player *p, struct channel *to);
+
+/* Server - ban functions */
+int add_ban(struct server *s, struct ban *b);
 
 void print_server(struct server *s);
 
