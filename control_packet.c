@@ -430,9 +430,10 @@ void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_a
  *
  * @param s the server
  * @param pl the player who switched
+ * @param from the channel the player was in
  * @param to the channel he is moving to
  */
-void s_notify_switch_channel(struct server *s, struct player *pl, struct channel *to)
+void s_notify_switch_channel(struct server *s, struct player *pl, struct channel *from, struct channel *to)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -448,9 +449,9 @@ void s_notify_switch_channel(struct server *s, struct player *pl, struct channel
 	/* packet version */			ptr += 4;	/* not done yet */
 	/* empty checksum */			ptr += 4;	/* filled later */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player who switched */
-	*(uint32_t *)ptr = 1;			ptr += 4;	/* ??? */
+	*(uint32_t *)ptr = from->id;			ptr += 4;	/* ID of previous channel */
 	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
-	*(uint16_t *)ptr = 0;			ptr += 2;	/* 1 = no pass, 0 = pass */
+	*(uint16_t *)ptr = 1;			ptr += 2;	/* 1 = no pass, 0 = pass */
 
 	ar_each(struct player *, tmp_pl, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -475,7 +476,7 @@ void s_notify_switch_channel(struct server *s, struct player *pl, struct channel
  */
 void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
-	struct channel *to;
+	struct channel *to, *from;
 	uint32_t to_id;
 	char pass[30];
 	uint32_t pub_id, priv_id;
@@ -491,10 +492,13 @@ void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli
 
 	if (pl != NULL && to != NULL) {
 		send_acknowledge(pl);		/* ACK */
-		//if (strcmp(pass, to->password) == 0) {
+		if (!(to->flags & CHANNEL_FLAG_PASSWORD)
+				|| strcmp(pass, to->password) == 0) {
 			printf("Player switching to channel %s.\n", to->name);
+			from = pl->in_chan;
 			if (move_player(pl, to)) {
-				s_notify_switch_channel(ts_server, pl, to);
+				s_notify_switch_channel(ts_server, pl, from, to);
+				printf("Player moved, notify sent.\n");
 				/* TODO change privileges */
 			}
 		//}
