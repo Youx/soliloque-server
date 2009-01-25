@@ -14,4 +14,6 @@ void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_ad
 void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
 void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
 void *c_req_delete_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
+void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
+
 #endif

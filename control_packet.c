@@ -320,6 +320,11 @@ void s_notify_kick_server(struct server *s, struct player *kicker, struct player
 
 /**
  * Handles a server kick request.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the sender
+ * @param cli_len the length of cli_addr
  */
 void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
@@ -607,6 +612,85 @@ void *c_req_delete_channel(char *data, unsigned int len, struct sockaddr_in *cli
 			} else if (destroy_channel_by_id(ts_server, del->id)) {
 				s_notify_channel_deleted(ts_server, del_id);
 			}
+		}
+	}
+	return NULL;
+}
+
+/**
+ * Send a notification to all players that target has been banned.
+ *
+ * @param s the server
+ * @param pl the player who gave the order to ban
+ * @param target the player who is banned
+ * @param duration the duration of the ban (0 = unlimited)
+ * @param reason the reason of the ban
+ */
+void s_notify_ban(struct server *s, struct player *pl, struct player *target, uint16_t duration, char *reason)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 64;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = target->public_id;	ptr += 4;	/* ID of player banned */
+	*(uint16_t *)ptr = 2;			ptr += 2;	/* kick */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* banner ID */
+	*(uint8_t *)ptr = strlen(reason);	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, strlen(reason));	ptr += 29;	/* reason message */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			sendto(socket_desc, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a player ban request.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the sender
+ * @param cli_len the length of cli_adr
+ */
+void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	uint32_t pub_id, priv_id, ban_id;
+	struct player *pl, *target;
+	char *reason;
+	uint16_t duration;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+	memcpy(&ban_id, data + 24, 4);
+	memcpy(&duration, data + 28, 2);
+
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	target = get_player_by_public_id(ts_server, ban_id);
+
+	if (pl != NULL && target != NULL) {
+		send_acknowledge(pl);		/* ACK */
+		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+			reason = strndup(data + 29, MIN(29, data[28]));
+			printf("Reason for banning player %s : %s\n", target->name, reason);
+			s_notify_ban(ts_server, pl, target, duration, reason);
+			remove_player(ts_server, pl);
+			free(reason);
 		}
 	}
 	return NULL;
