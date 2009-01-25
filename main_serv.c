@@ -83,7 +83,8 @@ packet_function get_f0_function(unsigned char * code)
 		case 0x05:
 			return &c_req_chans;
 		case 0xc9:
-		case 0xd1:
+		case 0xd1:	/* delete channel */
+			return &c_req_delete_channel;
 		default:
 			return NULL;
 		}

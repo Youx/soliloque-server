@@ -501,8 +501,113 @@ void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli
 				printf("Player moved, notify sent.\n");
 				/* TODO change privileges */
 			}
-		//}
-		print_server(ts_server);
+		}
+	}
+	return NULL;
+}
+
+/**
+ * Notify players that a channel has been deleted
+ *
+ * @param s the server
+ * @param del_id the id of the deleted channel
+ */
+void s_notify_channel_deleted(struct server *s, uint32_t del_id)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 30;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0073bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = del_id;		ptr += 2;	/* ID of deleted channel */
+	*(uint32_t *)ptr = 1;			ptr += 4;	/* ????? the previous 
+								   ptr += 2 is not an error*/
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			sendto(socket_desc, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+
+}
+
+/**
+ * Notify a player that his request to delete a channel failed (channel not empty)
+ *
+ * @param s the server
+ * @param pl the player who wants to delete the channel
+ * @param pkt_cnt the counter of the packet we failed to execute
+ */
+void s_resp_cannot_delete_channel(struct server *s, struct player *pl, uint32_t pkt_cnt)
+{
+	char *data, *ptr;
+	int data_size = 30;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0xff93bef0;		ptr += 4;	/* function code */
+	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
+	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint16_t *)ptr = 0x00d1;		ptr += 2;	/* ID of player who switched */
+	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
+	packet_add_crc_d(data, data_size);
+
+	sendto(socket_desc, data, data_size, 0,
+			(struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
+	free(data);
+}
+
+/**
+ * Handles a request by a client to delete a channel.
+ * This request will fail if there still are people in the channel.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the sender
+ * @param cli_len the length of cli_adr
+ */
+void *c_req_delete_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	struct channel *del;
+	uint32_t pub_id, priv_id, pkt_cnt, del_id;
+	struct player *pl;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+	memcpy(&pkt_cnt, data + 12, 4);
+
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	memcpy(&del_id, data + 24, 4);
+	del = get_channel_by_id(ts_server, del_id);
+
+	if (pl != NULL) {
+		send_acknowledge(pl);
+		if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+			if (del == NULL || del->current_users > 0) {
+				s_resp_cannot_delete_channel(ts_server, pl, pkt_cnt);
+			} else if (destroy_channel_by_id(ts_server, del->id)) {
+				s_notify_channel_deleted(ts_server, del_id);
+			}
+		}
 	}
 	return NULL;
 }
