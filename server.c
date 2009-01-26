@@ -279,6 +279,14 @@ int move_player(struct player *p, struct channel *to)
 	return 1;
 }
 
+/**
+ * Add a new ban to the server.
+ *
+ * @param s the server
+ * @param b the ban
+ *
+ * @return 1 on success
+ */
 int add_ban(struct server *s, struct ban *b)
 {
 	struct ban *tmp_b;
@@ -299,6 +307,39 @@ int add_ban(struct server *s, struct ban *b)
 
 	ar_insert(s->bans, (void *)b);
 	return 1;
+}
+
+/**
+ * Retrieves a ban with its ID.
+ *
+ * @param s the server
+ * @param ban_id the id of the ban
+ *
+ * @return value the ban, or NULL if it does not exist
+ */
+struct ban *get_ban_by_id(struct server *s, uint16_t ban_id)
+{
+	struct ban *b;
+
+	ar_each(struct ban *, b, s->bans)
+		if(b->id == ban_id)
+			return b;
+	ar_end_each;
+
+	return NULL;
+}
+
+/**
+ * Removes a ban from the server.
+ *
+ * @param s the server
+ * @param b the ban we want to remove
+ *
+ * @return
+ */
+void remove_ban(struct server *s, struct ban *b)
+{
+	ar_remove(s->bans, (void *)b);
 }
 
 /**

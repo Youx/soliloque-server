@@ -38,6 +38,8 @@ int move_player(struct player *p, struct channel *to);
 
 /* Server - ban functions */
 int add_ban(struct server *s, struct ban *b);
+void remove_ban(struct server *s, struct ban *b);
+struct ban *get_ban_by_id(struct server *s, uint16_t id);
 
 void print_server(struct server *s);
 
