@@ -361,6 +361,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_ad
  * @param kicker the player who kicked
  * @param kicked the player kicked from the server
  * @param reason the reason the player was kicked
+ * @param kicked_to the channel the player is moved to
  */
 void s_notify_kick_channel(struct server *s, struct player *kicker, struct player *kicked, 
 		char *reason, struct channel *kicked_to)
@@ -703,6 +704,7 @@ void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsi
 /**
  * Send the list of bans to a player
  *
+ * @param s the server
  * @param pl the player who asked for the list of bans
  */
 void s_resp_bans(struct server *s, struct player *pl)

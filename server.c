@@ -250,7 +250,6 @@ void remove_player(struct server *s, struct player *p)
 /**
  * Move a player from its current channel to another.
  *
- * @param s the server
  * @param p the player we are moving
  * @param to the channel we are moving him to
  */

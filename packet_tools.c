@@ -18,7 +18,7 @@
  * Add a crc to a given data packet.
  *
  * @param data the packet
- * @param the length of the packet
+ * @param len the length of the packet
  * @param offset the offset where we want to write our checksum.
  */
 void packet_add_crc(char *data, unsigned int len, unsigned int offset)
