@@ -39,7 +39,9 @@ static void test_init_server()
 	add_channel(ts_server, new_predef_channel());
 	add_channel(ts_server,
 			new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
-
+	add_ban(ts_server, test_ban(0));
+	add_ban(ts_server, test_ban(1));
+	add_ban(ts_server, test_ban(1));
 	/* Add players */
 	/*
 	new_default_player();
@@ -56,6 +58,7 @@ static void init_callbacks()
 	f0_callbacks[0x2d] = &c_req_kick_server;	/* client wants to kick someone from the server */
 	f0_callbacks[0x2e] = &c_req_kick_channel;	/* client wants to kick someone from the channel */
 	f0_callbacks[0x2f] = &c_req_switch_channel;	/* client wants to switch channels */
+	f0_callbacks[0x9a] = &c_req_list_bans;		/* client wants the list of bans */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }

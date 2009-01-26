@@ -28,6 +28,29 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 }
 
 /**
+ * Generate a testing ban
+ *
+ * @param x 0 or 1 to get different values
+ *
+ * @return the created ban
+ */
+struct ban *test_ban(int x)
+{
+	struct ban *b = (struct ban *)calloc(sizeof(struct ban), 1);
+
+	if (x == 0) {
+		b->duration = 0;
+		b->ip = "192.168.100.100";
+		b->reason = "CBIENFAIT";
+	} else {
+		b->duration = 200;
+		b->ip = "192.168.1.1";
+		b->reason = "CBIENFAIT caca culotte blablablablabla";
+	}
+	return b;
+}
+
+/**
  * Return the size a ban will take once converted to
  * raw data (to be transmitted).
  *
@@ -37,7 +60,8 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
  */
 int ban_to_data_size(struct ban *b)
 {
-	return 2 + 15 + 2 + strlen(b->reason) + 1;
+	/* IP (*) + Duration (2) + reason (*) */
+	return (strlen(b->ip) +1) + 2 + (strlen(b->reason) +1);
 }
 
 /**
@@ -53,10 +77,9 @@ int ban_to_data(struct ban *b, char *dest)
 	char *ptr;
 
 	ptr = dest;
-	*(uint16_t *)ptr = b->id;	ptr += 2;	/* ID of ban */
-	strncpy(ptr, b->ip, 15);	ptr += 15;	/* IP string */
-	*(uint16_t *)ptr = b->duration;	ptr += 2;	/* duration of ban */
-	strcpy(ptr, b->reason);		ptr += strlen(b->reason) + 1;
+	strcpy(ptr, b->ip);		ptr += strlen(b->ip) + 1;	/* ip */
+	*(uint16_t *)ptr = b->duration;	ptr += 2;			/* duration in minutes */
+	strcpy(ptr, b->reason);		ptr += strlen(b->reason) + 1;	/* reason */
 
 	return ban_to_data_size(b);
 }

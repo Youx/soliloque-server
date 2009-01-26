@@ -666,7 +666,7 @@ void s_notify_ban(struct server *s, struct player *pl, struct player *target, ui
  * @param data the request packet
  * @param len the length of data
  * @param cli_addr the address of the sender
- * @param cli_len the length of cli_adr
+ * @param cli_len the length of cli_addr
  */
 void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
 {
@@ -694,5 +694,76 @@ void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsi
 			free(reason);
 		}
 	}
+	return NULL;
+}
+
+
+/**
+ * Send the list of bans to a player
+ *
+ * @param pl the player who asked for the list of bans
+ */
+void s_resp_bans(struct server *s, struct player *pl)
+{
+	char *data, *ptr;
+	int data_size, tmp_size;
+	struct ban *b;
+	
+	data_size = 24;
+	data_size += 4;	/* number of bans */
+
+	ar_each(struct ban *, b, s->bans)
+		data_size += ban_to_data_size(b);
+	ar_end_each;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x019bbef0;		ptr += 4;	/* function code */
+	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
+	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
+	/* packet version */			ptr += 4;	/* filled later */
+	/* checksum */				ptr += 4;	/* filled at the end */
+	*(uint16_t *)ptr = s->bans->used_slots;	ptr += 4;	/* number of bans */
+	printf("number of bans : %i\n", s->bans->used_slots);
+	ar_each(struct ban *, b, s->bans)
+		tmp_size = ban_to_data(b, ptr);
+		ptr += tmp_size;
+	ar_end_each;
+	
+	packet_add_crc_d(data, data_size);
+	printf("list of bans : sending %i bytes\n", data_size);
+	sendto(socket_desc, data, data_size, 0,
+			(struct sockaddr *)pl->cli_addr, pl->cli_len);
+
+	pl->f0_s_counter++;
+
+	free(data);
+}
+
+/**
+ * Handle a player request for the list of bans*
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the sender
+ * @param cli_len the length of cli_addr
+ */
+void *c_req_list_bans(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	uint32_t pub_id, priv_id;
+	struct player *pl;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+
+	if (pl != NULL) {
+		send_acknowledge(pl);		/* ACK */
+		s_resp_bans(ts_server, pl);
+	}
+	printf("LIST OF BANS\n");
 	return NULL;
 }
