@@ -81,6 +81,45 @@ static void server_accept_connection(struct player *pl)
 }
 
 /**
+ * Refuse a connection from a player because he has been banned.
+ *
+ * @param cli_addr the address of the player
+ * @param cli_len the length of cli_addr
+ */
+static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_len)
+{
+	char *data = (char *)calloc(436, sizeof(char));
+	char *ptr = data;
+	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
+	/* *(uint32_t *)ptr = pl->private_id;*/		ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
+	*(uint32_t *)ptr = 2;				ptr += 4;	/* Packet counter */
+	/* Checksum initialize at the end */		ptr += 4;
+	/* *ptr = 14;*/					ptr += 1;	/* Length of server name */
+	/* memcpy(ptr, "Nom du serveur", 14);*/		ptr += 29;	/* Server name */
+	/* *ptr = 18;*/					ptr += 1;	/* Length of server machine */
+	/* memcpy(ptr, "Machine du serveur", 18);*/	ptr += 29;	/* Server machine */
+	/* Server version */
+	/* *(uint16_t *)ptr = 2;*/			ptr += 2;	/* Server version (major 1) */
+	/* *(uint16_t *)ptr = 0;*/			ptr += 2;	/* Server version (major 2) */
+	/* *(uint16_t *)ptr = 20;*/			ptr += 2;	/* Server version (minor 1) */
+	/* *(uint16_t *)ptr = 1;*/			ptr += 2;	/* Server version (minor 2) */
+	*(uint32_t *)ptr = 0xFFFFFFFA;			ptr += 4;	/* Error code (1 = OK, 2 = Server Offline, 0xFFFFFFFA = Banned */
+	/* rights */					ptr += 80;
+
+	*(uint32_t *)ptr = 0x00584430;			ptr += 4;	/* Private ID */
+	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
+	/* *ptr = 26;*/					ptr += 1;	/* Length of welcome message */
+	/* memcpy(ptr, "Bienvenue sur mon serveur.", 26);*/	ptr += 255;	/* Welcome message */
+
+	/* Add CRC */
+	packet_add_crc(data, 436, 16);
+	/* Send packet */
+	sendto(socket_desc, data, 436, 0, (struct sockaddr *)cli_addr, cli_len);
+	free(data);
+}
+
+/**
  * Handle a connection attempt from a player :
  * - check the crc
  * - check server/user password (TODO)
@@ -101,6 +140,13 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	/* Check crc */
 	if (!packet_check_crc(data, len, 16))
 		return;
+
+	/* Check if the IP is banned */
+	if (get_ban_by_ip(ts_server, cli_addr->sin_addr) != NULL) {
+		server_refuse_connection_ban(cli_addr, cli_len);
+		printf("PLAYER BANNED TRIED TO CONNECT\n");
+		return;
+	}
 	/* If registered, check if player exists, else check server password */
 
 

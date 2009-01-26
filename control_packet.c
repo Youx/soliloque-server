@@ -687,9 +687,10 @@ void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsi
 		send_acknowledge(pl);		/* ACK */
 		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 			reason = strndup(data + 29, MIN(29, data[28]));
+			add_ban(ts_server, new_ban(0, target->cli_addr->sin_addr, reason));
 			printf("Reason for banning player %s : %s\n", target->name, reason);
 			s_notify_ban(ts_server, pl, target, duration, reason);
-			remove_player(ts_server, pl);
+			remove_player(ts_server, target);
 			free(reason);
 		}
 	}

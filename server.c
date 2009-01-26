@@ -315,7 +315,7 @@ int add_ban(struct server *s, struct ban *b)
  * @param s the server
  * @param ban_id the id of the ban
  *
- * @return value the ban, or NULL if it does not exist
+ * @return the ban, or NULL if it does not exist
  */
 struct ban *get_ban_by_id(struct server *s, uint16_t ban_id)
 {
@@ -323,6 +323,26 @@ struct ban *get_ban_by_id(struct server *s, uint16_t ban_id)
 
 	ar_each(struct ban *, b, s->bans)
 		if(b->id == ban_id)
+			return b;
+	ar_end_each;
+
+	return NULL;
+}
+
+/**
+ * Retrieves a ban with its IP if it exists.
+ *
+ * @param s the server
+ * @param ip the ip of the player
+ *
+ * @return the ban, or NULL if it does not exist
+ */
+struct ban *get_ban_by_ip(struct server *s, struct in_addr ip)
+{
+	struct ban *b;
+
+	ar_each(struct ban *, b, s->bans)
+		if (strcmp(b->ip, inet_ntoa(ip)) == 0)
 			return b;
 	ar_end_each;
 
