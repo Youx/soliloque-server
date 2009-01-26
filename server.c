@@ -1,6 +1,10 @@
 #include "server.h"
 #include "channel.h"
 #include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /**
  * Create and initialize a new server
