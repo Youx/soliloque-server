@@ -53,11 +53,12 @@ static void test_init_server()
 static void init_callbacks()
 {
 	bzero(f0_callbacks, 255 * sizeof(packet_function));
-	f0_callbacks[0x45] = &c_req_ban;		/* client wants to ban someone */
 	f0_callbacks[0x2c] = &c_req_leave;		/* client wants to leave */
 	f0_callbacks[0x2d] = &c_req_kick_server;	/* client wants to kick someone from the server */
 	f0_callbacks[0x2e] = &c_req_kick_channel;	/* client wants to kick someone from the channel */
 	f0_callbacks[0x2f] = &c_req_switch_channel;	/* client wants to switch channels */
+	f0_callbacks[0x45] = &c_req_ban;		/* client wants to ban someone */
+	f0_callbacks[0x46] = &c_req_remove_ban;		/* client wants to unban someone */
 	f0_callbacks[0x9a] = &c_req_list_bans;		/* client wants the list of bans */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */

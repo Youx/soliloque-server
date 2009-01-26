@@ -764,6 +764,34 @@ void *c_req_list_bans(char *data, unsigned int len, struct sockaddr_in *cli_addr
 		send_acknowledge(pl);		/* ACK */
 		s_resp_bans(ts_server, pl);
 	}
-	printf("LIST OF BANS\n");
+	return NULL;
+}
+
+/**
+ * Handles a request to remove a ban.
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param cli_addr the address of the sender
+ * @param cli_len the length of cli_addr
+ */
+void *c_req_remove_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+{
+	uint32_t pub_id, priv_id;
+	struct player *pl;
+	struct in_addr ip;
+	struct ban *b;
+
+	memcpy(&priv_id, data + 4, 4);
+	memcpy(&pub_id, data + 8, 4);
+	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+
+	if (pl != NULL && pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+		send_acknowledge(pl);		/* ACK */
+		inet_aton(data+24, &ip);
+		b = get_ban_by_ip(ts_server, ip);
+		if (b != NULL)
+			remove_ban(ts_server, b);
+	}
 	return NULL;
 }
