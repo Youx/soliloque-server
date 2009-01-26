@@ -210,6 +210,7 @@ void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *c
 	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 	if (pl == NULL) {
 		printf("pl == NULL. Why????\n");
+		return;
 	}
 	/* Get the counter */
 	ka_id = *(uint32_t *)(data + 12);
