@@ -7,16 +7,16 @@
 #include "player.h"
 #include "server.h"
 
-void *c_req_chans(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
+void *c_req_chans(char *data, unsigned int len, struct server *s, struct player *pl);
 void s_notify_new_player(struct player *pl, struct server *s);
-void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_delete_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_list_bans(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_remove_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
-void *c_req_ip_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
+void *c_req_leave(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_kick_server(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_kick_channel(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_switch_channel(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_delete_channel(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_ban(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_list_bans(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_remove_ban(char *data, unsigned int len, struct server *s, struct player *pl);
+void *c_req_ip_ban(char *data, unsigned int len, struct server *s, struct player *pl);
 
 #endif

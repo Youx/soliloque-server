@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 extern struct server *ts_server;
-extern int socket_desc;
 
 /** The size of the raw audio block (in bytes) */
 int codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};
@@ -85,7 +84,7 @@ int audio_received(char *in, int len)
 			if (tmp_pl != NULL && tmp_pl != sender) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
-				sendto(socket_desc, data, data_size, 0, 
+				sendto(ts_server->socket_desc, data, data_size, 0, 
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			}
 		}

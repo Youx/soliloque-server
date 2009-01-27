@@ -15,8 +15,6 @@
 #include "array.h"
 #include "packet_tools.h"
 
-extern struct server *ts_server;
-extern int socket_desc;
 /**
  * Reply to a c_req_chans by sending packets containing
  * a data dump of the channels.
@@ -60,7 +58,7 @@ void s_resp_chans(struct player *pl, struct server *s)
 	packet_add_crc_d(data, data_size);
 
 	printf("size of all channels : %i\n", data_size);
-	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
 }
@@ -95,7 +93,7 @@ void s_notify_new_player(struct player *pl, struct server *s)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 		}
 	ar_end_each;
@@ -133,7 +131,7 @@ void s_notify_player_left(struct server *s, struct player *p)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -188,7 +186,7 @@ void s_resp_players(struct player *pl, struct server *s)
 		packet_add_crc_d(data, data_size);
 
 		printf("size of all players : %i\n", data_size);
-		sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+		sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
 		nb_players -= MIN(10, nb_players);
@@ -218,7 +216,7 @@ void s_resp_unknown(struct player *pl, struct server *s)
 
 	packet_add_crc_d(data, data_size);
 
-	sendto(socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
 }
@@ -231,23 +229,15 @@ void s_resp_unknown(struct player *pl, struct server *s)
  * @param cli_addr the address of the client
  * @param cli_len the size of cli_addr
  */
-void *c_req_chans(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_chans(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id;
-	struct player *pl;
+	send_acknowledge(pl);		/* ACK */
+	s_resp_chans(pl, s);	/* list of channels */
+	usleep(250000);
+	s_resp_players(pl, s);	/* list of players */
+	usleep(250000);
+	s_resp_unknown(pl, s);
 
-	memcpy(&priv_id, data+4, 4);
-	memcpy(&pub_id, data+8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-
-	if (pl != NULL) {
-		send_acknowledge(pl);		/* ACK */
-		s_resp_chans(pl, ts_server);	/* list of channels */
-		usleep(250000);
-		s_resp_players(pl, ts_server);	/* list of players */
-		usleep(250000);
-		s_resp_unknown(pl, ts_server);
-	}
 	return NULL;
 }
 
@@ -260,20 +250,13 @@ void *c_req_chans(char *data, unsigned int len, struct sockaddr_in *cli_addr, un
  * @param cli_len the size of cli_addr
  * // F0 BE 2C 01
  */
-void *c_req_leave(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_leave(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id;
-	struct player *pl;
+	send_acknowledge(pl);		/* ACK */
+	/* send a notification to all players */
+	s_notify_player_left(s, pl);
+	remove_player(s, pl);
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-	if (pl != NULL) {
-		send_acknowledge(pl);		/* ACK */
-		/* send a notification to all players */
-		s_notify_player_left(ts_server, pl);
-		remove_player(ts_server, pl);
-	}
 	return NULL;
 }
 
@@ -312,7 +295,7 @@ void s_notify_kick_server(struct server *s, struct player *kicker, struct player
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -328,25 +311,22 @@ void s_notify_kick_server(struct server *s, struct player *kicker, struct player
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_kick_server(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_kick_server(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id, target_id;
+	uint32_t target_id;
 	char *reason;
-	struct player *pl, *target;
+	struct player *target;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 	memcpy(&target_id, data + 24, 4);
-	target = get_player_by_public_id(ts_server, target_id);
+	target = get_player_by_public_id(s, target_id);
 
-	if (pl != NULL && target != NULL) {
+	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
-			s_notify_kick_server(ts_server, pl, target, reason);
-			remove_player(ts_server, pl);
+			s_notify_kick_server(s, pl, target, reason);
+			remove_player(s, pl);
 			free(reason);
 		}
 	}
@@ -391,7 +371,7 @@ void s_notify_kick_channel(struct server *s, struct player *kicker, struct playe
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -402,27 +382,24 @@ void s_notify_kick_channel(struct server *s, struct player *kicker, struct playe
 /**
  * Handles a channel kick request.
  */
-void *c_req_kick_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_kick_channel(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id, target_id;
+	uint32_t target_id;
 	char *reason;
-	struct player *pl, *target;
+	struct player *target;
 	struct channel *def_chan;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 	memcpy(&target_id, data + 24, 4);
-	target = get_player_by_public_id(ts_server, target_id);
-	def_chan = get_default_channel(ts_server);
+	target = get_player_by_public_id(s, target_id);
+	def_chan = get_default_channel(s);
 
-	if (pl != NULL && target != NULL) {
+	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if ((pl->chan_privileges & CHANNEL_PRIV_CHANADMIN || pl->global_flags & GLOBAL_FLAG_SERVERADMIN) &&
 				pl->in_chan == target->in_chan) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
-			s_notify_kick_channel(ts_server, pl, target, reason, def_chan);
+			s_notify_kick_channel(s, pl, target, reason, def_chan);
 			move_player(pl, def_chan);
 			/* TODO update player channel privileges etc... */
 
@@ -466,7 +443,7 @@ void s_notify_switch_channel(struct server *s, struct player *pl, struct channel
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -482,30 +459,25 @@ void s_notify_switch_channel(struct server *s, struct player *pl, struct channel
  * @param cli_addr the sender
  * @param cli_len the size of cli_addr
  */
-void *c_req_switch_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_switch_channel(char *data, unsigned int len, struct server *s, struct player *pl)
 {
 	struct channel *to, *from;
 	uint32_t to_id;
 	char pass[30];
-	uint32_t pub_id, priv_id;
-	struct player *pl;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 	memcpy(&to_id, data + 24, 4);
-	to = get_channel_by_id(ts_server, to_id);
+	to = get_channel_by_id(s, to_id);
 	bzero(pass, 30);
 	strncpy(pass, data + 29, MIN(29, data[28]));
 
-	if (pl != NULL && to != NULL) {
+	if (to != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if (!(to->flags & CHANNEL_FLAG_PASSWORD)
 				|| strcmp(pass, to->password) == 0) {
 			printf("Player switching to channel %s.\n", to->name);
 			from = pl->in_chan;
 			if (move_player(pl, to)) {
-				s_notify_switch_channel(ts_server, pl, from, to);
+				s_notify_switch_channel(s, pl, from, to);
 				printf("Player moved, notify sent.\n");
 				/* TODO change privileges */
 			}
@@ -544,7 +516,7 @@ void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -578,7 +550,7 @@ void s_resp_cannot_delete_channel(struct server *s, struct player *pl, uint32_t 
 	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
 	packet_add_crc_d(data, data_size);
 
-	sendto(socket_desc, data, data_size, 0,
+	sendto(s->socket_desc, data, data_size, 0,
 			(struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
@@ -593,28 +565,22 @@ void s_resp_cannot_delete_channel(struct server *s, struct player *pl, uint32_t 
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_adr
  */
-void *c_req_delete_channel(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_delete_channel(char *data, unsigned int len, struct server *s, struct player *pl)
 {
 	struct channel *del;
-	uint32_t pub_id, priv_id, pkt_cnt, del_id;
-	struct player *pl;
+	uint32_t pkt_cnt, del_id;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
 	memcpy(&pkt_cnt, data + 12, 4);
 
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
 	memcpy(&del_id, data + 24, 4);
-	del = get_channel_by_id(ts_server, del_id);
+	del = get_channel_by_id(s, del_id);
 
-	if (pl != NULL) {
-		send_acknowledge(pl);
-		if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
-			if (del == NULL || del->current_users > 0) {
-				s_resp_cannot_delete_channel(ts_server, pl, pkt_cnt);
-			} else if (destroy_channel_by_id(ts_server, del->id)) {
-				s_notify_channel_deleted(ts_server, del_id);
-			}
+	send_acknowledge(pl);
+	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+		if (del == NULL || del->current_users > 0) {
+			s_resp_cannot_delete_channel(s, pl, pkt_cnt);
+		} else if (destroy_channel_by_id(s, del->id)) {
+			s_notify_channel_deleted(s, del_id);
 		}
 	}
 	return NULL;
@@ -655,7 +621,7 @@ void s_notify_ban(struct server *s, struct player *pl, struct player *target, ui
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(socket_desc, data, data_size, 0,
+			sendto(s->socket_desc, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -671,29 +637,26 @@ void s_notify_ban(struct server *s, struct player *pl, struct player *target, ui
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_ban(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id, ban_id;
-	struct player *pl, *target;
+	uint32_t ban_id;
+	struct player *target;
 	char *reason;
 	uint16_t duration;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
 	memcpy(&ban_id, data + 24, 4);
 	memcpy(&duration, data + 28, 2);
 
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-	target = get_player_by_public_id(ts_server, ban_id);
+	target = get_player_by_public_id(s, ban_id);
 
-	if (pl != NULL && target != NULL) {
+	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 			reason = strndup(data + 29, MIN(29, data[28]));
-			add_ban(ts_server, new_ban(0, target->cli_addr->sin_addr, reason));
+			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
 			printf("Reason for banning player %s : %s\n", target->name, reason);
-			s_notify_ban(ts_server, pl, target, duration, reason);
-			remove_player(ts_server, target);
+			s_notify_ban(s, pl, target, duration, reason);
+			remove_player(s, target);
 			free(reason);
 		}
 	}
@@ -738,7 +701,7 @@ void s_resp_bans(struct server *s, struct player *pl)
 	
 	packet_add_crc_d(data, data_size);
 	printf("list of bans : sending %i bytes\n", data_size);
-	sendto(socket_desc, data, data_size, 0,
+	sendto(s->socket_desc, data, data_size, 0,
 			(struct sockaddr *)pl->cli_addr, pl->cli_len);
 
 	pl->f0_s_counter++;
@@ -754,20 +717,10 @@ void s_resp_bans(struct server *s, struct player *pl)
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_list_bans(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_list_bans(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id;
-	struct player *pl;
-
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-
-	if (pl != NULL) {
-		send_acknowledge(pl);		/* ACK */
-		s_resp_bans(ts_server, pl);
-	}
+	send_acknowledge(pl);		/* ACK */
+	s_resp_bans(s, pl);
 	return NULL;
 }
 
@@ -779,23 +732,17 @@ void *c_req_list_bans(char *data, unsigned int len, struct sockaddr_in *cli_addr
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_remove_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_remove_ban(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id;
-	struct player *pl;
 	struct in_addr ip;
 	struct ban *b;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-
-	if (pl != NULL && pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		send_acknowledge(pl);		/* ACK */
 		inet_aton(data+24, &ip);
-		b = get_ban_by_ip(ts_server, ip);
+		b = get_ban_by_ip(s, ip);
 		if (b != NULL)
-			remove_ban(ts_server, b);
+			remove_ban(s, b);
 	}
 	return NULL;
 }
@@ -808,22 +755,16 @@ void *c_req_remove_ban(char *data, unsigned int len, struct sockaddr_in *cli_add
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_ip_ban(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void *c_req_ip_ban(char *data, unsigned int len, struct server *s, struct player *pl)
 {
-	uint32_t pub_id, priv_id;
-	struct player *pl;
 	struct in_addr ip;
 	uint16_t duration;
 
-	memcpy(&priv_id, data + 4, 4);
-	memcpy(&pub_id, data + 8, 4);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
-	
-	if (pl != NULL && pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
+	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		send_acknowledge(pl);		/* ACK */
 		duration = *(uint16_t *)(data + 24);
 		inet_aton(data+26, &ip);
-		add_ban(ts_server, new_ban(duration, ip, "IP BAN"));
+		add_ban(s, new_ban(duration, ip, "IP BAN"));
 	}
 	return NULL;
 }

@@ -21,7 +21,6 @@
 #include "control_packet.h"
 
 extern struct server *ts_server;
-extern int socket_desc;
 
 /**
  * Send a packet to the player, indicating that his connection
@@ -75,7 +74,7 @@ static void server_accept_connection(struct player *pl)
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
-	sendto(socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(ts_server->socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }
@@ -115,7 +114,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
-	sendto(socket_desc, data, 436, 0, (struct sockaddr *)cli_addr, cli_len);
+	sendto(ts_server->socket_desc, data, 436, 0, (struct sockaddr *)cli_addr, cli_len);
 	free(data);
 }
 
@@ -182,7 +181,7 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 	/* Add CRC */
 	packet_add_crc(data, 24, 16);
 
-	sendto(socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(ts_server->socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }

@@ -3,7 +3,6 @@
 #include <assert.h>
 
 extern struct server *ts_server;
-extern int socket_desc;
 
 /**
  * Send an acknowledge packet to a player
@@ -23,6 +22,6 @@ void send_acknowledge(struct player *pl)
 
 	assert (ptr - data == 16);
 
-	sendto(socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(ts_server->socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f1_s_counter++;
 }

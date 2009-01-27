@@ -12,20 +12,20 @@
 #include "control_packet.h"
 #include "acknowledge_packet.h"
 #include "audio_packet.h"
+#include "packet_tools.h"
 
 #define MAX_MSG 1024
 
 /* functions */
-typedef void *(*packet_function)(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len);
+typedef void *(*packet_function)(char *data, unsigned int len, struct server *s, struct player *pl);
 
 packet_function f0_callbacks[255];
 
-int socket_desc;
 
 /* context of the server */
 struct server * ts_server;
 
-static void test_init_server()
+static struct server *test_init_server()
 {
 	/* Test server */
 	ts_server = new_server();
@@ -48,6 +48,7 @@ static void test_init_server()
 	add_player(ts_server, new_default_player());
 	*/
 	print_server(ts_server);
+	return ts_server;
 }
 
 static void init_callbacks()
@@ -118,6 +119,8 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 {
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
+	uint32_t public_id, private_id;
+	struct player *pl;
 
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
@@ -125,8 +128,24 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 
 	func = get_f0_function(code);
 	if (func != NULL) {
+		/* Check header size */
+		if (len <= 24) {
+			printf("(WW) Control packet too small to be valid.\n");
+			return;
+		}
+		/* Check CRC */
+		/*if (packet_check_crc_d(data, len)) {
+			printf("(WW) Control packet has invalid CRC\n");
+			return;
+		}*/
+		/* Check if player exists */
+		memcpy(&private_id, data + 4, 4);
+		memcpy(&public_id, data + 8, 4);
+		pl = get_player_by_ids(ts_server, public_id, private_id);
 		/* Execute */
-		(*func)(data, len, cli_addr, cli_len);
+		if (pl != NULL) {
+			(*func)(data, len, ts_server, pl);
+		}
 	} else {
 		printf("(WW) Function with code : 0x%"PRIx32" is invalid or is not implemented yet.\n", *(uint32_t *)code);
 	}
@@ -176,24 +195,25 @@ int main()
 	struct pollfd socket_poll;
 	int pollres;
 
-	/* socket creation */
-	socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
-	ERROR_IF(socket_desc < 0);
+	/* do some initialization of the finite state machine */
+	init_callbacks();
+	test_init_server();
 
+	/* socket creation */
+	ts_server->socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
+	ERROR_IF(ts_server->socket_desc < 0);
+	
 	/* bind local server port */
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(8767);
-	rc = bind(socket_desc, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	rc = bind(ts_server->socket_desc, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 	ERROR_IF(rc < 0);
 	/* initialize for polling */
-	socket_poll.fd = socket_desc;
+	socket_poll.fd = ts_server->socket_desc;
 	socket_poll.events = POLLIN;
 	socket_poll.revents = 0;
 
-	/* do some initialization of the finite state machine */
-	init_callbacks();
-	test_init_server();
 
 	/* main loop */
 	while (1) {
@@ -208,7 +228,7 @@ int main()
 			break;
 		default:
 			cli_len = sizeof(cli_addr);
-			n = recvfrom(socket_desc, data, MAX_MSG, 0,
+			n = recvfrom(ts_server->socket_desc, data, MAX_MSG, 0,
 					(struct sockaddr *) &cli_addr, &cli_len);
 			if (n == -1) {
 				fprintf(stderr, "(EE) %s\n", strerror(errno));
