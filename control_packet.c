@@ -787,3 +787,60 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
 	}
 	return NULL;
 }
+
+/**
+ * Send the server information to the player
+ *
+ * @param pl the player who requested the server info
+ */
+void s_resp_server_stats(struct player *pl)
+{
+	int data_size = 100;
+	char *data, *ptr;
+	struct server *s = pl->in_chan->in_server;
+
+	/* initialize the packet */
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+	*(uint32_t *)ptr = 0x0196bef0;			ptr += 4;	/* */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
+	/* packet version */				ptr += 4;
+	/* empty checksum */				ptr += 4;
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* server uptime */
+	*(uint16_t *)ptr = 2;				ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 0;				ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 20;				ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 1;				ptr += 2;	/* server version */
+	*(uint32_t *)ptr = s->players->used_slots;	ptr += 4;	/* number of players connected */
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* total bytes received */
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* total bytes sent */
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* ??? */
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* ??? */
+	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes received (last second) */
+	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes sent (last second) */
+	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes received (last minute) */
+	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes sent (last minute) */
+	*(uint64_t *)ptr = 0;				ptr += 8;	/* total logins */
+
+	packet_add_crc_d(data, data_size);
+
+	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
+	free(data);
+}
+
+/**
+ * Handle a player request for server information
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player asking for it
+ */
+void *c_req_server_stats(char *data, unsigned int len, struct player *pl)
+{
+	send_acknowledge(pl);		/* ACK */
+	s_resp_server_stats(pl);
+	return NULL;
+}
