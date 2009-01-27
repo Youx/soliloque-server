@@ -18,37 +18,32 @@
 
 /* functions */
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
-
 packet_function f0_callbacks[255];
 
-
-/* context of the server */
-struct server * ts_server;
 
 static struct server *test_init_server()
 {
 	/* Test server */
-	ts_server = new_server();
+	struct server *s = new_server();
 	/* Add channels */
-	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server, new_predef_channel());
-	destroy_channel_by_id(ts_server, 1);
-	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server, new_predef_channel());
-	add_channel(ts_server,
-			new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
-	add_ban(ts_server, test_ban(0));
-	add_ban(ts_server, test_ban(1));
-	add_ban(ts_server, test_ban(1));
+	add_channel(s, new_predef_channel());
+	add_channel(s, new_predef_channel());
+	add_channel(s, new_predef_channel());
+	destroy_channel_by_id(s, 1);
+	add_channel(s, new_predef_channel());
+	add_channel(s, new_predef_channel());
+	add_channel(s, new_predef_channel());
+	add_channel(s, new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
+	add_ban(s, test_ban(0));
+	add_ban(s, test_ban(1));
+	add_ban(s, test_ban(1));
 	/* Add players */
 	/*
 	new_default_player();
-	add_player(ts_server, new_default_player());
+	add_player(s, new_default_player());
 	*/
-	print_server(ts_server);
-	return ts_server;
+	print_server(s);
+	return s;
 }
 
 static void init_callbacks()
@@ -66,16 +61,16 @@ static void init_callbacks()
 	/* callbacks[0] = myfunc1; ... */
 }
 
-void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	printf("(II) Packet : Connection.\n");
 	switch (((uint16_t *)data)[1]) {
 	/* Client requesting a connection */
 	case 3:
-		handle_player_connect(data, len, cli_addr, cli_len, ts_server);
+		handle_player_connect(data, len, cli_addr, cli_len, s);
 		break;
 	case 1:
-		handle_player_keepalive(data, len, cli_addr, cli_len, ts_server);
+		handle_player_keepalive(data, len, cli_addr, cli_len, s);
 		break;
 	default:
 		printf("(WW) Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
@@ -115,7 +110,7 @@ packet_function get_f0_function(unsigned char * code)
 		printf("(WW) %s", strerror(errno)); \
 	}
 
-void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
@@ -141,7 +136,7 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 		/* Check if player exists */
 		memcpy(&private_id, data + 4, 4);
 		memcpy(&public_id, data + 8, 4);
-		pl = get_player_by_ids(ts_server, public_id, private_id);
+		pl = get_player_by_ids(s, public_id, private_id);
 		/* Execute */
 		if (pl != NULL) {
 			(*func)(data, len, pl);
@@ -151,35 +146,35 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 	}
 }
 
-void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	printf("(II) Packet : ACK.\n");
 }
 
-void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	int res;
 	printf("(II) Packet : Audio data.\n");
-	res = audio_received(data, len, ts_server);
+	res = audio_received(data, len, s);
 	printf("(II) Return value : %i.\n", res);
 }
 
 /* Manage an incoming packet */
-void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+static void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	/* first a few tests */
 	switch (((uint16_t *)data)[0]) {
 	case 0xbef0:		/* commands */
-		handle_control_type_packet(data, len, cli_addr, cli_len);
+		handle_control_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	case 0xbef1:		/* acknowledge */
-		handle_ack_type_packet(data, len, cli_addr, cli_len);
+		handle_ack_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	case 0xbef2: 		/* audio data */
-		handle_data_type_packet(data, len, cli_addr, cli_len);
+		handle_data_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	case 0xbef4:		/* connection and keepalives */
-		handle_connection_type_packet(data, len, cli_addr, cli_len);
+		handle_connection_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	default:
 		printf("(WW) Unvalid packet type field : 0x%x.\n", ((uint16_t *)data)[0]);
@@ -194,10 +189,11 @@ int main()
 	char data[MAX_MSG];
 	struct pollfd socket_poll;
 	int pollres;
+	struct server *ts_server;
 
 	/* do some initialization of the finite state machine */
 	init_callbacks();
-	test_init_server();
+	ts_server = test_init_server();
 
 	/* socket creation */
 	ts_server->socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
@@ -234,7 +230,7 @@ int main()
 				fprintf(stderr, "(EE) %s\n", strerror(errno));
 			} else {
 				printf("(II) %i bytes received.\n", n);
-				handle_packet(data, n, &cli_addr, cli_len);
+				handle_packet(data, n, &cli_addr, cli_len, ts_server);
 			}
 		}
 
