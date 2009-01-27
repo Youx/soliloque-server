@@ -20,8 +20,6 @@
 #include "player.h"
 #include "control_packet.h"
 
-extern struct server *ts_server;
-
 /**
  * Send a packet to the player, indicating that his connection
  * was accepted.
@@ -74,7 +72,7 @@ static void server_accept_connection(struct player *pl)
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
-	sendto(ts_server->socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(pl->in_chan->in_server->socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }
@@ -85,7 +83,7 @@ static void server_accept_connection(struct player *pl)
  * @param cli_addr the address of the player
  * @param cli_len the length of cli_addr
  */
-static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_len)
+static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_len, struct server *s)
 {
 	char *data = (char *)calloc(436, sizeof(char));
 	char *ptr = data;
@@ -114,7 +112,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
-	sendto(ts_server->socket_desc, data, 436, 0, (struct sockaddr *)cli_addr, cli_len);
+	sendto(s->socket_desc, data, 436, 0, (struct sockaddr *)cli_addr, cli_len);
 	free(data);
 }
 
@@ -133,7 +131,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
  * @param cli_addr the adress of the client
  * @param cli_len the length of cli_addr
  */
-void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	struct player *pl;
 	/* Check crc */
@@ -141,8 +139,8 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 		return;
 
 	/* Check if the IP is banned */
-	if (get_ban_by_ip(ts_server, cli_addr->sin_addr) != NULL) {
-		server_refuse_connection_ban(cli_addr, cli_len);
+	if (get_ban_by_ip(s, cli_addr->sin_addr) != NULL) {
+		server_refuse_connection_ban(cli_addr, cli_len, s);
 		printf("PLAYER BANNED TRIED TO CONNECT\n");
 		return;
 	}
@@ -151,13 +149,13 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 
 	/* Add player to the pool */
 	pl = new_player_from_data(data, len, cli_addr, cli_len);
-	add_player(ts_server, pl);
+	add_player(s, pl);
 	/* Send a message to the client indicating he has been accepted */
 
 	/* Send server information to the player (0xf4be0400) */
 	server_accept_connection(pl);
 	/* Send a message to all players saying that a new player arrived (0xf0be6400) */
-	s_notify_new_player(pl, ts_server);
+	s_notify_new_player(pl);
 }
 
 /**
@@ -181,7 +179,7 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 	/* Add CRC */
 	packet_add_crc(data, 24, 16);
 
-	sendto(ts_server->socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(pl->in_chan->in_server->socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }
@@ -196,7 +194,7 @@ void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
  * @param cli_addr the adress of the client
  * @param cli_len the length of cli_addr
  */
-void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len)
+void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	struct player *pl;
 	uint32_t pub_id, priv_id, ka_id;
@@ -206,7 +204,7 @@ void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *c
 	/* Retrieve the player */
 	priv_id = *(uint32_t *)(data + 4);
 	pub_id = *(uint32_t *)(data + 8);
-	pl = get_player_by_ids(ts_server, pub_id, priv_id);
+	pl = get_player_by_ids(s, pub_id, priv_id);
 	if (pl == NULL) {
 		printf("pl == NULL. Why????\n");
 		return;
@@ -214,5 +212,5 @@ void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *c
 	/* Get the counter */
 	ka_id = *(uint32_t *)(data + 12);
 	/* Send the keepalive response */
-	s_resp_keepalive(ts_server, pl, ka_id);
+	s_resp_keepalive(s, pl, ka_id);
 }

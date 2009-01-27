@@ -2,8 +2,6 @@
 #include "player.h"
 #include <assert.h>
 
-extern struct server *ts_server;
-
 /**
  * Send an acknowledge packet to a player
  * ACK packets consist of just a 16 bytes header
@@ -22,6 +20,6 @@ void send_acknowledge(struct player *pl)
 
 	assert (ptr - data == 16);
 
-	sendto(ts_server->socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	sendto(pl->in_chan->in_server->socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f1_s_counter++;
 }

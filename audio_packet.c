@@ -8,8 +8,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern struct server *ts_server;
-
 /** The size of the raw audio block (in bytes) */
 int codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};
 /** The number of frames contained in one block */
@@ -27,7 +25,7 @@ int codec_offset[13] = {6, 6, 6, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1};
  *
  * @return 0 on success, -1 on failure.
  */
-int audio_received(char *in, int len)
+int audio_received(char *in, int len, struct server *s)
 {
 	uint32_t pub_id, priv_id;
 	char data_codec;
@@ -44,7 +42,7 @@ int audio_received(char *in, int len)
 	
 	memcpy(&priv_id, in + 4, 4);
 	memcpy(&pub_id, in + 8, 4);
-	sender = get_player_by_ids(ts_server, pub_id, priv_id);
+	sender = get_player_by_ids(s, pub_id, priv_id);
 
 	if (sender != NULL) {
 		ch_in = sender->in_chan;
@@ -84,7 +82,7 @@ int audio_received(char *in, int len)
 			if (tmp_pl != NULL && tmp_pl != sender) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
-				sendto(ts_server->socket_desc, data, data_size, 0, 
+				sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0, 
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			}
 		}

@@ -17,7 +17,7 @@
 #define MAX_MSG 1024
 
 /* functions */
-typedef void *(*packet_function)(char *data, unsigned int len, struct server *s, struct player *pl);
+typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
 
 packet_function f0_callbacks[255];
 
@@ -72,10 +72,10 @@ void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_
 	switch (((uint16_t *)data)[1]) {
 	/* Client requesting a connection */
 	case 3:
-		handle_player_connect(data, len, cli_addr, cli_len);
+		handle_player_connect(data, len, cli_addr, cli_len, ts_server);
 		break;
 	case 1:
-		handle_player_keepalive(data, len, cli_addr, cli_len);
+		handle_player_keepalive(data, len, cli_addr, cli_len, ts_server);
 		break;
 	default:
 		printf("(WW) Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
@@ -129,7 +129,7 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 	func = get_f0_function(code);
 	if (func != NULL) {
 		/* Check header size */
-		if (len <= 24) {
+		if (len < 24) {
 			printf("(WW) Control packet too small to be valid.\n");
 			return;
 		}
@@ -144,7 +144,7 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 		pl = get_player_by_ids(ts_server, public_id, private_id);
 		/* Execute */
 		if (pl != NULL) {
-			(*func)(data, len, ts_server, pl);
+			(*func)(data, len, pl);
 		}
 	} else {
 		printf("(WW) Function with code : 0x%"PRIx32" is invalid or is not implemented yet.\n", *(uint32_t *)code);
@@ -160,7 +160,7 @@ void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, 
 {
 	int res;
 	printf("(II) Packet : Audio data.\n");
-	res = audio_received(data, len);
+	res = audio_received(data, len, ts_server);
 	printf("(II) Return value : %i.\n", res);
 }
 

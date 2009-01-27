@@ -24,13 +24,15 @@
  *
  * TODO : split the channels over packets
  */
-void s_resp_chans(struct player *pl, struct server *s)
+void s_resp_chans(struct player *pl)
 {
 	char *data;
 	int data_size = 0;
 	struct channel *ch;
 	char *ptr;
 	int ch_size;
+	struct server *s = pl->in_chan->in_server;
+
 	/* compute the size of the packet */
 	data_size += 24;	/* header */
 	data_size += 4;		/* number of channels in packet */
@@ -69,11 +71,12 @@ void s_resp_chans(struct player *pl, struct server *s)
  * @param pl the player who arrived
  * @param s the server
  */
-void s_notify_new_player(struct player *pl, struct server *s)
+void s_notify_new_player(struct player *pl)
 {
 	struct player *tmp_pl;
 	char *data, *ptr;
 	int data_size;
+	struct server *s = pl->in_chan->in_server;
 
 	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
@@ -104,14 +107,14 @@ void s_notify_new_player(struct player *pl, struct server *s)
 /**
  * Send a "player disconnected" message to all players.
  *
- * @param s the server
  * @param p the player who left
  */
-void s_notify_player_left(struct server *s, struct player *p)
+void s_notify_player_left(struct player *p)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 64;
+	struct server *s = p->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -146,7 +149,7 @@ void s_notify_player_left(struct server *s, struct player *p)
  * @param pl the player we send the player list to
  * @param s the server we will get the players from
  */
-void s_resp_players(struct player *pl, struct server *s)
+void s_resp_players(struct player *pl)
 {
 	char *data;
 	int data_size = 0;
@@ -156,6 +159,8 @@ void s_resp_players(struct player *pl, struct server *s)
 	struct player *pls[10];
 	int i;
 	int players_copied;
+	struct server *s = pl->in_chan->in_server;
+
 	/* compute the size of the packet */
 	data_size += 24;	/* header */
 	data_size += 4;		/* number of players in packet */
@@ -194,11 +199,12 @@ void s_resp_players(struct player *pl, struct server *s)
 	free(data);
 }
 
-void s_resp_unknown(struct player *pl, struct server *s)
+void s_resp_unknown(struct player *pl)
 {
 	char *data;
 	char *ptr;
 	int data_size = 283;
+	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -229,14 +235,14 @@ void s_resp_unknown(struct player *pl, struct server *s)
  * @param cli_addr the address of the client
  * @param cli_len the size of cli_addr
  */
-void *c_req_chans(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_chans(char *data, unsigned int len, struct player *pl)
 {
 	send_acknowledge(pl);		/* ACK */
-	s_resp_chans(pl, s);	/* list of channels */
+	s_resp_chans(pl);	/* list of channels */
 	usleep(250000);
-	s_resp_players(pl, s);	/* list of players */
+	s_resp_players(pl);	/* list of players */
 	usleep(250000);
-	s_resp_unknown(pl, s);
+	s_resp_unknown(pl);
 
 	return NULL;
 }
@@ -250,12 +256,12 @@ void *c_req_chans(char *data, unsigned int len, struct server *s, struct player 
  * @param cli_len the size of cli_addr
  * // F0 BE 2C 01
  */
-void *c_req_leave(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_leave(char *data, unsigned int len, struct player *pl)
 {
 	send_acknowledge(pl);		/* ACK */
 	/* send a notification to all players */
-	s_notify_player_left(s, pl);
-	remove_player(s, pl);
+	s_notify_player_left(pl);
+	remove_player(pl->in_chan->in_server, pl);
 
 	return NULL;
 }
@@ -269,11 +275,12 @@ void *c_req_leave(char *data, unsigned int len, struct server *s, struct player 
  * @param kicked the player kicked from the server
  * @param reason the reason the player was kicked
  */
-void s_notify_kick_server(struct server *s, struct player *kicker, struct player *kicked, char *reason)
+void s_notify_kick_server(struct player *kicker, struct player *kicked, char *reason)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 64;
+	struct server *s = kicker->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -311,11 +318,12 @@ void s_notify_kick_server(struct server *s, struct player *kicker, struct player
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_kick_server(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t target_id;
 	char *reason;
 	struct player *target;
+	struct server *s = pl->in_chan->in_server;
 
 	memcpy(&target_id, data + 24, 4);
 	target = get_player_by_public_id(s, target_id);
@@ -325,7 +333,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct server *s, struct p
 		if(pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
-			s_notify_kick_server(s, pl, target, reason);
+			s_notify_kick_server(pl, target, reason);
 			remove_player(s, pl);
 			free(reason);
 		}
@@ -343,12 +351,13 @@ void *c_req_kick_server(char *data, unsigned int len, struct server *s, struct p
  * @param reason the reason the player was kicked
  * @param kicked_to the channel the player is moved to
  */
-void s_notify_kick_channel(struct server *s, struct player *kicker, struct player *kicked, 
+void s_notify_kick_channel(struct player *kicker, struct player *kicked, 
 		char *reason, struct channel *kicked_to)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 68;
+	struct server *s = kicker->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -382,12 +391,13 @@ void s_notify_kick_channel(struct server *s, struct player *kicker, struct playe
 /**
  * Handles a channel kick request.
  */
-void *c_req_kick_channel(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t target_id;
 	char *reason;
 	struct player *target;
 	struct channel *def_chan;
+	struct server *s = pl->in_chan->in_server;
 
 	memcpy(&target_id, data + 24, 4);
 	target = get_player_by_public_id(s, target_id);
@@ -399,7 +409,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct server *s, struct 
 				pl->in_chan == target->in_chan) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
-			s_notify_kick_channel(s, pl, target, reason, def_chan);
+			s_notify_kick_channel(pl, target, reason, def_chan);
 			move_player(pl, def_chan);
 			/* TODO update player channel privileges etc... */
 
@@ -418,11 +428,12 @@ void *c_req_kick_channel(char *data, unsigned int len, struct server *s, struct 
  * @param from the channel the player was in
  * @param to the channel he is moving to
  */
-void s_notify_switch_channel(struct server *s, struct player *pl, struct channel *from, struct channel *to)
+void s_notify_switch_channel(struct player *pl, struct channel *from, struct channel *to)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 38;
+	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -459,11 +470,12 @@ void s_notify_switch_channel(struct server *s, struct player *pl, struct channel
  * @param cli_addr the sender
  * @param cli_len the size of cli_addr
  */
-void *c_req_switch_channel(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 {
 	struct channel *to, *from;
 	uint32_t to_id;
 	char pass[30];
+	struct server *s = pl->in_chan->in_server;
 
 	memcpy(&to_id, data + 24, 4);
 	to = get_channel_by_id(s, to_id);
@@ -477,7 +489,7 @@ void *c_req_switch_channel(char *data, unsigned int len, struct server *s, struc
 			printf("Player switching to channel %s.\n", to->name);
 			from = pl->in_chan;
 			if (move_player(pl, to)) {
-				s_notify_switch_channel(s, pl, from, to);
+				s_notify_switch_channel(pl, from, to);
 				printf("Player moved, notify sent.\n");
 				/* TODO change privileges */
 			}
@@ -532,10 +544,11 @@ void s_notify_channel_deleted(struct server *s, uint32_t del_id)
  * @param pl the player who wants to delete the channel
  * @param pkt_cnt the counter of the packet we failed to execute
  */
-void s_resp_cannot_delete_channel(struct server *s, struct player *pl, uint32_t pkt_cnt)
+void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 {
 	char *data, *ptr;
 	int data_size = 30;
+	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -565,10 +578,11 @@ void s_resp_cannot_delete_channel(struct server *s, struct player *pl, uint32_t 
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_adr
  */
-void *c_req_delete_channel(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 {
 	struct channel *del;
 	uint32_t pkt_cnt, del_id;
+	struct server *s = pl->in_chan->in_server;
 
 	memcpy(&pkt_cnt, data + 12, 4);
 
@@ -578,7 +592,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct server *s, struc
 	send_acknowledge(pl);
 	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		if (del == NULL || del->current_users > 0) {
-			s_resp_cannot_delete_channel(s, pl, pkt_cnt);
+			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else if (destroy_channel_by_id(s, del->id)) {
 			s_notify_channel_deleted(s, del_id);
 		}
@@ -595,11 +609,12 @@ void *c_req_delete_channel(char *data, unsigned int len, struct server *s, struc
  * @param duration the duration of the ban (0 = unlimited)
  * @param reason the reason of the ban
  */
-void s_notify_ban(struct server *s, struct player *pl, struct player *target, uint16_t duration, char *reason)
+void s_notify_ban(struct player *pl, struct player *target, uint16_t duration, char *reason)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 64;
+	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
@@ -637,12 +652,13 @@ void s_notify_ban(struct server *s, struct player *pl, struct player *target, ui
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_ban(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_ban(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t ban_id;
 	struct player *target;
 	char *reason;
 	uint16_t duration;
+	struct server *s = pl->in_chan->in_server;
 
 	memcpy(&ban_id, data + 24, 4);
 	memcpy(&duration, data + 28, 2);
@@ -655,7 +671,7 @@ void *c_req_ban(char *data, unsigned int len, struct server *s, struct player *p
 			reason = strndup(data + 29, MIN(29, data[28]));
 			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
 			printf("Reason for banning player %s : %s\n", target->name, reason);
-			s_notify_ban(s, pl, target, duration, reason);
+			s_notify_ban(pl, target, duration, reason);
 			remove_player(s, target);
 			free(reason);
 		}
@@ -670,11 +686,12 @@ void *c_req_ban(char *data, unsigned int len, struct server *s, struct player *p
  * @param s the server
  * @param pl the player who asked for the list of bans
  */
-void s_resp_bans(struct server *s, struct player *pl)
+void s_resp_bans(struct player *pl)
 {
 	char *data, *ptr;
 	int data_size, tmp_size;
 	struct ban *b;
+	struct server *s = pl->in_chan->in_server;
 	
 	data_size = 24;
 	data_size += 4;	/* number of bans */
@@ -717,10 +734,10 @@ void s_resp_bans(struct server *s, struct player *pl)
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_list_bans(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_list_bans(char *data, unsigned int len, struct player *pl)
 {
 	send_acknowledge(pl);		/* ACK */
-	s_resp_bans(s, pl);
+	s_resp_bans(pl);
 	return NULL;
 }
 
@@ -732,10 +749,11 @@ void *c_req_list_bans(char *data, unsigned int len, struct server *s, struct pla
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_remove_ban(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_remove_ban(char *data, unsigned int len, struct player *pl)
 {
 	struct in_addr ip;
 	struct ban *b;
+	struct server *s = pl->in_chan->in_server;
 
 	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		send_acknowledge(pl);		/* ACK */
@@ -755,10 +773,11 @@ void *c_req_remove_ban(char *data, unsigned int len, struct server *s, struct pl
  * @param cli_addr the address of the sender
  * @param cli_len the length of cli_addr
  */
-void *c_req_ip_ban(char *data, unsigned int len, struct server *s, struct player *pl)
+void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
 {
 	struct in_addr ip;
 	uint16_t duration;
+	struct server *s = pl->in_chan->in_server;
 
 	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		send_acknowledge(pl);		/* ACK */
