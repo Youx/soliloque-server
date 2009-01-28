@@ -849,3 +849,218 @@ void *c_req_server_stats(char *data, unsigned int len, struct player *pl)
 	s_resp_server_stats(pl);
 	return NULL;
 }
+
+/**
+ * Notify all players that a player's channel privilege
+ * has been granted/revoked.
+ *
+ * @param pl the player who granted/revoked the privilege
+ * @param tgt the player whose privileges are going to change
+ * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
+ * @param on_off switch this right on or off
+ */
+void s_notify_player_ch_priv_changed(struct player *pl, struct player *tgt, char right, char on_off)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 34;
+	struct server *s = pl->in_chan->in_server;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x006abef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* ID of player whose channel priv changed */
+	*(uint8_t *)ptr = on_off;		ptr += 1;/* switch the priv ON/OFF */
+	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the privilege (1<<right) */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of the player who changed the priv */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a request to change a player's channel privileges
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player asking for it
+ */
+void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *pl)
+{
+	struct player *tgt;
+	uint32_t tgt_id;
+	char on_off, right;
+
+	send_acknowledge(pl);		/* ACK */
+
+	memcpy(&tgt_id, data + 24, 4);
+	on_off = data[28];
+	right = data[29];
+	tgt = get_player_by_public_id(pl->in_chan->in_server, tgt_id);
+	/* TODO : better privileges */
+	if (tgt != NULL &&
+			(pl->global_flags & GLOBAL_FLAG_SERVERADMIN ||
+			 ((pl->chan_privileges & CHANNEL_PRIV_CHANADMIN) &&
+			  (pl->in_chan == pl->in_chan)))) {
+		printf("Player priv before : 0x%x\n", tgt->chan_privileges);
+		if (on_off == 2)
+			tgt->chan_privileges &= (0xFF ^ (1 << right));
+		else if(on_off == 0)
+			tgt->chan_privileges |= (1 << right);
+		printf("Player priv after  : 0x%x\n", tgt->chan_privileges);
+		s_notify_player_ch_priv_changed(pl, tgt, right, on_off);
+	}
+	return NULL;
+}
+
+/**
+ * Notify all players that a player's global flags
+ * has been granted/revoked.
+ *
+ * @param pl the player who granted/revoked the privilege
+ * @param tgt the player whose privileges are going to change
+ * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
+ * @param on_off switch this right on or off
+ */
+void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 34;
+	struct server *s = pl->in_chan->in_server;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x006bbef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* ID of player whose global flags changed */
+	*(uint8_t *)ptr = on_off;		ptr += 1;/* set or unset the flag */
+	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the flag (1 << right) */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of player who changed the flag */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a request to change a player's global flags
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player asking for it
+ */
+void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *pl)
+{
+	struct player *tgt;
+	uint32_t tgt_id;
+	char on_off, right;
+
+	send_acknowledge(pl);		/* ACK */
+
+	memcpy(&tgt_id, data + 24, 4);
+	on_off = data[28];
+	right = data[29];
+	tgt = get_player_by_public_id(pl->in_chan->in_server, tgt_id);
+	/* TODO : better privileges */
+	if (tgt != NULL && (pl->global_flags & GLOBAL_FLAG_SERVERADMIN)) {
+		printf("Player sv rights before : 0x%x\n", tgt->global_flags);
+		if (on_off == 2)
+			tgt->global_flags &= (0xFF ^ (1 << right));
+		else if(on_off == 0)
+			tgt->global_flags |= (1 << right);
+		printf("Player sv rights after  : 0x%x\n", tgt->global_flags);
+		s_notify_player_sv_right_changed(pl, tgt, right, on_off);
+	}
+	return NULL;
+}
+
+/**
+ * Notify all players of a player's status change
+ * has been granted/revoked.
+ *
+ * @param pl the player who granted/revoked the privilege
+ * @param tgt the player whose privileges are going to change
+ * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
+ * @param on_off switch this right on or off
+ */
+void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 30;
+	struct server *s = pl->in_chan->in_server;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0068bef0;		ptr += 4;	/* function code */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
+	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a request to change a player's global flags
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player asking for it
+ */
+void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
+{
+	uint16_t attributes;
+
+	send_acknowledge(pl);		/* ACK */
+
+	memcpy(&attributes, data + 24, 2);
+	printf("Player sv rights before : 0x%x\n", pl->player_attributes);
+	pl->player_attributes = attributes;
+	printf("Player sv rights after  : 0x%x\n", pl->player_attributes);
+	s_notify_player_attr_changed(pl, attributes);
+	return NULL;
+}

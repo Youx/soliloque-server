@@ -35,7 +35,8 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
 	strcpy(p->client, login);
-	p->global_flags = GLOBAL_FLAG_SERVERADMIN;	/* remove later */
+	p->global_flags = GLOBAL_FLAG_SERVERADMIN | GLOBAL_FLAG_REGISTERED;	/* remove later */
+	p->chan_privileges = CHANNEL_PRIV_CHANADMIN;
 	p->f0_s_counter = 1;
 	p->f0_c_counter = 1;
 	p->f1_s_counter = 1;
