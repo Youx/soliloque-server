@@ -10,6 +10,7 @@ struct server {
 	struct array *chans;
 	struct array *players;
 	struct array *bans;
+	struct server_stat *stats;
 
 	char password[30];
 	char server_name[30];

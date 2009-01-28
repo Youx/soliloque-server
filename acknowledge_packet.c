@@ -1,5 +1,7 @@
 #include "acknowledge_packet.h"
 #include "player.h"
+#include "server_stat.h"
+
 #include <assert.h>
 
 /**
@@ -20,6 +22,6 @@ void send_acknowledge(struct player *pl)
 
 	assert (ptr - data == 16);
 
-	sendto(pl->in_chan->in_server->socket_desc, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(pl->in_chan->in_server, data, 16, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f1_s_counter++;
 }

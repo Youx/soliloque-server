@@ -8,12 +8,15 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "server.h"
 #include "channel.h"
 #include "acknowledge_packet.h"
 #include "array.h"
 #include "packet_tools.h"
+#include "server_stat.h"
 
 /**
  * Reply to a c_req_chans by sending packets containing
@@ -60,7 +63,7 @@ void s_resp_chans(struct player *pl)
 	packet_add_crc_d(data, data_size);
 
 	printf("size of all channels : %i\n", data_size);
-	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
 }
@@ -96,7 +99,7 @@ void s_notify_new_player(struct player *pl)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 		}
 	ar_end_each;
@@ -134,7 +137,7 @@ void s_notify_player_left(struct player *p)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -191,7 +194,7 @@ void s_resp_players(struct player *pl)
 		packet_add_crc_d(data, data_size);
 
 		printf("size of all players : %i\n", data_size);
-		sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+		send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
 		nb_players -= MIN(10, nb_players);
@@ -222,7 +225,7 @@ void s_resp_unknown(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
 }
@@ -302,7 +305,7 @@ void s_notify_kick_server(struct player *kicker, struct player *kicked, char *re
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -380,7 +383,7 @@ void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -454,7 +457,7 @@ void s_notify_switch_channel(struct player *pl, struct channel *from, struct cha
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -528,7 +531,7 @@ void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -563,7 +566,7 @@ void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
 	packet_add_crc_d(data, data_size);
 
-	sendto(s->socket_desc, data, data_size, 0,
+	send_to(s, data, data_size, 0,
 			(struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
@@ -636,7 +639,7 @@ void s_notify_ban(struct player *pl, struct player *target, uint16_t duration, c
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			sendto(s->socket_desc, data, data_size, 0,
+			send_to(s, data, data_size, 0,
 					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
@@ -718,7 +721,7 @@ void s_resp_bans(struct player *pl)
 	
 	packet_add_crc_d(data, data_size);
 	printf("list of bans : sending %i bytes\n", data_size);
-	sendto(s->socket_desc, data, data_size, 0,
+	send_to(s, data, data_size, 0,
 			(struct sockaddr *)pl->cli_addr, pl->cli_len);
 
 	pl->f0_s_counter++;
@@ -798,35 +801,37 @@ void s_resp_server_stats(struct player *pl)
 	int data_size = 100;
 	char *data, *ptr;
 	struct server *s = pl->in_chan->in_server;
-
+	uint32_t stats[4] = {0, 0, 0, 0};
+	
+	compute_timed_stats(s->stats, stats);
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint32_t *)ptr = 0x0196bef0;			ptr += 4;	/* */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
-	/* packet version */				ptr += 4;
-	/* empty checksum */				ptr += 4;
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* server uptime */
-	*(uint16_t *)ptr = 2;				ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 0;				ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 20;				ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 1;				ptr += 2;	/* server version */
-	*(uint32_t *)ptr = s->players->used_slots;	ptr += 4;	/* number of players connected */
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* total bytes received */
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* total bytes sent */
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* ??? */
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* ??? */
-	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes received (last second) */
-	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes sent (last second) */
-	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes received (last minute) */
-	*(uint32_t *)ptr = 0;				ptr += 4;	/* bytes sent (last minute) */
-	*(uint64_t *)ptr = 0;				ptr += 8;	/* total logins */
+	*(uint32_t *)ptr = 0x0196bef0;				ptr += 4;	/* */
+	*(uint32_t *)ptr = pl->private_id;			ptr += 4;	/* player private id */
+	*(uint32_t *)ptr = pl->public_id;			ptr += 4;	/* player public id */
+	*(uint32_t *)ptr = pl->f0_s_counter;			ptr += 4;	/* packet counter */
+	/* packet version */					ptr += 4;
+	/* empty checksum */					ptr += 4;
+	*(uint64_t *)ptr = time(NULL) - s->stats->start_time;	ptr += 8;	/* server uptime */
+	*(uint16_t *)ptr = 2;					ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 0;					ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 20;					ptr += 2;	/* server version */
+	*(uint16_t *)ptr = 1;					ptr += 2;	/* server version */
+	*(uint32_t *)ptr = s->players->used_slots;		ptr += 4;	/* number of players connected */
+	*(uint64_t *)ptr = s->stats->pkt_sent;			ptr += 8;	/* total bytes received */
+	*(uint64_t *)ptr = s->stats->size_sent;			ptr += 8;	/* total bytes sent */
+	*(uint64_t *)ptr = s->stats->pkt_rec;			ptr += 8;	/* total packets received */
+	*(uint64_t *)ptr = s->stats->size_rec;			ptr += 8;	/* total packets sent */
+	*(uint32_t *)ptr = stats[0];				ptr += 4;	/* bytes received/sec (last second) */
+	*(uint32_t *)ptr = stats[1];				ptr += 4;	/* bytes sent/sec (last second) */
+	*(uint32_t *)ptr = stats[2]/60;				ptr += 4;	/* bytes received/sec (last minute) */
+	*(uint32_t *)ptr = stats[3]/60;				ptr += 4;	/* bytes sent/sec (last minute) */
+	*(uint64_t *)ptr = s->stats->total_logins;		ptr += 8;	/* total logins */
 
 	packet_add_crc_d(data, data_size);
 
-	sendto(s->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f0_s_counter++;
 	free(data);
 }

@@ -4,6 +4,7 @@
 #include "server.h"
 #include "channel.h"
 #include "array.h"
+#include "server_stat.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -82,7 +83,7 @@ int audio_received(char *in, int len, struct server *s)
 			if (tmp_pl != NULL && tmp_pl != sender) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
-				sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0, 
+				send_to(sender->in_chan->in_server, data, data_size, 0, 
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			}
 		}

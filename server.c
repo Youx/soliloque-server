@@ -1,4 +1,6 @@
 #include "server.h"
+#include "server_stat.h"
+
 #include "channel.h"
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +23,7 @@ struct server *new_server()
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
+	serv->stats = new_sstat();
 	
 	return serv;
 }
@@ -179,6 +182,7 @@ int add_player(struct server *serv, struct player *pl)
 	/* Find next slot in the array */
 	ar_insert(serv->players, pl);
 
+	serv->stats->total_logins++;
 	return add_player_to_channel(def_chan, pl);
 }
 

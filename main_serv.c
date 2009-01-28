@@ -13,6 +13,7 @@
 #include "acknowledge_packet.h"
 #include "audio_packet.h"
 #include "packet_tools.h"
+#include "server_stat.h"
 
 #define MAX_MSG 1024
 
@@ -163,6 +164,8 @@ static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli
 /* Manage an incoming packet */
 static void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
+	/* add some stats */
+	sstat_add_packet(s->stats, len, 0);
 	/* first a few tests */
 	switch (((uint16_t *)data)[0]) {
 	case 0xbef0:		/* commands */
