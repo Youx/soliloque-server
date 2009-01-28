@@ -807,27 +807,27 @@ void s_resp_server_stats(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint32_t *)ptr = 0x0196bef0;				ptr += 4;	/* */
-	*(uint32_t *)ptr = pl->private_id;			ptr += 4;	/* player private id */
-	*(uint32_t *)ptr = pl->public_id;			ptr += 4;	/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;			ptr += 4;	/* packet counter */
-	/* packet version */					ptr += 4;
-	/* empty checksum */					ptr += 4;
-	*(uint64_t *)ptr = time(NULL) - s->stats->start_time;	ptr += 8;	/* server uptime */
-	*(uint16_t *)ptr = 2;					ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 0;					ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 20;					ptr += 2;	/* server version */
-	*(uint16_t *)ptr = 1;					ptr += 2;	/* server version */
-	*(uint32_t *)ptr = s->players->used_slots;		ptr += 4;	/* number of players connected */
-	*(uint64_t *)ptr = s->stats->pkt_sent;			ptr += 8;	/* total bytes received */
-	*(uint64_t *)ptr = s->stats->size_sent;			ptr += 8;	/* total bytes sent */
-	*(uint64_t *)ptr = s->stats->pkt_rec;			ptr += 8;	/* total packets received */
-	*(uint64_t *)ptr = s->stats->size_rec;			ptr += 8;	/* total packets sent */
-	*(uint32_t *)ptr = stats[0];				ptr += 4;	/* bytes received/sec (last second) */
-	*(uint32_t *)ptr = stats[1];				ptr += 4;	/* bytes sent/sec (last second) */
-	*(uint32_t *)ptr = stats[2]/60;				ptr += 4;	/* bytes received/sec (last minute) */
-	*(uint32_t *)ptr = stats[3]/60;				ptr += 4;	/* bytes sent/sec (last minute) */
-	*(uint64_t *)ptr = s->stats->total_logins;		ptr += 8;	/* total logins */
+	*(uint32_t *)ptr = 0x0196bef0;			ptr += 4;/* */
+	*(uint32_t *)ptr = pl->private_id;		ptr += 4;/* player private id */
+	*(uint32_t *)ptr = pl->public_id;		ptr += 4;/* player public id */
+	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;/* packet counter */
+	/* packet version */				ptr += 4;
+	/* empty checksum */				ptr += 4;
+	*(uint64_t *)ptr = time(NULL) - s->stats->start_time;	ptr += 8;/* server uptime */
+	*(uint16_t *)ptr = 2;				ptr += 2;/* server version */
+	*(uint16_t *)ptr = 0;				ptr += 2;/* server version */
+	*(uint16_t *)ptr = 20;				ptr += 2;/* server version */
+	*(uint16_t *)ptr = 1;				ptr += 2;/* server version */
+	*(uint32_t *)ptr = s->players->used_slots;	ptr += 4;/* number of players connected */
+	*(uint64_t *)ptr = s->stats->pkt_sent;		ptr += 8;/* total bytes received */
+	*(uint64_t *)ptr = s->stats->size_sent;		ptr += 8;/* total bytes sent */
+	*(uint64_t *)ptr = s->stats->pkt_rec;		ptr += 8;/* total packets received */
+	*(uint64_t *)ptr = s->stats->size_rec;		ptr += 8;/* total packets sent */
+	*(uint32_t *)ptr = stats[0];			ptr += 4;/* bytes received/sec (last second) */
+	*(uint32_t *)ptr = stats[1];			ptr += 4;/* bytes sent/sec (last second) */
+	*(uint32_t *)ptr = stats[2]/60;			ptr += 4;/* bytes received/sec (last minute) */
+	*(uint32_t *)ptr = stats[3]/60;			ptr += 4;/* bytes sent/sec (last minute) */
+	*(uint64_t *)ptr = s->stats->total_logins;	ptr += 8;/* total logins */
 
 	packet_add_crc_d(data, data_size);
 
