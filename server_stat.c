@@ -11,6 +11,18 @@
 #include <sys/time.h>
 
 
+/**
+ * Wrapper around the sendto function that handles timed statistics
+ *
+ * @param s the server
+ * @param buf the data
+ * @param len the length of buf
+ * @param flags sendto flags (see man(2) sendto)
+ * @param dest_addr the destination address
+ * @param addrlen the length of dest_addr
+ *
+ * @return the number of characters sent, or -1
+ */
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 		const struct sockaddr *dest_addr, socklen_t addrlen)
 {
@@ -18,6 +30,11 @@ ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 	return sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
 }
 
+/**
+ * Allocate and initializes a server statistics structure.
+ *
+ * @return the allocated statistics
+ */
 struct server_stat *new_sstat()
 {
 	struct server_stat *st;
@@ -32,6 +49,16 @@ struct server_stat *new_sstat()
 	return st;
 }
 
+/**
+ * Add a packet to the statistics :
+ * - add its size to the total size
+ * - increment the counter
+ * - insert it into the timed statistics
+ *
+ * @param st the server statistics
+ * @param size the size of the packet
+ * @param in_out 0 if input packet, 1 if output packet
+ */
 void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 {
 	struct timeval now, res;
@@ -71,6 +98,12 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	st->pkt_io[i] = in_out;
 }
 
+/**
+ * Compute time relative statistics (bytes/sec or bytes/min)
+ *
+ * @param st the server statistics
+ * @param stats the results
+ */
 void compute_timed_stats(struct server_stat *st, uint32_t *stats)
 {
 	struct timeval now, res;
@@ -86,7 +119,7 @@ void compute_timed_stats(struct server_stat *st, uint32_t *stats)
 		if (res.tv_sec < 60) {
 			stats[2 + st->pkt_io[i]] += st->pkt_sizes[i];
 			if (res.tv_sec < 1) {
-				stats[st->pkt_io[i]] += st->pkt_sizes[i];
+				stats[0 + st->pkt_io[i]] += st->pkt_sizes[i];
 			}
 		} else {
 			/* clear */
