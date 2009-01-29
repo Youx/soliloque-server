@@ -1236,3 +1236,223 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 	}
 	return NULL;
 }
+
+/**
+ * Send a notification to all  players indicating that
+ * a channel's name has changed
+ *
+ * @param pl the player who changed it
+ * @param ch the channel changed
+ * @param topic the new topic
+ */
+void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char *name)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	struct player *tmp_pl;
+
+	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
+	data_size = 24 + 4 + 4 + (strlen(name) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x006fbef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+	strcpy(ptr, name);
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a player request to change a channel's name
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player requesting the change
+ */
+void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl)
+{
+	uint32_t ch_id;
+	char *name;
+	struct channel *ch;
+
+	send_acknowledge(pl);
+	memcpy(&ch_id, data + 24, 4);
+	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
+
+	if (ch != NULL) {
+		if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN ||
+			 (pl->chan_privileges & CHANNEL_PRIV_CHANADMIN &&
+			  pl->in_chan == ch)) {
+			name = strdup(data + 28);
+			free(ch->name);
+			ch->name = name;
+			s_resp_chan_name_changed(pl, ch, name);
+		}
+	}
+	return NULL;
+}
+
+/**
+ * Send a notification to all players indicating that
+ * a channel's topic has changed
+ *
+ * @param pl the player who changed it
+ * @param ch the channel changed
+ * @param topic the new topic
+ */
+void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, char *topic)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	struct player *tmp_pl;
+
+	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
+	data_size = 24 + 4 + 4 + (strlen(topic) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0070bef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+	strcpy(ptr, topic);
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a player request to change a channel's topic
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player requesting the change
+ */
+void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl)
+{
+	uint32_t ch_id;
+	char *topic;
+	struct channel *ch;
+
+	send_acknowledge(pl);
+	memcpy(&ch_id, data + 24, 4);
+	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
+
+	if (ch != NULL) {
+		if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN ||
+			 (pl->chan_privileges & CHANNEL_PRIV_CHANADMIN &&
+			  pl->in_chan == ch)) {
+			topic = strdup(data + 28);
+			free(ch->topic);
+			ch->topic = topic;
+			s_resp_chan_topic_changed(pl, ch, topic);
+		}
+	}
+	return NULL;
+}
+
+/**
+ * Send a notification to all  players indicating that
+ * a channel's description has changed
+ *
+ * @param pl the player who changed it
+ * @param ch the channel changed
+ * @param topic the new topic
+ */
+void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char *desc)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	struct player *tmp_pl;
+
+	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
+	data_size = 24 + 4 + 4 + (strlen(desc) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0072bef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+	strcpy(ptr, desc);
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+
+}
+
+/**
+ * Handle a player request to change a channel's description
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player requesting the change
+ */
+void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
+{
+	uint32_t ch_id;
+	char *desc;
+	struct channel *ch;
+
+	send_acknowledge(pl);
+	memcpy(&ch_id, data + 24, 4);
+	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
+
+	if (ch != NULL) {
+		if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN ||
+			 (pl->chan_privileges & CHANNEL_PRIV_CHANADMIN &&
+			  pl->in_chan == ch)) {
+			desc = strdup(data + 28);
+			free(ch->desc);
+			ch->desc = desc;
+			s_resp_chan_desc_changed(pl, ch, desc);
+		}
+	}
+	return NULL;
+}

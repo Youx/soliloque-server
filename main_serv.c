@@ -63,7 +63,6 @@ static void init_callbacks()
 	f0_callbacks[0x95] = &c_req_server_stats;	/* client wants connection stats from the server */
 	f0_callbacks[0x9a] = &c_req_list_bans;		/* client wants the list of bans */
 	f0_callbacks[0xae] = &c_req_send_message;	/* client wants the list of bans */
-	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }
 
@@ -90,6 +89,12 @@ packet_function get_f0_function(unsigned char * code)
 		switch (code[2]) {
 		case 0x05:
 			return &c_req_chans;
+		case 0xce:
+			return &c_req_change_chan_name;
+		case 0xcf:
+			return &c_req_change_chan_topic;
+		case 0xd0:
+			return &c_req_change_chan_desc;
 		case 0xc9:
 		case 0xd1:	/* delete channel */
 			return &c_req_delete_channel;

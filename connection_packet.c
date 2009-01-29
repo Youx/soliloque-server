@@ -46,7 +46,8 @@ static void server_accept_connection(struct player *pl)
 	*(uint16_t *)ptr = 20;				ptr += 2;	/* Server version (minor 1) */
 	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
 	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
-							ptr += 11;
+	*(uint16_t *)ptr = 0x1FEF;			ptr += 2;	/* supported codecs (1<<codec | 1<<codec2 ...) */
+							ptr += 9;
 	*(uint32_t *)ptr = 0xFFFFFFFF;
 	*(uint32_t *)(ptr+4) = 0xFFFFFFFF;
 	*(uint32_t *)(ptr+8) = 0xFFFFFFFF;		/* Server admin rights */
