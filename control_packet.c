@@ -1064,3 +1064,175 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 	s_notify_player_attr_changed(pl, attributes);
 	return NULL;
 }
+
+/**
+ * Send a message to all players on the server
+ *
+ * @param pl the sender
+ * @param color the hexadecimal color of the message
+ * @param msg the message
+ */
+void send_message_to_all(struct player *pl, uint32_t color, char *msg)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
+	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
+	*(uint8_t *)ptr = 0;			ptr += 1;/* type of msg (0 = all) */
+	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
+	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strcpy(ptr, msg);
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Send a message to all players in a channel
+ *
+ * @param pl the sender
+ * @param ch the channel to send the message to
+ * @param color the hexadecimal color of the message
+ * @param msg the message
+ */
+void send_message_to_channel(struct player *pl, struct channel *ch, uint32_t color, char *msg)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size;
+	int i;
+	struct server *s = pl->in_chan->in_server;
+	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
+	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
+	*(uint8_t *)ptr = 1;			ptr += 1;/* type of msg (1 = channel) */
+	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
+	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strcpy(ptr, msg);
+
+	for (i = 0 ; i < ch->max_users ; i++) {
+		if (ch->players[i] != NULL) {
+			tmp_pl = ch->players[i];
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+		}
+	}
+
+	free(data);
+}
+
+/**
+ * Send a message to a specific player
+ *
+ * @param pl the sender
+ * @param tgt the receiver
+ * @param color the hexadecimal color of the message
+ * @param msg the message
+ */
+void send_message_to_player(struct player *pl, struct player *tgt, uint32_t color, char *msg)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
+	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	*(uint32_t *)ptr = tgt->private_id;	ptr += 4;/* private ID */
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* public ID */
+	*(uint32_t *)ptr = tgt->f0_s_counter;	ptr += 4;/* public ID */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
+	*(uint8_t *)ptr = 2;			ptr += 1;/* type of msg (2 = private) */
+	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
+	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strcpy(ptr, msg);
+
+	packet_add_crc_d(data, data_size);
+	send_to(s, data, data_size, 0,
+			(struct sockaddr *)tgt->cli_addr, tgt->cli_len);
+	tgt->f0_s_counter++;
+
+	free(data);
+}
+
+/**
+ * Handle a player request to send a message
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player sending the message
+ */
+void *c_req_send_message(char *data, unsigned int len, struct player *pl)
+{
+	uint32_t color;
+	char msg_type;
+	uint32_t dst_id;
+	char *msg;
+	struct channel *ch;
+	struct player *tgt;
+	
+	send_acknowledge(pl);		/* ACK */
+
+	memcpy(&color, data + 24, 4);
+	memcpy(&msg_type, data + 28, 1);
+	memcpy(&dst_id, data + 29, 4);
+	msg = strdup(data + 33);
+
+	switch (msg_type) {
+	case 0:
+		send_message_to_all(pl, color, msg);
+		break;
+	case 1:
+		ch = get_channel_by_id(pl->in_chan->in_server, dst_id);
+		if (ch != NULL) {
+			send_message_to_channel(pl, ch, color, msg);
+		}
+		break;
+	case 2:
+		tgt = get_player_by_public_id(pl->in_chan->in_server, dst_id);
+		send_message_to_player(pl, tgt, color, msg);
+		break;
+	default:
+		printf("Wrong type of message.\n");
+	}
+	return NULL;
+}

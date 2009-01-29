@@ -62,6 +62,7 @@ static void init_callbacks()
 	f0_callbacks[0x46] = &c_req_remove_ban;		/* client wants to unban someone */
 	f0_callbacks[0x95] = &c_req_server_stats;	/* client wants connection stats from the server */
 	f0_callbacks[0x9a] = &c_req_list_bans;		/* client wants the list of bans */
+	f0_callbacks[0xae] = &c_req_send_message;	/* client wants the list of bans */
 	//f4be0300
 	/* callbacks[0] = myfunc1; ... */
 }
