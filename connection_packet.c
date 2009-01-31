@@ -31,15 +31,17 @@ static void server_accept_connection(struct player *pl)
 {
 	char *data = (char *)calloc(436, sizeof(char));
 	char *ptr = data;
+	struct server *s = pl->in_chan->in_server;
+
 	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
 	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
 	/* Checksum initialize at the end */		ptr += 4;
-	*ptr = 14;					ptr += 1;	/* Length of server name */
-	memcpy(ptr, "Nom du serveur", 14);		ptr += 29;	/* Server name */
-	*ptr = 18;					ptr += 1;	/* Length of server machine */
-	memcpy(ptr, "Machine du serveur", 18);		ptr += 29;	/* Server machine */
+	*ptr = strlen(s->server_name);			ptr += 1;	/* Length of server name */
+	strncpy(ptr, s->server_name, *(ptr - 1));	ptr += 29;	/* Server name */
+	*ptr = strlen(s->machine);			ptr += 1;	/* Length of server machine */
+	strncpy(ptr, s->machine, *(ptr - 1));		ptr += 29;	/* Server machine */
 	/* Server version */
 	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */
 	*(uint16_t *)ptr = 0;				ptr += 2;	/* Server version (major 2) */
@@ -68,8 +70,8 @@ static void server_accept_connection(struct player *pl)
 	/* garbage data */				ptr += 69;
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*ptr = 26;					ptr += 1;	/* Length of welcome message */
-	memcpy(ptr, "Bienvenue sur mon serveur.", 26);	ptr += 255;	/* Welcome message */
+	*ptr = MIN(255, strlen(s->welcome_msg));	ptr += 1;	/* Length of welcome message */
+	strncpy(ptr, s->welcome_msg, *(ptr - 1));	ptr += 255;	/* Welcome message */
 
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);

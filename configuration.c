@@ -22,6 +22,11 @@ static struct server *parse_server(config_setting_t *set)
 	cpl = config_setting_get_member(set, "port");
 	s->port = config_setting_get_int(cpl);
 	printf("Port : %i\n", s->port);
+	/* get welcome message */
+	cpl = config_setting_get_member(set, "welcome");
+	strncpy(s->welcome_msg, config_setting_get_string(cpl), 255);
+	printf("Welcome msg : %s\n", s->welcome_msg);
+
 	return s;
 }
 struct server **parse()

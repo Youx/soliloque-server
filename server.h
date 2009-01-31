@@ -29,6 +29,7 @@ struct server {
 	char password[30];
 	char server_name[30];
 	char machine[30];
+	char welcome_msg[256];
 	uint16_t version[4]/* = {2,0,20,1}*/;
 
 	int socket_desc;
