@@ -16,6 +16,7 @@ def configure(conf):
   conf.setenv('default')
   conf.check_cfg(atleast_pkgconfig_version='0.0.0')
   conf.check_cfg(package='libconfig', args='--cflags --libs', uselib_store='LIBCONFIG')
+  conf.check_cc(lib='pthread', uselib_store='PTHREAD', mandatory=True)
   # Check for strndup (not present on OSX
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
   conf.write_config_header('config.h')
@@ -28,5 +29,5 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
-  sol_serv.uselib = 'LIBCONFIG'
+  sol_serv.uselib = 'LIBCONFIG PTHREAD'
   sol_serv.cflags = '-O2 -ggdb -Wall -D_GNU_SOURCE -D_BSD_SOURCE'
