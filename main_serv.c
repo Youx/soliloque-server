@@ -14,6 +14,7 @@
 #include "audio_packet.h"
 #include "packet_tools.h"
 #include "server_stat.h"
+#include "configuration.h"
 
 #define MAX_MSG 1024
 
@@ -22,10 +23,8 @@ typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl
 packet_function f0_callbacks[255];
 
 
-static struct server *test_init_server()
+void test_init_server(struct server *s)
 {
-	/* Test server */
-	struct server *s = new_server();
 	/* Add channels */
 	add_channel(s, new_predef_channel());
 	add_channel(s, new_predef_channel());
@@ -44,7 +43,6 @@ static struct server *test_init_server()
 	add_player(s, new_default_player());
 	*/
 	print_server(s);
-	return s;
 }
 
 static void init_callbacks()
@@ -110,16 +108,6 @@ packet_function get_f0_function(unsigned char * code)
 }
 
 
-#define ERROR_IF(cond) \
-	if(cond) { \
-		printf("(EE) %s", strerror(errno)); \
-		exit(1); \
-	}
-
-#define WARNING_IF(cond) \
-	if(cond) { \
-		printf("(WW) %s", strerror(errno)); \
-	}
 
 void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
@@ -171,7 +159,7 @@ static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli
 }
 
 /* Manage an incoming packet */
-static void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	/* add some stats */
 	sstat_add_packet(s->stats, len, 0);
@@ -196,57 +184,25 @@ static void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, uns
 
 int main()
 {
-	int rc, n;
-	unsigned int cli_len;
-	struct sockaddr_in serv_addr, cli_addr;
-	char data[MAX_MSG];
-	struct pollfd socket_poll;
-	int pollres;
-	struct server *ts_server;
+	struct server **ss;
+	int i;
 
 	/* do some initialization of the finite state machine */
 	init_callbacks();
-	ts_server = test_init_server();
-
-	/* socket creation */
-	ts_server->socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
-	ERROR_IF(ts_server->socket_desc < 0);
-	
-	/* bind local server port */
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(8767);
-	rc = bind(ts_server->socket_desc, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-	ERROR_IF(rc < 0);
-	/* initialize for polling */
-	socket_poll.fd = ts_server->socket_desc;
-	socket_poll.events = POLLIN;
-	socket_poll.revents = 0;
-
-
-	/* main loop */
-	while (1) {
-		/* infinite timeout, wait for data to be available */
-		pollres = poll(&socket_poll, 1, -1);
-		switch(pollres) {
-		case 0:
-			printf("(EE) Time limit expired\n");
-			break;
-		case -1:
-			printf("(EE) Error occured while polling : %s\n", strerror(errno));
-			break;
-		default:
-			cli_len = sizeof(cli_addr);
-			n = recvfrom(ts_server->socket_desc, data, MAX_MSG, 0,
-					(struct sockaddr *) &cli_addr, &cli_len);
-			if (n == -1) {
-				fprintf(stderr, "(EE) %s\n", strerror(errno));
-			} else {
-				printf("(II) %i bytes received.\n", n);
-				handle_packet(data, n, &cli_addr, cli_len, ts_server);
-			}
-		}
-
+	ss = parse();
+	i = 0;
+	while (ss[i] != NULL) {
+		test_init_server(ss[i]);
+		printf("Launching server %i\n", i);
+		server_start(ss[i]);
+		i++;
 	}
+	i = 0;
+	while (ss[i] != NULL) {
+		pthread_join(ss[i]->main_thread, NULL);
+		i++;
+	}
+	printf("Servers initialized.\n");
 	/* exit */
+	return 0;
 }

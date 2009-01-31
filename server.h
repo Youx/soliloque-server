@@ -6,6 +6,20 @@
 #include "player.h"
 #include "array.h"
 
+#include <pthread.h>
+#include <poll.h>
+
+#define ERROR_IF(cond) \
+	if(cond) { \
+		printf("(EE) %s", strerror(errno)); \
+		exit(1); \
+	}
+
+#define WARNING_IF(cond) \
+	if(cond) { \
+		printf("(WW) %s", strerror(errno)); \
+	}
+
 struct server {
 	struct array *chans;
 	struct array *players;
@@ -19,6 +33,9 @@ struct server {
 
 	int socket_desc;
 	int port;
+
+        struct pollfd socket_poll;
+	pthread_t main_thread;
 };
 
 
@@ -45,4 +62,5 @@ struct ban *get_ban_by_ip(struct server *s, struct in_addr ip);
 
 void print_server(struct server *s);
 
+void server_start(struct server *s);
 #endif

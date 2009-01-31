@@ -2,11 +2,47 @@
 #include "server_stat.h"
 
 #include "channel.h"
+#include "main_serv.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <pthread.h>
+#include <poll.h>
+#include <errno.h>
+#include <sys/utsname.h>
+
+#define MAX_MSG 1024
+
+void get_machine_name(struct server *s)
+{
+	struct utsname mc;
+	int len = 0;
+
+	uname(&mc);
+	len += strlen(mc.sysname);
+	if (len <= 29) {
+		strcat(s->machine, mc.sysname);
+	}
+	len += 1;
+	if (len <= 29) {
+		s->machine[len - 1] = ' ';
+	}
+	len += strlen(mc.release);
+	if (len <= 29) {
+		strcat(s->machine, mc.release);
+	}
+	len += 1;
+	if (len <= 29) {
+		s->machine[len - 1] = ' ';
+	}
+	len += strlen(mc.machine);
+	if (len <= 29) {
+		strcat(s->machine, mc.machine);
+	}
+}
 
 /**
  * Create and initialize a new server
@@ -18,13 +54,14 @@
 struct server *new_server()
 {
 	struct server *serv;
-	serv = (struct server *)malloc(sizeof(struct server));
 	
+	serv = (struct server *)malloc(sizeof(struct server));
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
 	serv->stats = new_sstat();
-	
+	get_machine_name(serv);
+
 	return serv;
 }
 
@@ -387,3 +424,58 @@ void print_server(struct server *s)
 		print_player(tmp_pl);
 	ar_end_each;
 }
+
+void *server_run(void *args)
+{
+	struct server *s = (struct server *)args;
+	struct sockaddr_in cli_addr;
+	int n, pollres;
+	unsigned int cli_len;
+	char data[MAX_MSG];
+
+	while (1) {
+		pollres = poll(&s->socket_poll, 1, -1);
+		switch(pollres) {
+		case 0:
+			printf("(EE) Time limit expired\n");
+			break;
+		case -1:
+			printf("(EE) Error occured while polling : %s\n", strerror(errno));
+			break;
+		default:
+			cli_len = sizeof(cli_addr);
+			n = recvfrom(s->socket_desc, data, MAX_MSG, 0,
+					(struct sockaddr *) &cli_addr, &cli_len);
+			if (n == -1) {
+				fprintf(stderr, "(EE) %s\n", strerror(errno));
+			} else {
+				printf("(II) %i bytes received.\n", n);
+				handle_packet(data, n, &cli_addr, cli_len, s);
+			}
+		}
+	}
+}
+
+void server_start(struct server *s)
+{
+	struct sockaddr_in serv_addr;
+	int rc;
+
+	/* socket creation */
+	s->socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
+	ERROR_IF(s->socket_desc < 0);
+	/* bind local server port */
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr.sin_port = htons(s->port);
+	rc = bind(s->socket_desc, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+	ERROR_IF(rc < 0);
+
+	/* initialize for polling */
+	s->socket_poll.fd = s->socket_desc;
+	s->socket_poll.events = POLLIN;
+	s->socket_poll.revents = 0;
+
+	pthread_create(&s->main_thread, NULL, &server_run, (void *)s);
+}
+
