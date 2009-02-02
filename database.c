@@ -165,6 +165,7 @@ int db_create_channels(struct config *c, struct server *s)
 			/* free temporary variables */
 			free(name); free(topic); free(desc);
 		}
+		dbi_result_free(res);
 	}
 	return 1;
 }
