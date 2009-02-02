@@ -15,6 +15,7 @@
 #include "packet_tools.h"
 #include "server_stat.h"
 #include "configuration.h"
+#include "database.h"
 
 #define MAX_MSG 1024
 
@@ -191,8 +192,19 @@ int main()
 	/* do some initialization of the finite state machine */
 	init_callbacks();
 	c = config_parse("sol-server.cfg");
+	init_db(c);
 
+	ss = db_create_servers(c);
 
+	for (i = 0 ; ss[i] != NULL ; i++) {
+		db_create_channels(c, ss[i]);
+		//test_init_server(ss[i]);
+		printf("Launching server %i\n", i);
+		server_start(ss[i]);
+	}
+	for (i = 0 ; ss[i] != NULL ; i++) {
+		pthread_join(ss[i]->main_thread, NULL);
+	}
 	printf("Servers initialized.\n");
 	/* exit */
 	return 0;

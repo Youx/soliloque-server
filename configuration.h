@@ -2,6 +2,7 @@
 #define __CONFIGURATION_H__
 
 #include "server.h"
+#include <dbi/dbi.h>
 
 struct config
 {
@@ -16,6 +17,7 @@ struct config
 			char *db;
 		} connection;
 	} db;
+	dbi_conn conn;
 };
 
 void destroy_config(struct config *c);

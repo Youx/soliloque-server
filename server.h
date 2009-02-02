@@ -21,6 +21,8 @@
 	}
 
 struct server {
+	uint32_t id;
+
 	struct array *chans;
 	struct array *players;
 	struct array *bans;

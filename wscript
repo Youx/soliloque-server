@@ -5,7 +5,7 @@ VERSION='0.1'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
-SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c strndup.c audio_packet.c ban.c server_stat.c configuration.c'
+SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c strndup.c audio_packet.c ban.c server_stat.c configuration.c database.c'
 
 def set_options(opt):
   pass
@@ -16,6 +16,7 @@ def configure(conf):
   conf.setenv('default')
   conf.check_cfg(atleast_pkgconfig_version='0.0.0')
   conf.check_cfg(package='libconfig', args='--cflags --libs', uselib_store='LIBCONFIG', mandatory=True)
+  conf.check_cc(lib='dbi', uselib_store='LIBDBI', mandatory=True)
   conf.check_cc(lib='pthread', uselib_store='PTHREAD', mandatory=True)
   # Check for strndup (not present on OSX
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
@@ -29,5 +30,5 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
-  sol_serv.uselib = 'LIBCONFIG PTHREAD'
+  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI'
   sol_serv.cflags = '-O2 -ggdb -Wall -D_GNU_SOURCE -D_BSD_SOURCE'

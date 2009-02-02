@@ -30,6 +30,8 @@ struct channel {
 	uint16_t current_users;
 	struct player **players;
 	struct server *in_server;
+
+	uint32_t db_id;
 };
 
 
