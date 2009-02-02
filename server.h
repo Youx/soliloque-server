@@ -26,6 +26,7 @@ struct server {
 	struct array *chans;
 	struct array *players;
 	struct array *bans;
+	struct array *regs;
 	struct server_stat *stats;
 
 	char password[30];
@@ -63,6 +64,9 @@ int add_ban(struct server *s, struct ban *b);
 void remove_ban(struct server *s, struct ban *b);
 struct ban *get_ban_by_id(struct server *s, uint16_t id);
 struct ban *get_ban_by_ip(struct server *s, struct in_addr ip);
+
+/* Server - registration functions */
+struct registration *get_registration(struct server *s, char *login, char *pass);
 
 void print_server(struct server *s);
 

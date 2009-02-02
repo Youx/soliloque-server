@@ -20,6 +20,8 @@
 #include "player.h"
 #include "control_packet.h"
 #include "server_stat.h"
+#include "registration.h"
+
 
 /**
  * Send a packet to the player, indicating that his connection
@@ -138,6 +140,10 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	struct player *pl;
+	char password[30];
+	char login[30];
+	struct registration *r;
+
 	/* Check crc */
 	if (!packet_check_crc(data, len, 16))
 		return;
@@ -149,10 +155,33 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 		return;
 	}
 	/* If registered, check if player exists, else check server password */
+	bzero(password, 30 * sizeof(char));
+	strncpy(password, data + 121, MIN(29, data[120]));
+	bzero(login, 30 * sizeof(char));
+	strncpy(login, data + 91, MIN(29, data[90]));
+ 
+	pl = new_player_from_data(data, len, cli_addr, cli_len);
+	if (data[90] == 0) {	/* no login = anonymous mode */
+		/* check password against server password */
+		if (strcmp(password, s->password) != 0) {
+			destroy_player(pl);
+			return;	/* wrong server password */
+		}
+		pl->global_flags = GLOBAL_FLAG_UNREGISTERED;
+	} else {
+		r = get_registration(s, login, password);
+		if (r == NULL) {
+			printf("Invalid credentials for a registered player\n");
+			destroy_player(pl);
+			return;	/* nobody found with those credentials */
+		}
+		pl->global_flags |= r->global_flags;
+		pl->global_flags |= GLOBAL_FLAG_REGISTERED;
+		pl->reg = r;
+	}
 
 
 	/* Add player to the pool */
-	pl = new_player_from_data(data, len, cli_addr, cli_len);
 	add_player(s, pl);
 	/* Send a message to the client indicating he has been accepted */
 

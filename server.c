@@ -3,6 +3,7 @@
 
 #include "channel.h"
 #include "main_serv.h"
+#include "registration.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -59,6 +60,7 @@ struct server *new_server()
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
+	serv->regs = ar_new(8);
 	serv->stats = new_sstat();
 	get_machine_name(serv);
 
@@ -404,6 +406,18 @@ struct ban *get_ban_by_ip(struct server *s, struct in_addr ip)
 void remove_ban(struct server *s, struct ban *b)
 {
 	ar_remove(s->bans, (void *)b);
+}
+
+struct registration *get_registration(struct server *s, char *login, char *pass)
+{
+	struct registration *r;
+
+	ar_each(struct registration *, r, s->regs)
+		if (strcmp(r->name, login) == 0 && strcmp(r->password, pass) == 0)
+			return r;
+	ar_end_each;
+
+	return NULL;
 }
 
 /**

@@ -3,6 +3,8 @@
 
 #include "compat.h"
 #include "channel.h"
+#include "configuration.h"
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <resolv.h>
@@ -15,6 +17,7 @@
 #define CHANNEL_PRIV_AUTOVOICE  16
 
 /* Global flags */
+#define GLOBAL_FLAG_UNREGISTERED 0
 #define GLOBAL_FLAG_SERVERADMIN 1
 #define GLOBAL_FLAG_ALLOWREG  	2
 #define GLOBAL_FLAG_REGISTERED  4
@@ -42,6 +45,7 @@ struct player {
 	
 	/* the channel the player is in */
 	struct channel *in_chan;
+	struct registration *reg;
 
 	/* communication */
 	struct sockaddr_in *cli_addr;
