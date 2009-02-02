@@ -39,11 +39,11 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 		uint16_t codec, uint16_t sort_order, uint16_t max_users)
 {
 	struct channel *chan;
-	chan = (struct channel *)malloc(sizeof(struct channel));
+	chan = (struct channel *)calloc(1, sizeof(struct channel));
 	
 	bzero(chan->password, 30);
 	chan->current_users = 0;
-	chan->players = (struct player **)malloc(sizeof(struct player *) * max_users);
+	chan->players = (struct player **)calloc(max_users, sizeof(struct player *));
 	
 	chan->name = strdup(name);
 	chan->topic = strdup(topic);

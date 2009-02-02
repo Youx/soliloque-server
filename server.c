@@ -55,7 +55,7 @@ struct server *new_server()
 {
 	struct server *serv;
 	
-	serv = (struct server *)malloc(sizeof(struct server));
+	serv = (struct server *)calloc(1, sizeof(struct server));
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
@@ -476,6 +476,11 @@ void server_start(struct server *s)
 	s->socket_poll.events = POLLIN;
 	s->socket_poll.revents = 0;
 
+
 	pthread_create(&s->main_thread, NULL, &server_run, (void *)s);
 }
 
+void server_stop(struct server *s)
+{
+
+}

@@ -185,23 +185,14 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 int main()
 {
 	struct server **ss;
+	struct config *c;
 	int i;
 
 	/* do some initialization of the finite state machine */
 	init_callbacks();
-	ss = parse();
-	i = 0;
-	while (ss[i] != NULL) {
-		test_init_server(ss[i]);
-		printf("Launching server %i\n", i);
-		server_start(ss[i]);
-		i++;
-	}
-	i = 0;
-	while (ss[i] != NULL) {
-		pthread_join(ss[i]->main_thread, NULL);
-		i++;
-	}
+	c = config_parse("sol-server.cfg");
+
+
 	printf("Servers initialized.\n");
 	/* exit */
 	return 0;

@@ -34,6 +34,7 @@ struct server {
 
 	int socket_desc;
 	int port;
+	int codecs;
 
         struct pollfd socket_poll;
 	pthread_t main_thread;

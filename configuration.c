@@ -1,62 +1,112 @@
+#include "configuration.h"
+
 #include <libconfig.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "server.h"
 
-static struct server *parse_server(config_setting_t *set)
+/**
+ * Destroy an allocated configuration structure and all
+ * of its fields that are not null.
+ *
+ * @param c the configuration structure
+ */
+void destroy_config(struct config *c)
 {
-	struct server *s;
-	config_setting_t *cpl;
-	s = new_server();
-
-	/* get name */
-	cpl = config_setting_get_member(set, "name");
-	strncpy(s->server_name, config_setting_get_string(cpl), 29);
-	printf("Name : %s\n", s->server_name);
-	/* get password */
-	cpl = config_setting_get_member(set, "pass");
-	strncpy(s->password, config_setting_get_string(cpl), 29);
-	printf("Pass : %s\n", s->password);
-	/* get port */
-	cpl = config_setting_get_member(set, "port");
-	s->port = config_setting_get_int(cpl);
-	printf("Port : %i\n", s->port);
-	/* get welcome message */
-	cpl = config_setting_get_member(set, "welcome");
-	strncpy(s->welcome_msg, config_setting_get_string(cpl), 255);
-	printf("Welcome msg : %s\n", s->welcome_msg);
-
-	return s;
+	if (c->db_type != NULL) {
+		if (strcmp(c->db_type, "sqlite") == 0 || strcmp(c->db_type, "sqlite3") == 0) {
+			if (c->db.path != NULL)
+				free(c->db.path);
+		} else {
+			if (c->db.connection.host != NULL)
+				free(c->db.connection.host);
+			if (c->db.connection.pass != NULL)
+				free(c->db.connection.pass);
+			if (c->db.connection.user != NULL)
+				free(c->db.connection.user);
+		}
+		free(c->db_type);
+	}
+	free(c);
 }
-struct server **parse()
+
+/**
+ * Parse a file and generate a configuration structure
+ *
+ * @param cfg_file the input filename
+ *
+ * @return the allocated structure
+ */
+struct config *config_parse(char *cfg_file)
 {
 	config_t cfg;
-	config_setting_t *servers;
-	config_setting_t *serv;
-	struct server **ss;
-	int i = 0;
+	config_setting_t *db;
+	config_setting_t *curr;
+	struct config *cfg_s;
 
 	config_init(&cfg);
-	if (config_read_file(&cfg, "sol-server.cfg") == CONFIG_FALSE) {
-		printf("Error loading file\n");
+	if (config_read_file(&cfg, cfg_file) == CONFIG_FALSE) {
+		printf("Error loading file %s\n", cfg_file);
+		return 0;
 	}
 
-	servers = config_lookup(&cfg, "servers");
-	if (servers == NULL) {
-		printf("Error loading servers.\n");
+	db = config_lookup(&cfg, "db");
+	if (db == NULL) {
+		printf("Error : no db tag.\n");
+		return 0;
+	} else {
+		cfg_s = (struct config *)calloc(1, sizeof(struct config));
+	}
+	/* get the database type */
+	curr = config_setting_get_member(db, "type");
+	if (curr == NULL) /* default : sqlite3 */
+		cfg_s->db_type = "sqlite3";
+	else
+		cfg_s->db_type = strdup(config_setting_get_string(curr));
+
+	if (strcmp(cfg_s->db_type, "sqlite") == 0 || strcmp(cfg_s->db_type, "sqlite3") == 0) {
+		/* sqlite 2.x or 3.x use a filename to connect */
+		curr = config_setting_get_member(db, "path");
+		if (curr == NULL)
+			cfg_s->db.path = "./soliloque.db";
+		else
+			cfg_s->db.path = strdup(config_setting_get_string(curr));
+	} else {
+		/* anything else uses a host, port, user, pass, db */
+
+		/* get the hostname */
+		curr = config_setting_get_member(db, "host");
+		if (curr == NULL)
+			cfg_s->db.connection.host = "localhost";
+		else
+			cfg_s->db.connection.host = strdup(config_setting_get_string(curr));
+		/* get the port */
+		curr = config_setting_get_member(db, "port");
+		if (curr == NULL)
+			cfg_s->db.connection.port = 3306;
+		else
+			cfg_s->db.connection.port = config_setting_get_int(curr);
+		/* get the username */
+		curr = config_setting_get_member(db, "user");
+		if (curr == NULL)
+			cfg_s->db.connection.user = "root";
+		else
+			cfg_s->db.connection.user = strdup(config_setting_get_string(curr));
+		/* get the password */
+		curr = config_setting_get_member(db, "pass");
+		if (curr == NULL)
+			cfg_s->db.connection.pass = "";
+		else
+			cfg_s->db.connection.pass = strdup(config_setting_get_string(curr));
+		/* get the database */
+		curr = config_setting_get_member(db, "db");
+		if (curr == NULL)
+			cfg_s->db.connection.db = "soliloque";
+		else
+			cfg_s->db.connection.db = strdup(config_setting_get_string(curr));
 	}
 
-	while ((serv = config_setting_get_elem(servers, i)) != NULL)
-		i++;
-	ss = (struct server **)calloc(sizeof(struct server *), i + 1);
-
-	i = 0;
-	while ((serv = config_setting_get_elem(servers, i)) != NULL) {
-		printf("i = %i\n", i);	
-		ss[i] = parse_server(serv);
-		i++;
-	}
-	return ss;
+	return cfg_s;
 }
 
