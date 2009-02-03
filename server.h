@@ -67,6 +67,7 @@ struct ban *get_ban_by_ip(struct server *s, struct in_addr ip);
 
 /* Server - registration functions */
 struct registration *get_registration(struct server *s, char *login, char *pass);
+int add_registration(struct server *s, struct registration *r);
 
 void print_server(struct server *s);
 

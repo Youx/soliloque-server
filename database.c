@@ -7,6 +7,7 @@
 
 #include "server.h"
 #include "configuration.h"
+#include "registration.h"
 
 /**
  * Initialize the database from a configuration
@@ -170,3 +171,31 @@ int db_create_channels(struct config *c, struct server *s)
 	return 1;
 }
 
+int db_create_registrations(struct config *c, struct server *s)
+{
+	char *q = "SELECT * FROM registrations WHERE server_id = %i;";
+	struct registration *r;
+	char *name, *pass;
+	dbi_result res;
+
+	if (connect_db(c) == 0)
+		return 0;
+
+	res = dbi_conn_queryf(c->conn, q, s->id);
+
+	if (res) {
+		while (dbi_result_next_row(res)) {
+			r = new_registration();
+			r->global_flags = dbi_result_get_uint(res, "serveradmin");
+			name = dbi_result_get_string_copy(res, "name");
+			strncpy(r->name, name, MIN(29, strlen(name)));
+			pass = dbi_result_get_string_copy(res, "password");
+			strncpy(r->password, pass, MIN(29, strlen(pass)));
+			add_registration(s, r);
+			/* free temporary variables */
+			free(pass); free(name);
+		}
+		dbi_result_free(res);
+	}
+	return 1;
+}

@@ -198,6 +198,7 @@ int main()
 
 	for (i = 0 ; ss[i] != NULL ; i++) {
 		db_create_channels(c, ss[i]);
+		db_create_registrations(c, ss[i]);
 		//test_init_server(ss[i]);
 		printf("Launching server %i\n", i);
 		server_start(ss[i]);

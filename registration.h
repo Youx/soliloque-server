@@ -8,4 +8,6 @@ struct registration
 	char password[30];
 };
 
+struct registration *new_registration();
+
 #endif

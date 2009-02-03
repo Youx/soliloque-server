@@ -420,6 +420,12 @@ struct registration *get_registration(struct server *s, char *login, char *pass)
 	return NULL;
 }
 
+int add_registration(struct server *s, struct registration *r)
+{
+	ar_insert(s->regs, (void *)r);
+	return 1;
+}
+
 /**
  * Prints information about the server (channels, etc)
  *
