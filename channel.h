@@ -48,5 +48,6 @@ void print_channel(struct channel *chan);
 
 int channel_to_data(struct channel *ch, char *data);
 int channel_to_data_size(struct channel *ch);
+size_t channel_from_data(char *data, int len, struct channel **dst);
 
 #endif

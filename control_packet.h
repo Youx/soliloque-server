@@ -26,5 +26,6 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl);
+void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 
 #endif

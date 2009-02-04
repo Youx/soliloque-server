@@ -95,6 +95,7 @@ packet_function get_f0_function(unsigned char * code)
 		case 0xd0:
 			return &c_req_change_chan_desc;
 		case 0xc9:
+			return &c_req_create_channel;
 		case 0xd1:	/* delete channel */
 			return &c_req_delete_channel;
 		default:

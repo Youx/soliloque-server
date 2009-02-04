@@ -163,3 +163,28 @@ int channel_to_data_size(struct channel *ch)
 		+ strlen(ch->topic) + 1
 		+ strlen(ch->desc) + 1;
 }
+
+
+size_t channel_from_data(char *data, int len, struct channel **dst)
+{
+	uint16_t flags;
+	uint16_t codec;
+	uint16_t sort_order;
+	uint16_t max_users;
+	char *name, *topic, *desc, *ptr;
+
+	ptr = data;
+
+	/* ignore ID field */			ptr += 4;
+	flags = *(uint16_t *)ptr;		ptr += 2;
+	codec = *(uint16_t *)ptr;		ptr += 2;
+	/* ignore 0xFFFFFFFF field */		ptr += 4;
+	sort_order = *(uint16_t *)ptr;		ptr += 2;
+	max_users = *(uint16_t *)ptr;		ptr += 2;
+	name = strdup(ptr);			ptr += strlen(name) + 1;
+	topic = strdup(ptr);			ptr += strlen(topic) + 1;
+	desc = strdup(ptr);			ptr += strlen(desc) + 1;
+
+	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);
+	return ptr - data;
+}

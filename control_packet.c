@@ -1456,3 +1456,71 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 	}
 	return NULL;
 }
+
+/**
+ * Notify all players on a server that a new channel has been created
+ *
+ * @param ch the new channel
+ * @param creator the player who created the channel
+ */
+static void s_notify_channel_created(struct channel *ch, struct player *creator)
+{
+	char *data, *ptr;
+	int data_size;
+	struct player *tmp_pl;
+	struct server *s = ch->in_server;
+
+	data_size = 24 + 4;
+	data_size += channel_to_data_size(ch);
+
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+
+	*(uint32_t *)ptr = 0x006ebef0;		ptr += 4;/* function code */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = creator->public_id;	ptr += 4;/* id of creator */
+	channel_to_data(ch, ptr);
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a player request to create a new channel
+ *
+ * @param data the request packet
+ * @param len the length of data
+ * @param pl the player requesting the creation
+ */
+void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
+{
+	struct channel *ch;
+	size_t bytes_read;
+	char *ptr;
+
+	send_acknowledge(pl);
+	if (pl->global_flags | GLOBAL_FLAG_SERVERADMIN) {
+		ptr = data + 24;
+		bytes_read = channel_from_data(ptr, len - (ptr - data), &ch);
+		ptr += bytes_read;
+		strncpy(ch->password, ptr, MIN(29, len - (ptr - data) - 1));
+
+		add_channel(pl->in_chan->in_server, ch);
+		s_notify_channel_created(ch, pl);
+	}
+	return NULL;
+}
