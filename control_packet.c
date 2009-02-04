@@ -17,6 +17,7 @@
 #include "array.h"
 #include "packet_tools.h"
 #include "server_stat.h"
+#include "database.h"
 
 /**
  * Reply to a c_req_chans by sending packets containing
@@ -605,8 +606,13 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
 		if (del == NULL || del->current_users > 0) {
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
-		} else if (destroy_channel_by_id(s, del->id)) {
+		} else {
+			/* if the channel is registered, remove it from the db */
+			printf("Flags : %i\n", del->flags);
+			if ((del->flags & CHANNEL_FLAG_UNREGISTERED) == 0)
+				db_unregister_channel(s->conf, del);
 			s_notify_channel_deleted(s, del_id);
+			destroy_channel_by_id(s, del->id);
 		}
 	}
 	return NULL;
@@ -1533,15 +1539,21 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	struct channel *ch;
 	size_t bytes_read;
 	char *ptr;
+	struct server *s;
 
+	s = pl->in_chan->in_server;
 	send_acknowledge(pl);
 	if (pl->global_flags | GLOBAL_FLAG_SERVERADMIN) {
 		ptr = data + 24;
 		bytes_read = channel_from_data(ptr, len - (ptr - data), &ch);
 		ptr += bytes_read;
 		strncpy(ch->password, ptr, MIN(29, len - (ptr - data) - 1));
-
-		add_channel(pl->in_chan->in_server, ch);
+		add_channel(s, ch);
+		printf("New channel created\n");
+		print_channel(ch);
+		if (! (ch->flags & CHANNEL_FLAG_UNREGISTERED))
+			db_register_channel(s->conf, ch);
+		print_channel(ch);
 		s_notify_channel_created(ch, pl);
 	}
 	return NULL;

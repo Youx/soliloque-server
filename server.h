@@ -41,6 +41,7 @@ struct server {
 
         struct pollfd socket_poll;
 	pthread_t main_thread;
+	struct config *conf;
 };
 
 

@@ -78,6 +78,7 @@ struct server **db_create_servers(struct config *c)
 		i = 0;
 		for (i = 0 ; dbi_result_next_row(res) ; i++) {
 			ss[i] = new_server();
+			ss[i]->conf = c;
 
 			ss[i]->id = dbi_result_get_uint(res, "id");
 			strcpy(ss[i]->password, dbi_result_get_string(res, "password"));
@@ -105,15 +106,82 @@ struct server **db_create_servers(struct config *c)
 	return ss;
 }
 
-int db_update_channel(struct config *c, struct channel *ch)
+/**
+ * Make a channel persistent by inserting it into the database
+ *
+ * @param c the db config
+ * @param ch the channel to register
+ *
+ * @return 0 on failure, 1 on success
+ */
+int db_register_channel(struct config *c, struct channel *ch)
 {
+	char *q = "INSERT INTO channels \
+		   (server_id, name, topic, description, codec, maxusers, ordr, flag_default, flag_hierarchical, flag_moderated, parent_id, password, created_at) \
+		   VALUES (%i,%s,    %s,    %s,          %i,    %i,       %i,   %i,           %i,                %i,             %i,        %s,       NOW());";
+	char *name_clean, *topic_clean, *desc_clean, *pass_clean;
+	int flag_default, flag_hierar, flag_mod;
+	int insert_id;
+	dbi_result res;
 
+	printf("Trying to register a channel in the DB\n");
+	if (ch->db_id != 0) /* already exists in the db */
+		return 0;
+	if (connect_db(c) == 0)
+		return 0;
 
+	printf("Trying to register a channel in the DB - 1\n");
+	/* Secure the input before inserting */
+	dbi_conn_quote_string_copy(c->conn, ch->name, &name_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->topic, &topic_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->desc, &desc_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->password, &pass_clean);
+
+	/* better here than in the query function */
+	flag_default = (ch->flags & CHANNEL_FLAG_DEFAULT);
+	flag_hierar = (ch->flags & CHANNEL_FLAG_SUBCHANNELS);
+	flag_mod = (ch->flags & CHANNEL_FLAG_MODERATED);
+
+	if (dbi_conn_queryf(c->conn, q,
+			ch->in_server->id, name_clean, topic_clean, desc_clean,
+			ch->codec, ch->max_users, ch->sort_order,
+			flag_default, flag_hierar, flag_mod,
+			0xFFFFFFFF, pass_clean) == NULL) {
+		printf("Insertion request failed : \n");
+		printf(q, ch->in_server->id, name_clean, topic_clean, desc_clean,
+			ch->codec, ch->max_users, ch->sort_order,
+			flag_default, flag_hierar, flag_mod,
+			0xFFFFFFFF, pass_clean);
+		printf("\n");
+	}
+
+	insert_id = dbi_conn_sequence_last(c->conn, NULL);
+	ch->db_id = insert_id;
+
+	printf("Trying to register a channel in the DB - 1\n");
+	/* free allocated data */
+	free(name_clean); free(topic_clean); free(desc_clean); free(pass_clean);
+
+	return 1;
 }
 
+/**
+ * Unregister by removing it from the database
+ *
+ * @param c the db config
+ * @param ch the channel to unregister
+ *
+ * @return 1 on success, 0 on failure
+ */
 int db_unregister_channel(struct config *c, struct channel *ch)
 {
+	char *q = "DELETE FROM channels WHERE id = %i;";
 
+	if (connect_db(c) == 0)
+		return 0;
+	dbi_conn_queryf(c->conn, q, ch->db_id);
+	
+	return 1;
 }
 
 /**
