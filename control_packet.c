@@ -27,7 +27,7 @@
  *
  * TODO : split the channels over packets
  */
-void s_resp_chans(struct player *pl)
+static void s_resp_chans(struct player *pl)
 {
 	char *data;
 	int data_size = 0;
@@ -112,7 +112,7 @@ void s_notify_new_player(struct player *pl)
  *
  * @param p the player who left
  */
-void s_notify_player_left(struct player *p)
+static void s_notify_player_left(struct player *p)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -152,7 +152,7 @@ void s_notify_player_left(struct player *p)
  * @param pl the player we send the player list to
  * @param s the server we will get the players from
  */
-void s_resp_players(struct player *pl)
+static void s_resp_players(struct player *pl)
 {
 	char *data;
 	int data_size = 0;
@@ -202,7 +202,7 @@ void s_resp_players(struct player *pl)
 	free(data);
 }
 
-void s_resp_unknown(struct player *pl)
+static void s_resp_unknown(struct player *pl)
 {
 	char *data;
 	char *ptr;
@@ -278,7 +278,7 @@ void *c_req_leave(char *data, unsigned int len, struct player *pl)
  * @param kicked the player kicked from the server
  * @param reason the reason the player was kicked
  */
-void s_notify_kick_server(struct player *kicker, struct player *kicked, char *reason)
+static void s_notify_kick_server(struct player *kicker, struct player *kicked, char *reason)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -354,7 +354,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
  * @param reason the reason the player was kicked
  * @param kicked_to the channel the player is moved to
  */
-void s_notify_kick_channel(struct player *kicker, struct player *kicked, 
+static void s_notify_kick_channel(struct player *kicker, struct player *kicked, 
 		char *reason, struct channel *kicked_to)
 {
 	char *data, *ptr;
@@ -431,7 +431,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
  * @param from the channel the player was in
  * @param to the channel he is moving to
  */
-void s_notify_switch_channel(struct player *pl, struct channel *from, struct channel *to)
+static void s_notify_switch_channel(struct player *pl, struct channel *from, struct channel *to)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -507,7 +507,7 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
  * @param s the server
  * @param del_id the id of the deleted channel
  */
-void s_notify_channel_deleted(struct server *s, uint32_t del_id)
+static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -547,7 +547,7 @@ void s_notify_channel_deleted(struct server *s, uint32_t del_id)
  * @param pl the player who wants to delete the channel
  * @param pkt_cnt the counter of the packet we failed to execute
  */
-void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
+static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 {
 	char *data, *ptr;
 	int data_size = 30;
@@ -612,7 +612,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
  * @param duration the duration of the ban (0 = unlimited)
  * @param reason the reason of the ban
  */
-void s_notify_ban(struct player *pl, struct player *target, uint16_t duration, char *reason)
+static void s_notify_ban(struct player *pl, struct player *target, uint16_t duration, char *reason)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -689,7 +689,7 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
  * @param s the server
  * @param pl the player who asked for the list of bans
  */
-void s_resp_bans(struct player *pl)
+static void s_resp_bans(struct player *pl)
 {
 	char *data, *ptr;
 	int data_size, tmp_size;
@@ -796,7 +796,7 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
  *
  * @param pl the player who requested the server info
  */
-void s_resp_server_stats(struct player *pl)
+static void s_resp_server_stats(struct player *pl)
 {
 	int data_size = 100;
 	char *data, *ptr;
@@ -859,7 +859,7 @@ void *c_req_server_stats(char *data, unsigned int len, struct player *pl)
  * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
  * @param on_off switch this right on or off
  */
-void s_notify_player_ch_priv_changed(struct player *pl, struct player *tgt, char right, char on_off)
+static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tgt, char right, char on_off)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -937,7 +937,7 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
  * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
  * @param on_off switch this right on or off
  */
-void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off)
+static void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -1012,7 +1012,7 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
  * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
  * @param on_off switch this right on or off
  */
-void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
+static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -1072,7 +1072,7 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
  * @param color the hexadecimal color of the message
  * @param msg the message
  */
-void send_message_to_all(struct player *pl, uint32_t color, char *msg)
+static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -1116,7 +1116,7 @@ void send_message_to_all(struct player *pl, uint32_t color, char *msg)
  * @param color the hexadecimal color of the message
  * @param msg the message
  */
-void send_message_to_channel(struct player *pl, struct channel *ch, uint32_t color, char *msg)
+static void send_message_to_channel(struct player *pl, struct channel *ch, uint32_t color, char *msg)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -1164,7 +1164,7 @@ void send_message_to_channel(struct player *pl, struct channel *ch, uint32_t col
  * @param color the hexadecimal color of the message
  * @param msg the message
  */
-void send_message_to_player(struct player *pl, struct player *tgt, uint32_t color, char *msg)
+static void send_message_to_player(struct player *pl, struct player *tgt, uint32_t color, char *msg)
 {
 	char *data, *ptr;
 	int data_size;
@@ -1245,7 +1245,7 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
  * @param ch the channel changed
  * @param topic the new topic
  */
-void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char *name)
+static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char *name)
 {
 	char *data, *ptr;
 	int data_size;
@@ -1318,7 +1318,7 @@ void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl)
  * @param ch the channel changed
  * @param topic the new topic
  */
-void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, char *topic)
+static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, char *topic)
 {
 	char *data, *ptr;
 	int data_size;
@@ -1391,7 +1391,7 @@ void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl)
  * @param ch the channel changed
  * @param topic the new topic
  */
-void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char *desc)
+static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char *desc)
 {
 	char *data, *ptr;
 	int data_size;

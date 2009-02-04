@@ -28,11 +28,6 @@ int init_db(struct config *c)
 		dbi_conn_set_option(c->conn, "password", c->db.connection.pass);
 		dbi_conn_set_option(c->conn, "dbname", c->db.connection.db);
 		dbi_conn_set_option_numeric(c->conn, "port", c->db.connection.port);
-		/*printf("host -> %s\n", c->db.connection.host);
-		printf("username -> %s\n", c->db.connection.user);
-		printf("password -> %s\n", c->db.connection.pass);
-		printf("dbname -> %s\n", c->db.connection.db);
-		printf("port -> %i\n", c->db.connection.port);*/
 	}
 
 	return 1;
@@ -171,6 +166,13 @@ int db_create_channels(struct config *c, struct server *s)
 	return 1;
 }
 
+/**
+ * Go through the database, read and add to the server all
+ * the registrations stored.
+ *
+ * @param c the configuration of the db
+ * @param s the server
+ */
 int db_create_registrations(struct config *c, struct server *s)
 {
 	char *q = "SELECT * FROM registrations WHERE server_id = %i;";

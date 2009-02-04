@@ -198,7 +198,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
  * @param pl the player to send this to
  * @param ka_id the counter of the keepalived we received
  */
-void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
+static void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 {
 	char *data = (char *)calloc(24, sizeof(char));
 	char *ptr = data;
