@@ -131,7 +131,6 @@ int db_create_channels(struct config *c, struct server *s)
 	char *name, *topic, *desc;
 	int flags;
 
-	printf("C\n");
 	if (connect_db(c) == 0)
 		return 0;
 
@@ -157,6 +156,7 @@ int db_create_channels(struct config *c, struct server *s)
 					dbi_result_get_uint(res, "codec"),
 					dbi_result_get_int(res, "ordr"),
 					dbi_result_get_uint(res, "maxusers"));
+			ch->db_id = dbi_result_get_uint(res, "id");
 			add_channel(s, ch);
 			/* free temporary variables */
 			free(name); free(topic); free(desc);
