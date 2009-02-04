@@ -59,6 +59,8 @@ void ar_grow(struct array *a)
 {
 	a->total_slots *= 2;
 	a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
+	/* realloc does not set to zero!! */
+	bzero(a->array + (a->total_slots / 2), a->total_slots / 2 * sizeof(void *));
 }
 
 /**

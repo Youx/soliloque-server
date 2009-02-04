@@ -87,7 +87,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	st->pkt_max *= 2;
 	/* reallocate and clean */
 	st->pkt_sizes = (size_t *)realloc(st->pkt_sizes, sizeof(size_t) * st->pkt_max);
-	bzero(st->pkt_sizes + (st->pkt_max / 2), sizeof(size_t) * st->pkt_max / 2);
+	bzero(st->pkt_sizes + (st->pkt_max / 2), sizeof(size_t) * st->pkt_max / 2); /* realloc does not set to zero! */
 	/* reallocate */
 	st->pkt_timestamps = (struct timeval *)realloc(st->pkt_timestamps, sizeof(struct timeval) * st->pkt_max);
 	st->pkt_io = (char *)realloc(st->pkt_io, sizeof(char) * st->pkt_max);
