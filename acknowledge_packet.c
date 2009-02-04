@@ -15,7 +15,8 @@ void send_acknowledge(struct player *pl)
 	char data[16];
 	char *ptr = data;
 
-	*(uint32_t *)ptr = 0x0000bef1;		ptr+=4;
+	*(uint16_t *)ptr = PKT_TYPE_ACK;	ptr+=2;
+	*(uint16_t *)ptr = 0x0000;		ptr+=2;
 	*(uint32_t *)ptr = pl->private_id;	ptr+=4;
 	*(uint32_t *)ptr = pl->public_id;	ptr+=4;
 	*(uint32_t *)ptr = pl->f1_s_counter;	ptr+=4;

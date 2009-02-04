@@ -46,7 +46,8 @@ static void s_resp_chans(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint32_t *)ptr = 0x0006bef0;			ptr += 4;	/* */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_LIST_CH;			ptr += 2;	/* */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
 	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
@@ -85,7 +86,8 @@ void s_notify_new_player(struct player *pl)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0064bef0;		ptr += 4;
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CREATE_PL;	ptr += 2;	/* */
 	/* public and private ID */		ptr += 8;	/* done later */
 	/* counter */				ptr += 4;	/* done later */
 	/* packet version */			ptr += 4;	/* empty for now */
@@ -122,7 +124,8 @@ static void s_notify_player_left(struct player *p)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	*(uint32_t *)ptr = p->f0_s_counter;	ptr += 4;	/* packet counter */
@@ -175,7 +178,8 @@ static void s_resp_players(struct player *pl)
 		bzero(data, data_size * sizeof(char));
 		ptr = data;
 		/* initialize the packet */
-		*(uint32_t *)ptr = 0x0007bef0;			ptr += 4;
+		*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
+		*(uint16_t *)ptr = CTL_LIST_PL;			ptr += 2;	/* */
 		*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
 		*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
 		*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
@@ -288,7 +292,8 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	/* packet counter */			ptr += 4;	/* filled later */
@@ -365,7 +370,8 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0066bef0;			ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHKICK_PL;		ptr += 2;	/* */
 	/* private ID */				ptr += 4;	/* filled later */
 	/* public ID */					ptr += 4;	/* filled later */
 	/* packet counter */				ptr += 4;	/* filled later */
@@ -441,7 +447,8 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0067bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_SWITCHCHAN;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	/* packet counter */			ptr += 4;	/* filled later */
@@ -516,7 +523,8 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0073bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANDELETE;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	/* packet counter */			ptr += 4;	/* filled later */
@@ -556,7 +564,8 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0xff93bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANDELETE_ERROR;ptr += 2;	/* */
 	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
 	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
@@ -622,7 +631,8 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0065bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	/* packet counter */			ptr += 4;	/* filled later */
@@ -706,7 +716,8 @@ static void s_resp_bans(struct player *pl)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x019bbef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_BANLIST;		ptr += 2;	/* */
 	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
 	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
@@ -807,7 +818,8 @@ static void s_resp_server_stats(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint32_t *)ptr = 0x0196bef0;			ptr += 4;/* */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_SERVSTATS;		ptr += 2;	/* */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;/* player public id */
 	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;/* packet counter */
@@ -869,7 +881,8 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x006abef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_PL_CHPRIV;ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -947,7 +960,8 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x006bbef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_PL_SVPRIV;ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1022,7 +1036,8 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0068bef0;		ptr += 4;	/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_PL_STATUS;ptr += 2;	/* */
 	/* private ID */			ptr += 4;	/* filled later */
 	/* public ID */				ptr += 4;	/* filled later */
 	/* packet counter */			ptr += 4;	/* filled later */
@@ -1083,7 +1098,8 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1128,7 +1144,8 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1174,7 +1191,8 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0082bef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
 	*(uint32_t *)ptr = tgt->private_id;	ptr += 4;/* private ID */
 	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* public ID */
 	*(uint32_t *)ptr = tgt->f0_s_counter;	ptr += 4;/* public ID */
@@ -1257,7 +1275,8 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x006fbef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_CH_NAME;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1330,7 +1349,8 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0070bef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_CH_TOPIC;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1403,7 +1423,8 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0072bef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_CH_DESC;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */
@@ -1477,7 +1498,8 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 	ptr = data;
 
 
-	*(uint32_t *)ptr = 0x006ebef0;		ptr += 4;/* function code */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CREATE_CH;	ptr += 2;	/* */
 	/* private ID */			ptr += 4;/* filled later */
 	/* public ID */				ptr += 4;/* filled later */
 	/* packet counter */			ptr += 4;/* filled later */

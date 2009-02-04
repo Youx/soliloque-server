@@ -7,6 +7,8 @@
 
 #include "player.h"
 
+#define PKT_TYPE_ACK 0xbef1
+
 void send_acknowledge(struct player *pl);
 
 #endif
