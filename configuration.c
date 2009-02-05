@@ -16,8 +16,10 @@ void destroy_config(struct config *c)
 {
 	if (c->db_type != NULL) {
 		if (strcmp(c->db_type, "sqlite") == 0 || strcmp(c->db_type, "sqlite3") == 0) {
-			if (c->db.path != NULL)
-				free(c->db.path);
+			if (c->db.file.path != NULL)
+				free(c->db.file.path);
+			if (c->db.file.db != NULL)
+				free(c->db.file.db);
 		} else {
 			if (c->db.connection.host != NULL)
 				free(c->db.connection.host);
@@ -67,11 +69,17 @@ struct config *config_parse(char *cfg_file)
 
 	if (strcmp(cfg_s->db_type, "sqlite") == 0 || strcmp(cfg_s->db_type, "sqlite3") == 0) {
 		/* sqlite 2.x or 3.x use a filename to connect */
-		curr = config_setting_get_member(db, "path");
+		curr = config_setting_get_member(db, "dir");
 		if (curr == NULL)
-			cfg_s->db.path = "./soliloque.db";
+			cfg_s->db.file.path = "./";
 		else
-			cfg_s->db.path = strdup(config_setting_get_string(curr));
+			cfg_s->db.file.path = strdup(config_setting_get_string(curr));
+
+		curr = config_setting_get_member(db, "db");
+		if (curr == NULL)
+			cfg_s->db.file.db = "soliloque.sqlite3";
+		else
+			cfg_s->db.file.db = strdup(config_setting_get_string(curr));
 	} else {
 		/* anything else uses a host, port, user, pass, db */
 

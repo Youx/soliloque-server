@@ -8,7 +8,10 @@ struct config
 {
 	char *db_type;
 	union {
-		char *path;
+		struct {
+			char *path;
+			char *db;
+		} file;
 		struct {
 			char *host;
 			int port;
