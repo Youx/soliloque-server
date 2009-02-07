@@ -1,4 +1,6 @@
 #include "channel.h"
+#include "array.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -16,7 +18,7 @@ int destroy_channel(struct channel *chan)
 	free(chan->name);
 	free(chan->topic);
 	free(chan->desc);
-	free(chan->players);
+	ar_free(chan->players);
 
 	free(chan);
 	return 1;
@@ -42,8 +44,8 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	chan = (struct channel *)calloc(1, sizeof(struct channel));
 	
 	bzero(chan->password, 30);
-	chan->current_users = 0;
-	chan->players = (struct player **)calloc(max_users, sizeof(struct player *));
+	chan->players = ar_new(4);
+	chan->players->max_slots = max_users;
 	
 	chan->name = strdup(name);
 	chan->topic = strdup(topic);
@@ -52,7 +54,6 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	chan->flags = flags;
 	chan->codec = codec;
 	chan->sort_order = sort_order;
-	chan->max_users = max_users;
 	
 	return chan;
 };
@@ -100,19 +101,10 @@ void print_channel(struct channel *chan)
  */
 int add_player_to_channel(struct channel *chan, struct player *pl)
 {
-	int i;
-	
-	pl->in_chan = chan;
-	chan->current_users++;
-	
-	for (i = 0 ; i < chan->max_users ; i++) {
-		if (chan->players[i] == NULL) {
-			chan->players[i] = pl;
-			return 1;
-		}
+	if (ar_insert(chan->players, pl) == AR_OK) {
+		pl->in_chan = chan;
+		return 1;
 	}
-	chan->current_users--;
-	pl->in_chan = NULL;
 	return 0;
 }
 
@@ -140,7 +132,7 @@ int channel_to_data(struct channel *ch, char *data)
 	*(uint16_t *)ptr = ch->codec;		ptr += 2;
 	*(uint32_t *)ptr = 0xFFFFFFFF;		ptr += 4;
 	*(uint16_t *)ptr = ch->sort_order;	ptr += 2;
-	*(uint16_t *)ptr = ch->max_users;	ptr += 2;
+	*(uint16_t *)ptr = ch->players->max_slots;	ptr += 2;
 	strcpy(ptr, ch->name);			ptr += (strlen(ch->name) +1);
 	strcpy(ptr, ch->topic);			ptr += (strlen(ch->topic) +1);
 	strcpy(ptr, ch->desc);			ptr += (strlen(ch->desc) +1);

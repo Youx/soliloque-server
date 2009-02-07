@@ -604,7 +604,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);
 	if (pl->global_flags & GLOBAL_FLAG_SERVERADMIN) {
-		if (del == NULL || del->current_users > 0) {
+		if (del == NULL || del->players->used_slots > 0) {
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else {
 			/* if the channel is registered, remove it from the db */
@@ -1143,7 +1143,6 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size;
-	int i;
 	struct server *s = pl->in_chan->in_server;
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
@@ -1163,18 +1162,15 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
-	for (i = 0 ; i < ch->max_users ; i++) {
-		if (ch->players[i] != NULL) {
-			tmp_pl = ch->players[i];
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
-			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
-			tmp_pl->f0_s_counter++;
-		}
-	}
+	ar_each(struct player *, tmp_pl, ch->players)
+		*(uint32_t *)(data + 4) = tmp_pl->private_id;
+		*(uint32_t *)(data + 8) = tmp_pl->public_id;
+		*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+		packet_add_crc_d(data, data_size);
+		send_to(s, data, data_size, 0,
+				(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+		tmp_pl->f0_s_counter++;
+	ar_end_each;
 
 	free(data);
 }

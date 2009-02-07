@@ -276,16 +276,10 @@ struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
  */
 void remove_player(struct server *s, struct player *p)
 {
-	int i;
-
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
 	/* remove from the channel */
-	for (i=0 ; i < p->in_chan->max_users ; i++) {
-		if (p->in_chan->players[i] == p)
-			p->in_chan->players[i] = NULL;
-	}
-	p->in_chan->current_users--;
+	ar_remove(p->in_chan->players, (void *)p);
 	/* free the memory */
 	destroy_player(p);
 }
@@ -299,29 +293,18 @@ void remove_player(struct server *s, struct player *p)
 int move_player(struct player *p, struct channel *to)
 {
 	struct channel *old;
-	int i;
 
 	if (p->in_chan == NULL) {
 		return add_player_to_channel(to, p);
 	}
 
-	if (to->current_users >= to->max_users)
-		return 0;
-
-	/* remove from the old channel */
 	old = p->in_chan;
-	for(i = 0 ; i < old->max_users ; i++) {
-		if(old->players[i] == p)
-			old->players[i] = NULL;
+	if (ar_insert(to->players, (void *)p) == AR_OK) {
+		ar_remove(old->players, (void *)p);
+		return 1;
 	}
-	old->current_users--;
+
 	/* put inside the new channel */
-	p->in_chan = to;
-	for(i = 0 ; i < to->max_users ; i++) {
-		if (to->players[i] == NULL)
-			to->players[i] = p;
-	}
-	to->current_users++;
 	return 1;
 }
 

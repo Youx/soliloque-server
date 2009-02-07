@@ -36,7 +36,6 @@ int audio_received(char *in, int len, struct server *s)
 	struct player *tmp_pl;
 
 	size_t data_size, audio_block_size, expected_size;
-	int i;
 	char *data, *ptr;
 	
 	data_codec = in[3];
@@ -78,15 +77,14 @@ int audio_received(char *in, int len, struct server *s)
 								ptr += 2;		/* another counter?? */
 		memcpy(ptr, in + 16, audio_block_size);		ptr += audio_block_size;
 		
-		for (i = 0 ; i < ch_in->max_users ; i++) {
-			tmp_pl = ch_in->players[i];
-			if (tmp_pl != NULL && tmp_pl != sender) {
+		ar_each(struct player *, tmp_pl, ch_in->players)
+			if (tmp_pl != sender) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
 				send_to(sender->in_chan->in_server, data, data_size, 0, 
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 			}
-		}
+		ar_end_each;
 		free(data);
 		return 0;
 	} else {

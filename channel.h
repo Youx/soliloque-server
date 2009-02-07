@@ -20,15 +20,13 @@ struct channel {
 	uint16_t flags;
 	uint8_t codec;
 	uint16_t sort_order;
-	uint16_t max_users;
 	
 	char *name;
 	char *topic;
 	char *desc;
 	char password[30];
 
-	uint16_t current_users;
-	struct player **players;
+	struct array *players;
 	struct server *in_server;
 
 	uint32_t db_id;

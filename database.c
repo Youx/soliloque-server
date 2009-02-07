@@ -155,13 +155,13 @@ int db_register_channel(struct config *c, struct channel *ch)
 
 	res = dbi_conn_queryf(c->conn, q,
 			ch->in_server->id, name_clean, topic_clean, desc_clean,
-			ch->codec, ch->max_users, ch->sort_order,
+			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			0xFFFFFFFF, pass_clean);
 	if (res == NULL) {
 		printf("Insertion request failed : \n");
 		printf(q, ch->in_server->id, name_clean, topic_clean, desc_clean,
-			ch->codec, ch->max_users, ch->sort_order,
+			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			0xFFFFFFFF, pass_clean);
 		printf("\n");
