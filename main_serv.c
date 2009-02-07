@@ -193,6 +193,10 @@ int main()
 	/* do some initialization of the finite state machine */
 	init_callbacks();
 	c = config_parse("sol-server.cfg");
+	if (c == NULL) {
+		printf("(EE) Unable to read configuration file. Exiting.\n");
+		exit(0);
+	}
 	init_db(c);
 	if (!connect_db(c)) {
 		printf("(EE) Unable to connect to the database. Exiting.\n");
