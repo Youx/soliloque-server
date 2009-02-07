@@ -301,6 +301,7 @@ int move_player(struct player *p, struct channel *to)
 	old = p->in_chan;
 	if (ar_insert(to->players, (void *)p) == AR_OK) {
 		ar_remove(old->players, (void *)p);
+		p->in_chan = to;
 		return 1;
 	}
 
