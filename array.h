@@ -18,6 +18,8 @@ struct array {
 
 extern int tmp_arr_iterator;
 
+#define AR_OK 1
+
 #define ar_each(type, el_ptr, a)\
 for(tmp_arr_iterator=0 ; tmp_arr_iterator < a->total_slots ; tmp_arr_iterator++) {\
 	if(a->array[tmp_arr_iterator] != NULL) {\
@@ -33,5 +35,6 @@ int ar_grow(struct array *a);
 void ar_remove_index(struct array *a, int index);
 void ar_remove(struct array *a, void *el);
 int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **res);
+int ar_free(struct array *a);
 
 #endif

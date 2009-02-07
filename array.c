@@ -22,7 +22,6 @@ int tmp_arr_iterator;
 
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
 
-
 /**
  * Find the next available slot in the array.
  *
@@ -60,7 +59,7 @@ int ar_insert(struct array *a, void *elem)
 	if (i != -1) {
 		a->array[i] = elem;
 		a->used_slots++;
-		return 1;
+		return AR_OK;
 	}
 	return 0;
 }
@@ -82,7 +81,7 @@ int ar_grow(struct array *a)
 		a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
 		/* realloc does not set to zero!! */
 		bzero(a->array + old_size, (a->total_slots - old_size) * sizeof(void *));
-		return 1;
+		return AR_OK;
 	}
 	return 0;
 }
@@ -174,6 +173,18 @@ int ar_get_n_elems_start_at(struct array *a, int max_elem, int start_at, void **
 	return el_counter;
 }
 
+int ar_free(struct array *a)
+{
+	int i;
+
+	for (i = 0 ; i < a->total_slots ; i++) {
+		if (a->array[i] != NULL)
+			return 0;
+	}
+	free(a->array);
+	free(a);
+	return AR_OK;
+}
 #ifdef TEST_ARRAY
 
 int main()
