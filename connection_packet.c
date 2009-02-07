@@ -40,9 +40,9 @@ static void server_accept_connection(struct player *pl)
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
 	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
 	/* Checksum initialize at the end */		ptr += 4;
-	*ptr = strlen(s->server_name);			ptr += 1;	/* Length of server name */
+	*ptr = MIN(29, strlen(s->server_name));		ptr += 1;	/* Length of server name */
 	strncpy(ptr, s->server_name, *(ptr - 1));	ptr += 29;	/* Server name */
-	*ptr = strlen(s->machine);			ptr += 1;	/* Length of server machine */
+	*ptr = MIN(29, strlen(s->machine));			ptr += 1;	/* Length of server machine */
 	strncpy(ptr, s->machine, *(ptr - 1));		ptr += 29;	/* Server machine */
 	/* Server version */
 	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */

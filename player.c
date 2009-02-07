@@ -125,8 +125,8 @@ int player_to_data(struct player *pl, char *data)
 	*(uint16_t *)ptr = pl->chan_privileges;		ptr += 2;	/* player chan privileges */
 	*(uint16_t *)ptr = pl->global_flags;		ptr += 2;	/* player global flags */
 	*(uint16_t *)ptr = pl->player_attributes;	ptr += 2;	/* player attributes */
-	*ptr = strlen(pl->name);			ptr += 1;	/* player name size */
-	strncpy(ptr, pl->name, 29);			ptr += 29;	/* player name */
+	*ptr = MIN(29, strlen(pl->name));		ptr += 1;	/* player name size */
+	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;	/* player name */
 
 	return size;
 }

@@ -303,8 +303,8 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	*(uint32_t *)ptr = kicked->public_id;	ptr += 4;	/* ID of player who left */
 	*(uint16_t *)ptr = 2;			ptr += 2;	/* visible notification : kicked */
 	*(uint32_t *)ptr = kicker->public_id;	ptr += 4;	/* kicker ID */
-	*(uint8_t *)ptr = strlen(reason);	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, strlen(reason));	ptr += 29;	/* reason message */
+	*(uint8_t *)ptr = MIN(29, strlen(reason));	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
 
 	ar_each(struct player *, tmp_pl, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -382,8 +382,8 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	*(uint32_t *)ptr = kicker->public_id;		ptr += 4;	/* kicker ID */
 	*(uint32_t *)ptr = kicked_to->id;		ptr += 4;	/* channel the player is moved to */
 	*(uint16_t *)ptr = 0;				ptr += 2;	/* visible notification : kicked */
-	*(uint8_t *)ptr = (uint8_t)strlen(reason);	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, strlen(reason));		ptr += 29;	/* reason message */
+	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, *(ptr - 1));		ptr += 29;	/* reason message */
 
 	ar_each(struct player *, tmp_pl, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -647,8 +647,8 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	*(uint32_t *)ptr = target->public_id;	ptr += 4;	/* ID of player banned */
 	*(uint16_t *)ptr = 2;			ptr += 2;	/* kick */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* banner ID */
-	*(uint8_t *)ptr = strlen(reason);	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, strlen(reason));	ptr += 29;	/* reason message */
+	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
+	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
 
 	ar_each(struct player *, tmp_pl, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -1114,7 +1114,7 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
 	*(uint8_t *)ptr = 0;			ptr += 1;/* type of msg (0 = all) */
 	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
 	ar_each(struct player *, tmp_pl, s->players)
@@ -1159,7 +1159,7 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
 	*(uint8_t *)ptr = 1;			ptr += 1;/* type of msg (1 = channel) */
 	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
 	ar_each(struct player *, tmp_pl, ch->players)
@@ -1203,7 +1203,7 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
 	*(uint8_t *)ptr = 2;			ptr += 1;/* type of msg (2 = private) */
 	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, 29);		ptr += 29;/* sender's name */
+	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
 	packet_add_crc_d(data, data_size);
