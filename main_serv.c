@@ -194,7 +194,10 @@ int main()
 	init_callbacks();
 	c = config_parse("sol-server.cfg");
 	init_db(c);
-
+	if (!connect_db(c)) {
+		printf("(EE) Unable to connect to the database. Exiting.\n");
+		exit(0);
+	}
 	ss = db_create_servers(c);
 
 	for (i = 0 ; ss[i] != NULL ; i++) {
