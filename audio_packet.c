@@ -56,7 +56,7 @@ int audio_received(char *in, int len, struct server *s)
 		audio_block_size = codec_offset[(int)data_codec] + codec_audio_size[(int)data_codec];
 		expected_size = 16 + audio_block_size;
 		if (len != expected_size) {
-			printf("(EE) Audio packet's size is incorrect : %i bytes, expected : %i.\n", len,
+			printf("(EE) Audio packet's size is incorrect : %i bytes, expected : %zu.\n", len,
 					expected_size);
 			return -1;
 		}
