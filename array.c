@@ -8,12 +8,20 @@
  */
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "array.h"
 #include <sys/types.h>
 #include <assert.h>
+#include <strings.h>
+#include <math.h>
+#include <limits.h>
+
 #include "compat.h"
 
 int tmp_arr_iterator;
+
+#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+
 
 /**
  * Find the next available slot in the array.
@@ -38,16 +46,23 @@ int ar_next_available(const struct array *a)
  *
  * @param a the array
  * @param elem a generic pointer to an element
+ *
+ * @return 0 on failure, 1 on success
  */
-void ar_insert(struct array *a, void *elem)
+int ar_insert(struct array *a, void *elem)
 {
 	int i;
 
-	if (a->used_slots == a->total_slots)
+	if (a->used_slots == a->total_slots) {
 		ar_grow(a);
+	}
 	i = ar_next_available(a);
-	a->array[i] = elem;
-	a->used_slots++;
+	if (i != -1) {
+		a->array[i] = elem;
+		a->used_slots++;
+		return 1;
+	}
+	return 0;
 }
 
 /**
@@ -55,12 +70,21 @@ void ar_insert(struct array *a, void *elem)
  *
  * @param a the array that needs to be grown
  */
-void ar_grow(struct array *a)
+int ar_grow(struct array *a)
 {
-	a->total_slots *= 2;
-	a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
-	/* realloc does not set to zero!! */
-	bzero(a->array + (a->total_slots / 2), a->total_slots / 2 * sizeof(void *));
+	int old_size, new_size;
+
+	if (a->total_slots < a->max_slots) {
+		old_size = a->total_slots;
+		new_size = MIN(a->total_slots * 2, a->max_slots);
+
+		a->total_slots = new_size;
+		a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
+		/* realloc does not set to zero!! */
+		bzero(a->array + old_size, (a->total_slots - old_size) * sizeof(void *));
+		return 1;
+	}
+	return 0;
 }
 
 /**
@@ -76,6 +100,7 @@ struct array *ar_new(int size)
 	a = (struct array *)calloc(sizeof(struct array), 1);
 	a->total_slots = size;
 	a->used_slots = 0;
+	a->max_slots = INT_MAX;
 	a->array = (void **)calloc(sizeof(void *), size);
 	return a;
 }
