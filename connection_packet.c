@@ -21,6 +21,7 @@
 #include "control_packet.h"
 #include "server_stat.h"
 #include "registration.h"
+#include "server_privileges.h"
 
 
 /**
@@ -51,25 +52,10 @@ static void server_accept_connection(struct player *pl)
 	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
 	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
 	*(uint16_t *)ptr = 0x1FEF;			ptr += 2;	/* supported codecs (1<<codec | 1<<codec2 ...) */
-							ptr += 9;
-	*(uint32_t *)ptr = 0xFFFFFFFF;
-	*(uint32_t *)(ptr+4) = 0xFFFFFFFF;
-	*(uint32_t *)(ptr+8) = 0xFFFFFFFF;		/* Server admin rights */
-	*(uint32_t *)(ptr+12) = 0xFFFFFFFF;		/* Channel admin rights (channel perm) */
-	*(uint32_t *)(ptr+16) = 0xFFFFFFFF;		/* Channel admin rights (player privileges + other) */
-	*(uint32_t *)(ptr+20) = 0xFFFFFFFF;		/* (NOTHING) */
-	*(uint32_t *)(ptr+24) = 0xFFFFFFFF;		/* Op rights (channel perm +1/2 player privileges) */
-	*(uint32_t *)(ptr+28) = 0xFFFFFFFF;		/* Op rights (1/2 player privileges + other) */
-	*(uint32_t *)(ptr+32) = 0xFFFFFFFF;		/* (NOTHING) */
-	*(uint32_t *)(ptr+36) = 0xFFFFFFFF;		/* Voice rights (channel perm + player privileges) */
-	*(uint32_t *)(ptr+40) = 0xFFFFFFFF;		/* Voice rights (other) */
-	*(uint32_t *)(ptr+44) = 0xFFFFFFFF;		/* Regist rights (Admin + 1/2 Channel perm) */
-	*(uint32_t *)(ptr+48) = 0xFFFFFFFF;		/* Regist rights (1/2 Channel perm + player priv) */
-	*(uint32_t *)(ptr+52) = 0xFFFFFFFF;		/* Regist rights (other) */
-	*(uint32_t *)(ptr+56) = 0xFFFFFFFF;		/* Anonym rights (Admin + channel perm) */
-	*(uint32_t *)(ptr+60) = 0xFFFFFFFF;		/* Anonym rights (Player priv + other) */
-
-	/* garbage data */				ptr += 69;
+							ptr += 7;
+	/* 0 = SA, 1 = CA, 2 = Op, 3 = Voice, 4 = Reg, 5 = Anonymous */
+	sp_to_bitfield(s->privileges, ptr);
+	/* garbage data */				ptr += 71;
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
 	*ptr = MIN(255, strlen(s->welcome_msg));	ptr += 1;	/* Length of welcome message */

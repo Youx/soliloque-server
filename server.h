@@ -5,6 +5,7 @@
 #include "channel.h"
 #include "player.h"
 #include "array.h"
+#include "server_privileges.h"
 
 #include <pthread.h>
 #include <poll.h>
@@ -38,6 +39,8 @@ struct server {
 	int socket_desc;
 	int port;
 	int codecs;
+
+	struct server_privileges *privileges;
 
         struct pollfd socket_poll;
 	pthread_t main_thread;

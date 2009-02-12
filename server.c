@@ -62,6 +62,7 @@ struct server *new_server()
 	serv->bans = ar_new(4);
 	serv->regs = ar_new(8);
 	serv->stats = new_sstat();
+	serv->privileges = new_sp_test();
 	get_machine_name(serv);
 
 	return serv;
