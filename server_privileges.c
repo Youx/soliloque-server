@@ -109,6 +109,9 @@ int player_has_privilege(struct player *pl, int privilege)
 {
 	int grp;
 
+	/* FIXME : add a parameter that indicate the channel we are acting in.
+	 * If the channel is the same as the channel the player is in, he can use rights
+	 * provided by CA, OP, Voice, else he can only try anonymous and SA */
 	for (grp = 0 ; grp < 6 ; grp++) {
 		if (player_is_in_group(pl, grp)) {
 			if (pl->in_chan->in_server->privileges->privileges[grp][privilege])
