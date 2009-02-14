@@ -280,3 +280,122 @@ int db_create_registrations(struct config *c, struct server *s)
 	}
 	return 1;
 }
+
+/**
+ * Go through the database, read and add to the server all
+ * the server permissions stored.
+ *
+ * @param c the configuration of the db
+ * @param s the server
+ */
+int db_create_sv_privileges(struct config *c, struct server *s)
+{
+	char *q = "SELECT * FROM server_privileges WHERE server_id = %i;";
+	dbi_result res;
+	const char *group;
+	int g;
+	struct server_privileges *sp = s->privileges;
+
+	printf("Loading server privileges.\n");
+	if (connect_db(c) == 0)
+		return 0;
+
+	res = dbi_conn_queryf(c->conn, q, s->id);
+	if (res) {
+		while (dbi_result_next_row(res)) {
+			printf("sp row...\n");
+			/* Get the id of the group from the string */
+			group = dbi_result_get_string(res, "user_group");
+			if (strcmp(group, "server_admin") == 0) {
+				g = PRIV_SERVER_ADMIN;
+			} else if (strcmp(group, "channel_admin") == 0) {
+				g = PRIV_CHANNEL_ADMIN;
+			} else if (strcmp(group, "operator") == 0) {
+				g = PRIV_OPERATOR;
+			} else if (strcmp(group, "voice") == 0) {
+				g = PRIV_VOICE;
+			} else if (strcmp(group, "registered") == 0) {
+				g = PRIV_REGISTERED;
+			} else if (strcmp(group, "anonymous") == 0) {
+				g = PRIV_ANONYMOUS;
+			} else {
+				printf("(EE) server_privileges.user_group = %s, \
+						expected : server_admin, channel_admin, \
+						operator, voice, registered, anonymous.\n",
+						group);
+				continue;
+			}
+			printf("GROUP : %i\n", g);
+			/* Copy all privileges to the server... */
+			sp->priv[g][SP_ADM_DEL_SERVER] = dbi_result_get_uint(res, "adm_del_server");
+			sp->priv[g][SP_ADM_ADD_SERVER] = dbi_result_get_uint(res, "adm_add_server");
+			sp->priv[g][SP_ADM_LIST_SERVERS] = dbi_result_get_uint(res, "adm_list_servers");
+			sp->priv[g][SP_ADM_SET_PERMISSIONS] = dbi_result_get_uint(res, "adm_set_permissions");
+			sp->priv[g][SP_ADM_CHANGE_USER_PASS] = dbi_result_get_uint(res, "adm_change_user_pass");
+			sp->priv[g][SP_ADM_CHANGE_OWN_PASS] = dbi_result_get_uint(res, "adm_change_own_pass");
+			sp->priv[g][SP_ADM_LIST_REGISTRATIONS] = dbi_result_get_uint(res, "adm_list_registrations");
+			sp->priv[g][SP_ADM_REGISTER_PLAYER] = dbi_result_get_uint(res, "adm_register_player");
+
+			sp->priv[g][SP_ADM_CHANGE_SERVER_CODECS] = dbi_result_get_uint(res, "adm_change_server_codecs");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_TYPE] = dbi_result_get_uint(res, "adm_change_server_type");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_PASS] = dbi_result_get_uint(res, "adm_change_server_pass");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_WELCOME] = dbi_result_get_uint(res, "adm_change_server_welcome");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_MAXUSERS] = dbi_result_get_uint(res, "adm_change_server_maxusers");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_NAME] = dbi_result_get_uint(res, "adm_change_server_name");
+			sp->priv[g][SP_ADM_CHANGE_WEBPOST_URL] = dbi_result_get_uint(res, "adm_change_webpost_url");
+			sp->priv[g][SP_ADM_CHANGE_SERVER_PORT] = dbi_result_get_uint(res, "adm_change_server_port");
+
+			sp->priv[g][SP_ADM_START_SERVER] = dbi_result_get_uint(res, "adm_start_server");
+			sp->priv[g][SP_ADM_STOP_SERVER] = dbi_result_get_uint(res, "adm_stop_server");
+			sp->priv[g][SP_ADM_MOVE_PLAYER] = dbi_result_get_uint(res, "adm_move_player");
+			sp->priv[g][SP_ADM_BAN_IP] = dbi_result_get_uint(res, "adm_ban_ip");
+
+			sp->priv[g][SP_CHA_DELETE] = dbi_result_get_uint(res, "cha_delete");
+			sp->priv[g][SP_CHA_CREATE_MODERATED] = dbi_result_get_uint(res, "cha_create_moderated");
+			sp->priv[g][SP_CHA_CREATE_SUBCHANNELED] = dbi_result_get_uint(res, "cha_create_subchanneled");
+			sp->priv[g][SP_CHA_CREATE_DEFAULT] = dbi_result_get_uint(res, "cha_create_default");
+			sp->priv[g][SP_CHA_CREATE_UNREGISTERED] = dbi_result_get_uint(res, "cha_create_unregistered");
+			sp->priv[g][SP_CHA_CREATE_REGISTERED] = dbi_result_get_uint(res, "cha_create_registered");
+			sp->priv[g][SP_CHA_JOIN_REGISTERED] = dbi_result_get_uint(res, "cha_join_registered");
+
+			sp->priv[g][SP_CHA_JOIN_WO_PASS] = dbi_result_get_uint(res, "cha_join_wo_pass");
+			sp->priv[g][SP_CHA_CHANGE_CODEC] = dbi_result_get_uint(res, "cha_change_codec");
+			sp->priv[g][SP_CHA_CHANGE_MAXUSERS] = dbi_result_get_uint(res, "cha_change_maxusers");
+			sp->priv[g][SP_CHA_CHANGE_ORDER] = dbi_result_get_uint(res, "cha_change_order");
+			sp->priv[g][SP_CHA_CHANGE_DESC] = dbi_result_get_uint(res, "cha_change_desc");
+			sp->priv[g][SP_CHA_CHANGE_TOPIC] = dbi_result_get_uint(res, "cha_change_topic");
+			sp->priv[g][SP_CHA_CHANGE_PASS] = dbi_result_get_uint(res, "cha_change_pass");
+			sp->priv[g][SP_CHA_CHANGE_NAME] = dbi_result_get_uint(res, "cha_change_name");
+
+			sp->priv[g][SP_PL_GRANT_ALLOWREG] = dbi_result_get_uint(res, "pl_grant_allowreg");
+			sp->priv[g][SP_PL_GRANT_VOICE] = dbi_result_get_uint(res, "pl_grant_voice");
+			sp->priv[g][SP_PL_GRANT_AUTOVOICE] = dbi_result_get_uint(res, "pl_grant_autovoice");
+			sp->priv[g][SP_PL_GRANT_OP] = dbi_result_get_uint(res, "pl_grant_op");
+			sp->priv[g][SP_PL_GRANT_AUTOOP] = dbi_result_get_uint(res, "pl_grant_autoop");
+			sp->priv[g][SP_PL_GRANT_CA] = dbi_result_get_uint(res, "pl_grant_ca");
+			sp->priv[g][SP_PL_GRANT_SA] = dbi_result_get_uint(res, "pl_grant_sa");
+
+			sp->priv[g][SP_PL_REGISTER_PLAYER] = dbi_result_get_uint(res, "pl_register_player");
+			sp->priv[g][SP_PL_REVOKE_ALLOWREG] = dbi_result_get_uint(res, "pl_revoke_allowreg");
+			sp->priv[g][SP_PL_REVOKE_VOICE] = dbi_result_get_uint(res, "pl_revoke_voice");
+			sp->priv[g][SP_PL_REVOKE_AUTOVOICE] = dbi_result_get_uint(res, "pl_revoke_autovoice");
+			sp->priv[g][SP_PL_REVOKE_OP] = dbi_result_get_uint(res, "pl_revoke_op");
+			sp->priv[g][SP_PL_REVOKE_AUTOOP] = dbi_result_get_uint(res, "pl_revoke_autoop");
+			sp->priv[g][SP_PL_REVOKE_CA] = dbi_result_get_uint(res, "pl_revoke_ca");
+			sp->priv[g][SP_PL_REVOKE_SA] = dbi_result_get_uint(res, "pl_revoke_sa");
+
+			sp->priv[g][SP_PL_ALLOW_SELF_REG] = dbi_result_get_uint(res, "pl_allow_self_reg");
+			sp->priv[g][SP_PL_DEL_REGISTRATION] = dbi_result_get_uint(res, "pl_del_registration");
+
+			sp->priv[g][SP_OTHER_CH_COMMANDER] = dbi_result_get_uint(res, "other_ch_commander");
+			sp->priv[g][SP_OTHER_CH_KICK] = dbi_result_get_uint(res, "other_ch_kick");
+			sp->priv[g][SP_OTHER_SV_KICK] = dbi_result_get_uint(res, "other_sv_kick");
+			sp->priv[g][SP_OTHER_TEXT_PL] = dbi_result_get_uint(res, "other_text_pl");
+			sp->priv[g][SP_OTHER_TEXT_ALL_CH] = dbi_result_get_uint(res, "other_text_all_ch");
+			sp->priv[g][SP_OTHER_TEXT_IN_CH] = dbi_result_get_uint(res, "other_text_in_ch");
+			sp->priv[g][SP_OTHER_TEXT_ALL] = dbi_result_get_uint(res, "other_text_all");
+		}
+		dbi_result_free(res);
+	}
+	return 1;
+}

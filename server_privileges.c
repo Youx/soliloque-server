@@ -21,7 +21,7 @@ int sp_to_bitfield(struct server_privileges *sp, char *data)
 	for (grp = 0 ; grp < 6 ; grp++) {
 		for (priv = 0 ; priv < SP_SIZE ; priv++) {
 			bit = priv % 8;	/* 8 privileges / byte, we want the offset in the byte */
-			data[(grp * 9) + (priv / 8)] |= (sp->privileges[grp][priv] << (7 - bit));
+			data[(grp * 9) + (priv / 8)] |= (sp->priv[grp][priv] << (7 - bit));
 		}
 	}
 	return 6 * 9;
@@ -48,20 +48,20 @@ struct server_privileges *new_sp_test()
 	sp = new_sp();
 
 	/* administration */
-	sp->privileges[PRIV_SERVER_ADMIN][SP_ADM_REGISTER_PLAYER] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_ADM_STOP_SERVER] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_ADM_START_SERVER] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_ADM_REGISTER_PLAYER] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_ADM_STOP_SERVER] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_ADM_START_SERVER] = 1;
 	/* channel permissions */
-	sp->privileges[PRIV_SERVER_ADMIN][SP_CHA_JOIN_WO_PASS] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_CHA_CHANGE_CODEC] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_CHA_CHANGE_MAXUSERS] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_CHA_JOIN_WO_PASS] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_CHA_CHANGE_CODEC] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_CHA_CHANGE_MAXUSERS] = 1;
 	/* player privileges */
-	sp->privileges[PRIV_SERVER_ADMIN][SP_PL_GRANT_OP] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_PL_GRANT_AUTOOP] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_PL_GRANT_SA] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_PL_GRANT_OP] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_PL_GRANT_AUTOOP] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_PL_GRANT_SA] = 1;
 	/* other */
-	sp->privileges[PRIV_SERVER_ADMIN][SP_OTHER_TEXT_ALL] = 1;
-	sp->privileges[PRIV_SERVER_ADMIN][SP_OTHER_SV_KICK] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_OTHER_TEXT_ALL] = 1;
+	sp->priv[PRIV_SERVER_ADMIN][SP_OTHER_SV_KICK] = 1;
 
 	return sp;
 }
@@ -114,10 +114,22 @@ int player_has_privilege(struct player *pl, int privilege)
 	 * provided by CA, OP, Voice, else he can only try anonymous and SA */
 	for (grp = 0 ; grp < 6 ; grp++) {
 		if (player_is_in_group(pl, grp)) {
-			if (pl->in_chan->in_server->privileges->privileges[grp][privilege])
+			if (pl->in_chan->in_server->privileges->priv[grp][privilege])
 				return 1;
 		}
 	}
 	return 0;
 }
 
+void sp_print(struct server_privileges *sp)
+{
+	int i, j;
+
+	for (i = 0 ; i < 6 ; i++) {
+		printf("%i = ", i);
+		for (j = 0 ; j < SP_SIZE ; j++) {
+			printf("%i", sp->priv[i][j]);
+		}
+		printf("\n");
+	}
+}
