@@ -89,12 +89,12 @@ struct player;
 #define SP_OTHER_TEXT_ALL		86
 
 struct server_privileges {
-	char privileges[6][SP_SIZE];
+	char priv[6][SP_SIZE];
 };
 
 int sp_to_bitfield(struct server_privileges *sp, char *data);
 struct server_privileges *new_sp_test();
-struct server_privileges *new_sp_();
+struct server_privileges *new_sp();
 int player_has_privilege(struct player *pl, int privilege);
 
 #endif
