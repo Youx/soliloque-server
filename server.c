@@ -14,6 +14,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <sys/utsname.h>
+#include <stdio.h>
 
 #define MAX_MSG 1024
 

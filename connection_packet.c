@@ -10,10 +10,10 @@
 #include "connection_packet.h"
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <resolv.h>
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "packet_tools.h"
 #include "server.h"

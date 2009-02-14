@@ -6,6 +6,10 @@
 
 
 
+#undef MIN
+#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+
+
 #ifndef HAVE_STRNDUP
 
 #include <sys/types.h>

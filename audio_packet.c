@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 /** The size of the raw audio block (in bytes) */
 int codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};

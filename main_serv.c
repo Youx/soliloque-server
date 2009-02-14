@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#include <resolv.h>
 #include <poll.h>
 #include <inttypes.h>
 #include "server.h"

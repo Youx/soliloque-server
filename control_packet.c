@@ -2,7 +2,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <resolv.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,6 +9,7 @@
 #include <arpa/inet.h>
 #include <sys/time.h>
 #include <time.h>
+#include <stdio.h>
 
 #include "server.h"
 #include "channel.h"

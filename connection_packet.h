@@ -12,7 +12,6 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <resolv.h>
 #include "server.h"
 
 void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s);

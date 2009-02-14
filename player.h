@@ -7,7 +7,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <resolv.h>
 
 /* Channel privileges */
 #define CHANNEL_PRIV_CHANADMIN  1

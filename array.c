@@ -20,8 +20,6 @@
 
 int tmp_arr_iterator;
 
-#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
-
 /**
  * Find the next available slot in the array.
  *

@@ -3,7 +3,6 @@
 
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <resolv.h>
 
 #include "player.h"
 
