@@ -96,5 +96,6 @@ int sp_to_bitfield(struct server_privileges *sp, char *data);
 struct server_privileges *new_sp_test();
 struct server_privileges *new_sp();
 int player_has_privilege(struct player *pl, int privilege);
+void sp_print(struct server_privileges *sp);
 
 #endif
