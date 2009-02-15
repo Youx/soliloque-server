@@ -2,8 +2,10 @@
 #define __SERVER_PRIVILEGES_H__
 
 #include "player.h"
+#include "channel.h"
 
 struct player;
+struct channel;
 
 
 #define PRIV_SERVER_ADMIN 0
@@ -95,7 +97,7 @@ struct server_privileges {
 int sp_to_bitfield(struct server_privileges *sp, char *data);
 struct server_privileges *new_sp_test();
 struct server_privileges *new_sp();
-int player_has_privilege(struct player *pl, int privilege);
+int player_has_privilege(struct player *pl, int privilege, struct channel *ch);
 void sp_print(struct server_privileges *sp);
 
 #endif

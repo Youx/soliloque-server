@@ -341,7 +341,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
-		if(player_has_privilege(pl, SP_OTHER_SV_KICK)) {
+		if(player_has_privilege(pl, SP_OTHER_SV_KICK, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
 			s_notify_kick_server(pl, target, reason);
@@ -417,7 +417,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
-		if (player_has_privilege(pl, SP_OTHER_CH_KICK)) {
+		if (player_has_privilege(pl, SP_OTHER_CH_KICK, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
 			s_notify_kick_channel(pl, target, reason, def_chan);
@@ -501,7 +501,7 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 		 * - he has the privilege to join without giving a password
 		 * - he gives the correct password */
 		if (!(to->flags & CHANNEL_FLAG_PASSWORD)
-				|| player_has_privilege(pl, SP_CHA_JOIN_WO_PASS)
+				|| player_has_privilege(pl, SP_CHA_JOIN_WO_PASS, to)
 				|| strcmp(pass, to->password) == 0) {
 			printf("Player switching to channel %s.\n", to->name);
 			from = pl->in_chan;
@@ -609,7 +609,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 	del = get_channel_by_id(s, del_id);
 
 	send_acknowledge(pl);
-	if (player_has_privilege(pl, SP_CHA_DELETE)) {
+	if (player_has_privilege(pl, SP_CHA_DELETE, del)) {
 		if (del == NULL || del->players->used_slots > 0) {
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else {
@@ -692,7 +692,7 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
-		if(player_has_privilege(pl, SP_ADM_BAN_IP)) {
+		if(player_has_privilege(pl, SP_ADM_BAN_IP, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
 			printf("Reason for banning player %s : %s\n", target->name, reason);
@@ -781,7 +781,7 @@ void *c_req_remove_ban(char *data, unsigned int len, struct player *pl)
 	struct ban *b;
 	struct server *s = pl->in_chan->in_server;
 
-	if(player_has_privilege(pl, SP_ADM_BAN_IP)) {
+	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
 		inet_aton(data+24, &ip);
 		b = get_ban_by_ip(s, ip);
@@ -805,7 +805,7 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
 	uint16_t duration;
 	struct server *s = pl->in_chan->in_server;
 
-	if(player_has_privilege(pl, SP_ADM_BAN_IP)) {
+	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
 		duration = *(uint16_t *)(data + 24);
 		inet_aton(data+26, &ip);
@@ -958,7 +958,7 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 	default:
 		return NULL;
 	}
-	if (tgt != NULL && player_has_privilege(pl, priv_required)) {
+	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
 		printf("Player priv before : 0x%x\n", tgt->chan_privileges);
 		if (on_off == 2)
 			tgt->chan_privileges &= (0xFF ^ (1 << right));
@@ -1045,7 +1045,7 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 	default:
 		return NULL;
 	}
-	if (tgt != NULL && player_has_privilege(pl, priv_required)) {
+	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
 		printf("Player sv rights before : 0x%x\n", tgt->global_flags);
 		if (on_off == 2)
 			tgt->global_flags &= (0xFF ^ (1 << right));
@@ -1273,7 +1273,7 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 
 	switch (msg_type) {
 	case 0:
-		if (player_has_privilege(pl, SP_OTHER_TEXT_ALL))
+		if (player_has_privilege(pl, SP_OTHER_TEXT_ALL, NULL))
 			send_message_to_all(pl, color, msg);
 		break;
 	case 1:
@@ -1281,14 +1281,14 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 		/* If he is in the channel, check if he can send msg to his channel or any channel
 		 * if he is not in the channel, check if he can send msg to any channel */
 		if (ch != NULL) {
-			if ((ch == pl->in_chan && player_has_privilege(pl, SP_OTHER_TEXT_IN_CH))
-					|| player_has_privilege(pl, SP_OTHER_TEXT_ALL_CH))
+			if ((ch == pl->in_chan && player_has_privilege(pl, SP_OTHER_TEXT_IN_CH, ch))
+					|| player_has_privilege(pl, SP_OTHER_TEXT_ALL_CH, ch))
 			send_message_to_channel(pl, ch, color, msg);
 		}
 		break;
 	case 2:
 		tgt = get_player_by_public_id(pl->in_chan->in_server, dst_id);
-		if (player_has_privilege(pl, SP_OTHER_TEXT_PL))
+		if (player_has_privilege(pl, SP_OTHER_TEXT_PL, tgt->in_chan))
 				send_message_to_player(pl, tgt, color, msg);
 		break;
 	default:
@@ -1360,7 +1360,7 @@ void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl)
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
-		if (player_has_privilege(pl, SP_CHA_CHANGE_NAME)) {
+		if (player_has_privilege(pl, SP_CHA_CHANGE_NAME, ch)) {
 			name = strdup(data + 28);
 			free(ch->name);
 			ch->name = name;
@@ -1432,7 +1432,7 @@ void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl)
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
-		if (player_has_privilege(pl, SP_CHA_CHANGE_TOPIC)) {
+		if (player_has_privilege(pl, SP_CHA_CHANGE_TOPIC, ch)) {
 			topic = strdup(data + 28);
 			free(ch->topic);
 			ch->topic = topic;
@@ -1505,7 +1505,7 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
-		if (player_has_privilege(pl, SP_CHA_CHANGE_DESC)) {
+		if (player_has_privilege(pl, SP_CHA_CHANGE_DESC, ch)) {
 			desc = strdup(data + 28);
 			free(ch->desc);
 			ch->desc = desc;
@@ -1581,21 +1581,24 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	ptr += bytes_read;
 	strncpy(ch->password, ptr, MIN(29, len - (ptr - data) - 1));
 	/* Check the privileges */
+	/* TODO : when we support subchannels, context will have to
+	 * be changed to the parent channel (NULL if we create the
+	 * channel at the root */
 	if (ch->flags & CHANNEL_FLAG_UNREGISTERED) {
-		if (!player_has_privilege(pl, SP_CHA_CREATE_UNREGISTERED))
+		if (!player_has_privilege(pl, SP_CHA_CREATE_UNREGISTERED, NULL))
 			priv_nok++;
 	} else {
-		if (!player_has_privilege(pl, SP_CHA_CREATE_REGISTERED))
+		if (!player_has_privilege(pl, SP_CHA_CREATE_REGISTERED, NULL))
 			priv_nok++;
 	}
 	if (ch->flags & CHANNEL_FLAG_DEFAULT
-			&& !player_has_privilege(pl, SP_CHA_CREATE_DEFAULT))
+			&& !player_has_privilege(pl, SP_CHA_CREATE_DEFAULT, NULL))
 		priv_nok++;
 	if (ch->flags & CHANNEL_FLAG_MODERATED
-			&& !player_has_privilege(pl, SP_CHA_CREATE_MODERATED))
+			&& !player_has_privilege(pl, SP_CHA_CREATE_MODERATED, NULL))
 		priv_nok++;
 	if (ch->flags & CHANNEL_FLAG_SUBCHANNELS
-			&& !player_has_privilege(pl, SP_CHA_CREATE_SUBCHANNELED))
+			&& !player_has_privilege(pl, SP_CHA_CREATE_SUBCHANNELED, NULL))
 		priv_nok++;
 
 	if (priv_nok == 0) {

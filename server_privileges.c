@@ -1,6 +1,7 @@
 #include "server_privileges.h"
 
 #include "player.h"
+#include "channel.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -76,17 +77,17 @@ struct server_privileges *new_sp_test()
  *
  * @return 0 if he does not, something else if he does
  */
-static int player_is_in_group(struct player *pl, int group)
+static int player_is_in_group(struct player *pl, int group, struct channel *context)
 {
 	switch (group) {
 	case PRIV_SERVER_ADMIN:
 		return pl->global_flags & GLOBAL_FLAG_SERVERADMIN;
 	case PRIV_CHANNEL_ADMIN:
-		return pl->chan_privileges & CHANNEL_PRIV_CHANADMIN;
+		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_CHANADMIN);
 	case PRIV_OPERATOR:
-		return pl->chan_privileges & CHANNEL_PRIV_OP;
+		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_OP);
 	case PRIV_VOICE:
-		return pl->chan_privileges & CHANNEL_PRIV_VOICE;
+		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_VOICE);
 	case PRIV_REGISTERED:
 		return pl->global_flags & GLOBAL_FLAG_REGISTERED;
 	case PRIV_ANONYMOUS:	/* Everyone is this group */
@@ -106,15 +107,12 @@ static int player_is_in_group(struct player *pl, int group)
  *
  * @return 0 if he does not have the privilege, 1 if he does
  */
-int player_has_privilege(struct player *pl, int privilege)
+int player_has_privilege(struct player *pl, int privilege, struct channel *context)
 {
 	int grp;
 
-	/* FIXME : add a parameter that indicate the channel we are acting in.
-	 * If the channel is the same as the channel the player is in, he can use rights
-	 * provided by CA, OP, Voice, else he can only try anonymous and SA */
 	for (grp = 0 ; grp < 6 ; grp++) {
-		if (player_is_in_group(pl, grp)) {
+		if (player_is_in_group(pl, grp, context)) {
 			if (pl->in_chan->in_server->privileges->priv[grp][privilege])
 				return 1;
 		}
