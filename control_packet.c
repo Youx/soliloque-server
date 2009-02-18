@@ -838,10 +838,10 @@ static void s_resp_server_stats(struct player *pl)
 	/* packet version */				ptr += 4;
 	/* empty checksum */				ptr += 4;
 	*(uint64_t *)ptr = time(NULL) - s->stats->start_time;	ptr += 8;/* server uptime */
+	*(uint16_t *)ptr = 501;				ptr += 2;/* server version */
+	*(uint16_t *)ptr = 0;				ptr += 2;/* server version */
 	*(uint16_t *)ptr = 2;				ptr += 2;/* server version */
 	*(uint16_t *)ptr = 0;				ptr += 2;/* server version */
-	*(uint16_t *)ptr = 20;				ptr += 2;/* server version */
-	*(uint16_t *)ptr = 1;				ptr += 2;/* server version */
 	*(uint32_t *)ptr = s->players->used_slots;	ptr += 4;/* number of players connected */
 	*(uint64_t *)ptr = s->stats->pkt_sent;		ptr += 8;/* total bytes received */
 	*(uint64_t *)ptr = s->stats->size_sent;		ptr += 8;/* total bytes sent */
@@ -1636,10 +1636,10 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 	*(uint32_t *)ptr = 0;			ptr += 4;/* ping */
 	*(uint16_t *)ptr = time(NULL) - tgt->stats->activ_time;	ptr += 2;/* time iddle */
 						ptr += 2;/* packet loss */
-	*(uint16_t *)ptr = 501;			ptr += 2;/* client version */
-	*(uint16_t *)ptr = 0;			ptr += 2;/* client version */
-	*(uint16_t *)ptr = 1;			ptr += 2;/* client version */
-	*(uint16_t *)ptr = 1;			ptr += 2;/* client version */
+	*(uint16_t *)ptr = pl->version[0];	ptr += 2;/* client version */
+	*(uint16_t *)ptr = pl->version[1];	ptr += 2;/* client version */
+	*(uint16_t *)ptr = pl->version[2];	ptr += 2;/* client version */
+	*(uint16_t *)ptr = pl->version[3];	ptr += 2;/* client version */
 	*(uint32_t *)ptr = tgt->stats->pkt_sent;ptr += 4;/* packets sent */
 	*(uint32_t *)ptr = tgt->stats->pkt_rec;	ptr += 4;/* packets received */
 	*(uint32_t *)ptr = tgt->stats->size_sent;	ptr += 4;/* bytes sent */

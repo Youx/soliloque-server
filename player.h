@@ -38,6 +38,8 @@ struct player {
 	char machine[30];
 	char name[30];
 	char login[30];
+
+	uint16_t version[4];
 	
 	uint16_t chan_privileges;
 	uint16_t global_flags;

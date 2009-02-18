@@ -79,7 +79,8 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	char *password;
 	size_t tmp_size;
 	char *ptr = data;
-	
+	uint16_t version[4];
+
 	/* Verify fields */
 	
 	/* Copy fields */
@@ -90,6 +91,10 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	client = strndup(ptr, tmp_size);		ptr += 29;	/* client */
 	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of machine */
 	machine = strndup(ptr, tmp_size);		ptr += 29;	/* machine */
+	version[0] = *(uint16_t *)ptr;			ptr += 2;
+	version[1] = *(uint16_t *)ptr;			ptr += 2;
+	version[2] = *(uint16_t *)ptr;			ptr += 2;
+	version[3] = *(uint16_t *)ptr;			ptr += 2;
 	/* not used yet */				ptr += 10;
 	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of login */
 	login = strndup(ptr, tmp_size);			ptr += 29;	/* login */
@@ -100,6 +105,10 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	
 	/* Initialize player */
 	pl = new_player(nickname, login, machine);
+	pl->version[0] = version[0];
+	pl->version[1] = version[1];
+	pl->version[2] = version[2];
+	pl->version[3] = version[3];
 	pl->stats->start_time = time(NULL);
 	pl->stats->activ_time = time(NULL);
 	/* Alloc adresses */

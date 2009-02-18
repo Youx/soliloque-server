@@ -165,8 +165,20 @@ static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli
 /* Manage an incoming packet */
 void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
+	uint32_t pub, priv;
+	struct player *pl;
+
 	/* add some stats */
 	sstat_add_packet(s->stats, len, 0);
+	/* add some stats for the player if he exists */
+	priv = *(uint32_t *)(data + 4);
+	pub = *(uint32_t *)(data + 8);
+	pl = get_player_by_ids(s, pub, priv);
+	if (pl != NULL) {
+		pl->stats->pkt_sent++;
+		pl->stats->size_sent += len;
+	}
+
 	/* first a few tests */
 	switch (((uint16_t *)data)[0]) {
 	case 0xbef0:		/* commands */
