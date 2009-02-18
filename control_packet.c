@@ -249,9 +249,7 @@ void *c_req_chans(char *data, unsigned int len, struct player *pl)
 {
 	send_acknowledge(pl);		/* ACK */
 	s_resp_chans(pl);	/* list of channels */
-	usleep(250000);
 	s_resp_players(pl);	/* list of players */
-	usleep(250000);
 	s_resp_unknown(pl);
 
 	return NULL;
