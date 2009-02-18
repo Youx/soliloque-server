@@ -139,9 +139,9 @@ void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_add
 		memcpy(&private_id, data + 4, 4);
 		memcpy(&public_id, data + 8, 4);
 		pl = get_player_by_ids(s, public_id, private_id);
-		pl->stats->activ_time = time(NULL);	/* update */
 		/* Execute */
 		if (pl != NULL) {
+			pl->stats->activ_time = time(NULL);	/* update idle time */
 			(*func)(data, len, pl);
 		}
 	} else {
