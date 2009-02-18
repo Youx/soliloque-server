@@ -1621,10 +1621,12 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 {
 	int data_size;
 	char *data, *ptr;
-	
+	char *ip;
+
 	data_size = 164;
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
+	ip = inet_ntoa(tgt->cli_addr->sin_addr);
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
 	*(uint16_t *)ptr = CTL_PLAYERSTATS;	ptr += 2;	/* */
@@ -1648,8 +1650,8 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 	*(uint32_t *)ptr = tgt->stats->pkt_rec;	ptr += 4;/* packets received */
 	*(uint32_t *)ptr = tgt->stats->size_sent;	ptr += 4;/* bytes sent */
 	*(uint32_t *)ptr = tgt->stats->size_rec;ptr += 4;/* bytes received */
-	*ptr = 9;				ptr += 1;/* size of ip */
-	strncpy(ptr, "127.0.0.1", 29);		ptr += 29;/* ip of client */
+	*ptr = MIN(strlen(ip), 29);				ptr += 1;/* size of ip */
+	strncpy(ptr, ip, *(ptr - 1));		ptr += 29;/* ip of client */
 	*ptr = MIN(strlen(tgt->login), 29);	ptr += 1;/* size of login */
 	strncpy(ptr, tgt->login, *(ptr - 1));	ptr += 29;/* login */
 	*(uint32_t *)ptr = tgt->in_chan->id;	ptr += 4;/* id of channel */
@@ -1663,6 +1665,7 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 	pl->f0_s_counter++;
 
 	free(data);
+	free(ip);
 }
 
 /**
