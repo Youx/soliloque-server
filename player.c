@@ -95,7 +95,7 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	version[1] = *(uint16_t *)ptr;			ptr += 2;
 	version[2] = *(uint16_t *)ptr;			ptr += 2;
 	version[3] = *(uint16_t *)ptr;			ptr += 2;
-	/* not used yet */				ptr += 10;
+	/* not used yet */				ptr += 2;
 	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of login */
 	login = strndup(ptr, tmp_size);			ptr += 29;	/* login */
 	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of password */
