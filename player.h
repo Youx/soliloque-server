@@ -35,12 +35,14 @@ struct player {
 	
 	char client[30];
 	char machine[30];
-	
 	char name[30];
+	char login[30];
 	
 	uint16_t chan_privileges;
 	uint16_t global_flags;
 	uint16_t player_attributes;
+
+	struct player_stat *stats;
 	
 	/* the channel the player is in */
 	struct channel *in_chan;
