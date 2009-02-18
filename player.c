@@ -1,4 +1,6 @@
 #include "player.h"
+#include "player_stat.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -32,6 +34,7 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	struct player *p;
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
+	p->stats = new_plstat();
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
 	strcpy(p->client, login);
@@ -97,6 +100,8 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	
 	/* Initialize player */
 	pl = new_player(nickname, login, machine);
+	pl->stats->start_time = time(NULL);
+	pl->stats->activ_time = time(NULL);
 	/* Alloc adresses */
 	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
 	memcpy(pl->cli_addr, cli_addr, cli_len);

@@ -4,6 +4,7 @@
 #include "compat.h"
 #include "channel.h"
 #include "configuration.h"
+#include "player_stat.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>

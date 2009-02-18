@@ -24,6 +24,7 @@
 #define CTL_CHANDELETE		0x0073	/* channel deleted */
 #define CTL_MESSAGE		0x0082	/* message (all/channel/private) */
 #define CTL_CHANDELETE_ERROR	0xff93	/* error deleting channel */
+#define CTL_PLAYERSTATS		0x0194	/* player stats */
 #define CTL_SERVSTATS		0x0196	/* server stats */
 #define CTL_BANLIST		0x019b	/* server list of bans */
 
@@ -47,5 +48,6 @@ void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl);
 void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
+void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 
 #endif

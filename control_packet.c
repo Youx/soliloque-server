@@ -830,8 +830,8 @@ static void s_resp_server_stats(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	ptr = data;
-	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_SERVSTATS;		ptr += 2;	/* */
+	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;/* */
+	*(uint16_t *)ptr = CTL_SERVSTATS;		ptr += 2;/* */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;/* player private id */
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;/* player public id */
 	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;/* packet counter */
@@ -1610,5 +1610,74 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 		print_channel(ch);
 		s_notify_channel_created(ch, pl);
 	}
+	return NULL;
+}
+
+void s_res_player_stats(struct player *pl, struct player *tgt)
+{
+	int data_size;
+	char *data, *ptr;
+	
+	data_size = 164;
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYERSTATS;	ptr += 2;	/* */
+	*(uint32_t *)ptr = pl->private_id;	ptr += 4;/* private ID */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* public ID */
+	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;/* packet counter */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* player we get the info of */
+	*(uint32_t *)ptr = time(NULL) - tgt->stats->start_time;	ptr += 4;/* time connected */
+	*(uint16_t *)ptr = tgt->stats->pkt_lost / (tgt->stats->pkt_sent + 1 + tgt->stats->pkt_rec);
+	*(uint32_t *)ptr = 0;			ptr += 4;/* ping */
+	*(uint16_t *)ptr = time(NULL) - tgt->stats->activ_time;	ptr += 2;/* time iddle */
+						ptr += 2;/* packet loss */
+	*(uint16_t *)ptr = 501;			ptr += 2;/* client version */
+	*(uint16_t *)ptr = 0;			ptr += 2;/* client version */
+	*(uint16_t *)ptr = 1;			ptr += 2;/* client version */
+	*(uint16_t *)ptr = 1;			ptr += 2;/* client version */
+	*(uint32_t *)ptr = tgt->stats->pkt_sent;ptr += 4;/* packets sent */
+	*(uint32_t *)ptr = tgt->stats->pkt_rec;	ptr += 4;/* packets received */
+	*(uint32_t *)ptr = tgt->stats->size_sent;	ptr += 4;/* bytes sent */
+	*(uint32_t *)ptr = tgt->stats->size_rec;ptr += 4;/* bytes received */
+	*ptr = 9;				ptr += 1;/* size of ip */
+	strncpy(ptr, "127.0.0.1", 29);		ptr += 29;/* ip of client */
+	*ptr = MIN(strlen(tgt->login), 29);	ptr += 1;/* size of login */
+	strncpy(ptr, tgt->login, *(ptr - 1));	ptr += 29;/* login */
+	*(uint32_t *)ptr = tgt->in_chan->id;	ptr += 4;/* id of channel */
+	*(uint16_t *)ptr = tgt->chan_privileges;ptr += 2;/* channel privileges */
+	*(uint16_t *)ptr = tgt->global_flags;	ptr += 2;/* global flags */
+	*ptr = MIN(strlen(tgt->machine), 29);	ptr += 1;/* size of platform */
+	strncpy(ptr, tgt->machine, *(ptr - 1));	ptr += 29;/*platform */
+
+	packet_add_crc_d(data, data_size);
+	send_to(pl->in_chan->in_server, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	pl->f0_s_counter++;
+
+	free(data);
+}
+
+void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
+{
+	struct server *s;
+	uint32_t tgt_id;
+	struct player *tgt;
+
+	s = pl->in_chan->in_server;
+	send_acknowledge(pl);
+
+	tgt_id = *(uint32_t *)(data + 24);
+	tgt = get_player_by_public_id(s, tgt_id);
+
+	if (tgt != NULL) {
+		s_res_player_stats(pl, tgt);
+	} else {
+		printf("TGT = NULL\n");
+	}
+
 	return NULL;
 }
