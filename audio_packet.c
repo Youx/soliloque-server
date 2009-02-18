@@ -46,6 +46,7 @@ int audio_received(char *in, int len, struct server *s)
 	sender = get_player_by_ids(s, pub_id, priv_id);
 
 	if (sender != NULL) {
+		sender->stats->activ_time = time(NULL);	/* update */
 		ch_in = sender->in_chan;
 		/* Security checks */
 		if (data_codec != ch_in->codec) {
