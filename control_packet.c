@@ -1611,6 +1611,12 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	return NULL;
 }
 
+/**
+ * Send player connection statistics to another player.
+ *
+ * @param pl the player asking for it
+ * @param tgt the player whose statistics we want
+ */
 void s_res_player_stats(struct player *pl, struct player *tgt)
 {
 	int data_size;
@@ -1659,6 +1665,13 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 	free(data);
 }
 
+/**
+ * Handles a request for player connection statistics.
+ *
+ * @param data the request packet
+ * @param len the length of the packet
+ * @param pl the player asking for it
+ */
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 {
 	struct server *s;
