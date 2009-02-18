@@ -44,11 +44,14 @@ char packet_check_crc(char *data, unsigned int len, unsigned int offset)
 	char *buff = (char *)calloc(sizeof(char), len);
 	memcpy(buff, data, len);
 	
-	char *ptr = buff + offset;
+	char *ptr;
 	uint32_t old_crc;
 	uint32_t new_crc;
-	uint32_t *crc_ptr = (uint32_t *)ptr;
+	uint32_t *crc_ptr;
 	
+	ptr = buff + offset;
+	crc_ptr = (uint32_t *)ptr;
+
 	old_crc = *crc_ptr;
 	*crc_ptr = 0x00000000;
 	new_crc = GUINT32_TO_LE(crc_32(buff, len, 0xEDB88320));

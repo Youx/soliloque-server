@@ -56,7 +56,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	chan->sort_order = sort_order;
 	
 	return chan;
-};
+}
 
 /**
  * Initialize a default channel for testing.
