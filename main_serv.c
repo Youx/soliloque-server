@@ -223,7 +223,7 @@ int main()
 		db_create_registrations(c, ss[i]);
 		db_create_sv_privileges(c, ss[i]);
 		sp_print(ss[i]->privileges);
-		//test_init_server(ss[i]);
+		/* test_init_server(ss[i]); */
 		printf("Launching server %i\n", i);
 		server_start(ss[i]);
 	}

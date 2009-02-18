@@ -18,7 +18,7 @@ def configure(conf):
   conf.check_cfg(package='libconfig', args='--cflags --libs', uselib_store='LIBCONFIG', mandatory=True)
   conf.check_cc(lib='dbi', uselib_store='LIBDBI', mandatory=True)
   conf.check_cc(lib='pthread', uselib_store='PTHREAD', mandatory=True)
-  # Check for strndup (not present on OSX
+  # Check for strndup (not present on OSX)
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
   conf.write_config_header('config.h')
 
@@ -31,4 +31,4 @@ def build(bld):
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI'
-  sol_serv.cflags = '-O2 -ggdb -Wall -D_GNU_SOURCE -D_BSD_SOURCE'
+  sol_serv.cflags = '-O2 -ggdb -ansi -Wall -D_GNU_SOURCE -D_BSD_SOURCE'
