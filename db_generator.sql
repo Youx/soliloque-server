@@ -5,7 +5,7 @@
  */
 
 CREATE TABLE servers (
-  id integer primary key auto_increment,
+  id integer primary key autoincrement,
   name varchar(40),
   welcome_msg varchar(80) ,
   maxusers integer ,
@@ -33,7 +33,7 @@ CREATE TABLE servers (
 );
 
 CREATE TABLE channels (
-  id integer primary key auto_increment,
+  id integer primary key autoincrement,
   server_id integer ,
   parent_id integer ,
   flag_moderated integer,
@@ -50,7 +50,7 @@ CREATE TABLE channels (
 );
 
 CREATE TABLE registrations (
-  id integer primary key auto_increment,
+  id integer primary key autoincrement,
   server_id integer,
   serveradmin integer,
   name varchar(40),
@@ -60,7 +60,7 @@ CREATE TABLE registrations (
 );
 
 CREATE TABLE server_privileges (
-  id integer primary key auto_increment,
+  id integer primary key autoincrement,
   server_id integer,
   user_group varchar(40), /* SA, CA, Voice, OP, Anonymous */
   /* Administration privileges */
