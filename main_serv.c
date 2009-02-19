@@ -21,7 +21,7 @@
 
 /* functions */
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
-packet_function f0_callbacks[255];
+packet_function f0_callbacks[2][255];
 
 
 void test_init_server(struct server *s)
@@ -48,21 +48,34 @@ void test_init_server(struct server *s)
 
 static void init_callbacks()
 {
-	bzero(f0_callbacks, 255 * sizeof(packet_function));
-	f0_callbacks[0x2c] = &c_req_leave;		/* client wants to leave */
-	f0_callbacks[0x2d] = &c_req_kick_server;	/* client wants to kick someone from the server */
-	f0_callbacks[0x2e] = &c_req_kick_channel;	/* client wants to kick someone from the channel */
-	f0_callbacks[0x2f] = &c_req_switch_channel;	/* client wants to switch channels */
-	f0_callbacks[0x30] = &c_req_change_player_attr; /* change player attributes */
-	f0_callbacks[0x32] = &c_req_change_player_ch_priv;	/* change player channel privileges */
-	f0_callbacks[0x33] = &c_req_change_player_sv_right;	/* change global flags */
-	f0_callbacks[0x44] = &c_req_ip_ban;		/* client wants to ban an IP */
-	f0_callbacks[0x45] = &c_req_ban;		/* client wants to ban someone */
-	f0_callbacks[0x46] = &c_req_remove_ban;		/* client wants to unban someone */
-	f0_callbacks[0x90] = &c_req_player_stats;	/* client wants connection stats for a player */
-	f0_callbacks[0x95] = &c_req_server_stats;	/* client wants connection stats from the server */
-	f0_callbacks[0x9a] = &c_req_list_bans;		/* client wants the list of bans */
-	f0_callbacks[0xae] = &c_req_send_message;	/* client wants the list of bans */
+	bzero(f0_callbacks[0], 255 * sizeof(packet_function));
+	bzero(f0_callbacks[1], 255 * sizeof(packet_function));
+	
+	f0_callbacks[0][0x05] = &c_req_chans;		/* request chans and player list */
+	f0_callbacks[0][0xc9] = &c_req_create_channel;	/* create a channel */
+	/*f0_callbacks[0][0xcb] = &c_req_change_chan_pass;*/
+	/*f0_callbacks[0][0xcd] = &c_req_change_chan_codec_flags;*/
+	f0_callbacks[0][0xce] = &c_req_change_chan_name;
+	f0_callbacks[0][0xcf] = &c_req_change_chan_topic;
+	f0_callbacks[0][0xd0] = &c_req_change_chan_desc;
+	f0_callbacks[0][0xd1] = &c_req_delete_channel;
+	/*f0_callbacks[0][0xd2] = &c_req_change_chan_max_users;*/
+	/*f0_callbacks[0][0xd4] = &c_req_change_chan_order;*/
+
+	f0_callbacks[1][0x2c] = &c_req_leave;		/* client wants to leave */
+	f0_callbacks[1][0x2d] = &c_req_kick_server;	/* client wants to kick someone from the server */
+	f0_callbacks[1][0x2e] = &c_req_kick_channel;	/* client wants to kick someone from the channel */
+	f0_callbacks[1][0x2f] = &c_req_switch_channel;	/* client wants to switch channels */
+	f0_callbacks[1][0x30] = &c_req_change_player_attr; /* change player attributes */
+	f0_callbacks[1][0x32] = &c_req_change_player_ch_priv;	/* change player channel privileges */
+	f0_callbacks[1][0x33] = &c_req_change_player_sv_right;	/* change global flags */
+	f0_callbacks[1][0x44] = &c_req_ip_ban;		/* client wants to ban an IP */
+	f0_callbacks[1][0x45] = &c_req_ban;		/* client wants to ban someone */
+	f0_callbacks[1][0x46] = &c_req_remove_ban;		/* client wants to unban someone */
+	f0_callbacks[1][0x90] = &c_req_player_stats;	/* client wants connection stats for a player */
+	f0_callbacks[1][0x95] = &c_req_server_stats;	/* client wants connection stats from the server */
+	f0_callbacks[1][0x9a] = &c_req_list_bans;		/* client wants the list of bans */
+	f0_callbacks[1][0xae] = &c_req_send_message;	/* client wants the list of bans */
 	/* callbacks[0] = myfunc1; ... */
 }
 
@@ -85,29 +98,10 @@ void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_
 packet_function get_f0_function(unsigned char * code)
 {
 	/* Function packets */
-	if (code[3] == 0) { /* 0 = server packet, 1 = client packet*/
-		switch (code[2]) {
-		case 0x05:
-			return &c_req_chans;
-		case 0xce:
-			return &c_req_change_chan_name;
-		case 0xcf:
-			return &c_req_change_chan_topic;
-		case 0xd0:
-			return &c_req_change_chan_desc;
-		case 0xc9:
-			return &c_req_create_channel;
-		case 0xd1:	/* delete channel */
-			return &c_req_delete_channel;
-		default:
-			return NULL;
-		}
-	} else {
-		if (f0_callbacks[code[2]])
-			return f0_callbacks[code[2]];
-		else
-			return NULL;
+	if (code[3] == 0 || code[3] == 1) { /* 0 = server packet, 1 = client packet*/
+		return f0_callbacks[code[3]][code[2]];
 	}
+	return NULL;
 }
 
 
