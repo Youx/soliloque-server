@@ -20,6 +20,7 @@
 #define CTL_CREATE_CH		0x006e	/* new channel */
 #define CTL_CHANGE_CH_NAME	0x006f	/* channel name changed */
 #define CTL_CHANGE_CH_TOPIC	0x0070	/* channel topic changed */
+#define CTL_CHANGE_CH_FLAGS_CODEC 0x0071 /* change channel flags or codec */
 #define CTL_CHANGE_CH_DESC	0x0072	/* channel desc changed */
 #define CTL_CHANDELETE		0x0073	/* channel deleted */
 #define CTL_MESSAGE		0x0082	/* message (all/channel/private) */
@@ -47,6 +48,8 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl);
+void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *pl);
+void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl);
 void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 

@@ -53,8 +53,8 @@ static void init_callbacks()
 	
 	f0_callbacks[0][0x05] = &c_req_chans;		/* request chans and player list */
 	f0_callbacks[0][0xc9] = &c_req_create_channel;	/* create a channel */
-	/*f0_callbacks[0][0xcb] = &c_req_change_chan_pass;*/
-	/*f0_callbacks[0][0xcd] = &c_req_change_chan_codec_flags;*/
+	f0_callbacks[0][0xcb] = &c_req_change_chan_pass;
+	f0_callbacks[0][0xcd] = &c_req_change_chan_flag_codec;
 	f0_callbacks[0][0xce] = &c_req_change_chan_name;
 	f0_callbacks[0][0xcf] = &c_req_change_chan_topic;
 	f0_callbacks[0][0xd0] = &c_req_change_chan_desc;

@@ -1513,6 +1513,163 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 	return NULL;
 }
 
+void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	struct player *tmp_pl;
+
+	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
+	data_size = 24 + 4 + 4 + 2 + 2;
+	data = (char *)calloc(data_size, sizeof(char));
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_CH_FLAGS_CODEC;	ptr += 2;	/* */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
+	*(uint16_t *)ptr = ch->flags;		ptr += 2;/* new channel flags */
+	*(uint16_t *)ptr = ch->codec;		ptr += 2;/* new codec */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+
+	ar_each(struct player *, tmp_pl, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+}
+
+/**
+ * Handle a request to change the channel flags
+ * or change the codec of a channel.
+ *
+ * @param data the packet
+ * @param len the length of data
+ * @param pl the player who issued the request
+ */
+void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *pl)
+{
+	uint16_t new_flags;
+	uint16_t new_codec;
+	uint32_t ch_id;
+	struct channel *ch;
+	int priv_nok;
+	struct server *s;
+
+	send_acknowledge(pl);
+	s =  pl->in_chan->in_server;
+	priv_nok = 0;
+
+	ch_id = *(uint32_t *)(data + 24);
+	new_flags = *(uint16_t *)(data + 28);
+	new_codec = *(uint16_t *)(data + 30);
+
+	ch = get_channel_by_id(s, ch_id);
+	if (ch == NULL)
+		return NULL;
+
+	/* For each flag, check if it is changed, and if we have the permission to change it */
+	/* Registered / unregistered flag */
+	if ((ch->flags & CHANNEL_FLAG_UNREGISTERED) != (new_flags & CHANNEL_FLAG_UNREGISTERED)) {
+		if ((new_flags & CHANNEL_FLAG_UNREGISTERED)  /* we want to unregister the channel */
+				&& !player_has_privilege(pl, SP_CHA_CREATE_UNREGISTERED, NULL))
+			priv_nok++;
+		if (!(new_flags & CHANNEL_FLAG_UNREGISTERED) /* we want to register the channel */
+				&& !player_has_privilege(pl, SP_CHA_CREATE_REGISTERED, ch))
+			priv_nok++;
+	}
+	/* default flag */
+	if ((ch->flags & CHANNEL_FLAG_DEFAULT) != (new_flags & CHANNEL_FLAG_DEFAULT)
+			&& !player_has_privilege(pl, SP_CHA_CREATE_DEFAULT, ch))
+		priv_nok++;
+	/* moderated flag */
+	if ((ch->flags & CHANNEL_FLAG_MODERATED) != (new_flags & CHANNEL_FLAG_MODERATED)
+			&& !player_has_privilege(pl, SP_CHA_CREATE_MODERATED, ch))
+		priv_nok++;
+	/* subchannels flag */
+	if ((ch->flags & CHANNEL_FLAG_SUBCHANNELS) != (new_flags & CHANNEL_FLAG_SUBCHANNELS)
+			&& !player_has_privilege(pl, SP_CHA_CREATE_SUBCHANNELED, ch))
+		priv_nok++;
+	/* password flag */
+	if ((ch->flags & CHANNEL_FLAG_PASSWORD) != (new_flags & CHANNEL_FLAG_PASSWORD)
+			&& !player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch))
+		priv_nok++;
+	/* codec changed ? */
+	if ((ch->codec != new_codec)
+			&& !player_has_privilege(pl, SP_CHA_CHANGE_CODEC, ch))
+		priv_nok++;
+
+	/* Do the actual work */
+	if (priv_nok == 0) {
+		ch->flags = new_flags;
+		ch->codec = new_codec;
+
+		if ((ch->flags & CHANNEL_FLAG_PASSWORD) == 0)
+			bzero(ch->password, 30 * sizeof(char));
+
+		s_notify_channel_flags_codec_changed(pl, ch);
+	}
+	return NULL;
+}
+
+/**
+ * Handle a request to change a channel password.
+ *
+ * @param data the request packet
+ * @param len the length of the packet
+ * @param pl the player issuing the request
+ */
+void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
+{
+	char password[30];
+	int pass_len;
+	struct channel *ch;
+	uint32_t ch_id;
+	struct server *s;
+	uint16_t old_flags;
+
+	bzero(password, 30 * sizeof(char));
+	s = pl->in_chan->in_server;
+
+	ch_id = *(uint32_t *)(data + 24);
+	pass_len = MIN(29, *(data + 28));
+	strncpy(password, data + 29, pass_len);
+
+	ch = get_channel_by_id(s, ch_id);
+	send_acknowledge(pl);
+	if (ch != NULL && player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch)) {
+		printf("Change channel password : %s->%s\n", ch->name, password);
+		old_flags = ch->flags;
+
+		/* We either remove or change the password */
+		if (pass_len == 0) {
+			printf("(EE) This should not happened. Password removal is done using the change flags/codec function.\n");
+			bzero(ch->password, 30 * sizeof(char));
+			ch->flags &= (0xFFFF ^ CHANNEL_FLAG_PASSWORD);
+		} else {
+			bzero(ch->password, 30 * sizeof(char));
+			strcpy(ch->password, password);
+			ch->flags |= CHANNEL_FLAG_PASSWORD;
+		}
+		/* If we change the password when there is already one, the channel
+		 * flags do not change, no need to notify. */
+		if (old_flags != ch->flags) {
+			s_notify_channel_flags_codec_changed(pl, ch);
+		}
+	}
+	return NULL;
+}
 /**
  * Notify all players on a server that a new channel has been created
  *
@@ -1695,3 +1852,4 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 
 	return NULL;
 }
+
