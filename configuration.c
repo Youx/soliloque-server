@@ -50,12 +50,14 @@ struct config *config_parse(char *cfg_file)
 	config_init(&cfg);
 	if (config_read_file(&cfg, cfg_file) == CONFIG_FALSE) {
 		printf("Error loading file %s\n", cfg_file);
+		config_destroy(&cfg);
 		return 0;
 	}
 
 	db = config_lookup(&cfg, "db");
 	if (db == NULL) {
 		printf("Error : no db tag.\n");
+		config_destroy(&cfg);
 		return 0;
 	} else {
 		cfg_s = (struct config *)calloc(1, sizeof(struct config));
@@ -114,7 +116,7 @@ struct config *config_parse(char *cfg_file)
 		else
 			cfg_s->db.connection.db = strdup(config_setting_get_string(curr));
 	}
-
+	config_destroy(&cfg);
 	return cfg_s;
 }
 

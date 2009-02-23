@@ -27,14 +27,18 @@
 
 char *strndup (char const *s, size_t n)
 {
-	int i;
+	size_t i;
 	char *res;
 
 	for (i = 0 ; i < n ; i++) {
-		if (s[i] == 0)
+		if (s[i] == '\0')
 			break;
 	}
 	res = calloc(i + 1, sizeof(char));
+	if (res == NULL) {
+		printf("(EE) strndup, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 	return memcpy(res, s, i);
 }
 #endif /* HAVE_STRNDUP */

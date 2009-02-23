@@ -10,14 +10,14 @@
 
 #include "compat.h"
 
-void crc32_table(uint32_t poly, uint32_t *table)
+static void crc32_table(uint32_t poly, uint32_t *table)
 {
-	int i, j;
+	uint32_t i, j;
 
 	for (i = 0 ; i < 256 ; i++) {
 		table[i] = i;
 		for(j = 8 ; j > 0 ; j--) {
-			if(table[i] & 1)
+			if((table[i] & 1) != 0)
 				table[i] = (table[i] >> 1) ^ poly;
 			else
 				table[i] >>= 1;
@@ -25,12 +25,14 @@ void crc32_table(uint32_t poly, uint32_t *table)
 	}     
 }
 
-uint32_t crc_32(void *str, int length, uint32_t poly) 
+uint32_t crc_32(void *str, size_t length, uint32_t poly)
 {
 	uint32_t table[256];
-	int i;
-	crc32_table(poly, table);
 	uint32_t crc;
+	size_t i;
+
+	bzero(table, 256);
+	crc32_table(poly, table);
 
 	crc = 0xFFFFFFFF;
 	for (i = 0 ; i < length ; i++)

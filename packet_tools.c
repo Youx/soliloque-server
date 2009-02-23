@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "packet_tools.h"
 #include "compat.h"
@@ -21,7 +22,7 @@
  * @param len the length of the packet
  * @param offset the offset where we want to write our checksum.
  */
-void packet_add_crc(char *data, unsigned int len, unsigned int offset)
+void packet_add_crc(char *data, size_t len, unsigned int offset)
 {
 	char *ptr = data + offset;
 	uint32_t new_crc;
@@ -39,16 +40,19 @@ void packet_add_crc(char *data, unsigned int len, unsigned int offset)
  * @param len the length of the packet
  * @param offset the offset where the checksum is located.
  */
-char packet_check_crc(char *data, unsigned int len, unsigned int offset)
+int packet_check_crc(char *data, size_t len, unsigned int offset)
 {
-	char *buff = (char *)calloc(sizeof(char), len);
-	memcpy(buff, data, len);
-	
-	char *ptr;
+	char *buff, *ptr;
 	uint32_t old_crc;
 	uint32_t new_crc;
 	uint32_t *crc_ptr;
-	
+
+	buff = (char *)calloc(sizeof(char), len);
+	if (buff == NULL) {
+		printf("(WW) packet_check_crc, buffer allocation failed : %s.\n", strerror(errno));
+		return 0;
+	}
+	memcpy(buff, data, len);
 	ptr = buff + offset;
 	crc_ptr = (uint32_t *)ptr;
 
@@ -56,6 +60,7 @@ char packet_check_crc(char *data, unsigned int len, unsigned int offset)
 	*crc_ptr = 0x00000000;
 	new_crc = GUINT32_TO_LE(crc_32(buff, len, 0xEDB88320));
 	
+	free(buff);
 	return new_crc == old_crc;
 }
 
@@ -67,7 +72,7 @@ char packet_check_crc(char *data, unsigned int len, unsigned int offset)
  * @param data the packet
  * @param len the length of the packet
  */
-void packet_add_crc_d(char *data, unsigned int len)
+void packet_add_crc_d(char *data, size_t len)
 {
 	packet_add_crc(data, len, 20);
 }
@@ -80,7 +85,7 @@ void packet_add_crc_d(char *data, unsigned int len)
  * @param data the packet
  * @param len the length of the packet
  */
-char packet_check_crc_d(char *data, unsigned int len)
+int packet_check_crc_d(char *data, size_t len)
 {
-	return 	packet_check_crc(data, len, 20);
+	return packet_check_crc(data, len, 20);
 }

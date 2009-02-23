@@ -9,6 +9,9 @@
 #include <strings.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 
 /**
@@ -26,8 +29,13 @@
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 		const struct sockaddr *dest_addr, socklen_t addrlen)
 {
+	size_t ret;
+
 	sstat_add_packet(s->stats, len, 1);
-	return sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
+	ret = sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
+	if (ret == -1)
+		printf("(WW) send_to failed : %s\n", strerror(errno));
+	return ret;
 }
 
 /**

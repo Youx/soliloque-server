@@ -19,6 +19,6 @@
 
 struct server;
 
-int audio_received(char *in, int len, struct server *s);
+int audio_received(char *in, size_t len, struct server *s);
 
 #endif

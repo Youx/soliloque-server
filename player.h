@@ -31,8 +31,8 @@
 
 
 struct player {
-	int32_t public_id;
-	int32_t private_id;
+	uint32_t public_id;
+	uint32_t private_id;
 	
 	char client[30];
 	char machine[30];
@@ -58,8 +58,8 @@ struct player {
 	/* packet counters */
 	unsigned int f0_c_counter;
 	unsigned int f0_s_counter;
-	unsigned int f1_c_counter;
-	unsigned int f1_s_counter;
+	uint32_t f1_c_counter;
+	uint32_t f1_s_counter;
 	unsigned int f4_c_counter;
 	unsigned int f4_s_counter;
 };

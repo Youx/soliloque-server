@@ -10,9 +10,9 @@
  *
  */
 
-void packet_add_crc(char *data, unsigned int len, unsigned int offset);
-char packet_check_crc(char *data, unsigned int len, unsigned int offset);
-void packet_add_crc_d(char *data, unsigned int len);
-char packet_check_crc_d(char *data, unsigned int len);
+void packet_add_crc(char *data, size_t len, unsigned int offset);
+int packet_check_crc(char *data, size_t len, unsigned int offset);
+void packet_add_crc_d(char *data, size_t len);
+int packet_check_crc_d(char *data, size_t len);
 
 #endif
