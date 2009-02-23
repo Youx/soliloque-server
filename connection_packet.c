@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "packet_tools.h"
 #include "server.h"
@@ -32,9 +33,15 @@
  */
 static void server_accept_connection(struct player *pl)
 {
-	char *data = (char *)calloc(436, sizeof(char));
-	char *ptr = data;
+	char *data, *ptr;
 	struct server *s = pl->in_chan->in_server;
+
+	data = (char *)calloc(436, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) server_accept_connection : calloc failed : %s.\n", strerror(errno));
+		return;
+	}
+	ptr = data;
 
 	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
@@ -77,8 +84,15 @@ static void server_accept_connection(struct player *pl)
  */
 static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_len, struct server *s)
 {
-	char *data = (char *)calloc(436, sizeof(char));
-	char *ptr = data;
+	char *data, *ptr;
+
+	data = (char *)calloc(436, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) server_refuse_connection : calloc failed : %s.\n", strerror(errno));
+		return;
+	}
+	ptr = data;
+
 	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
 	/* *(uint32_t *)ptr = pl->private_id;*/		ptr += 4;	/* Private ID */
 	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
@@ -186,8 +200,14 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
  */
 static void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
 {
-	char *data = (char *)calloc(24, sizeof(char));
-	char *ptr = data;
+	char *data, *ptr;
+
+	data = (char *)calloc(24, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_keepalive : calloc failed : %s.\n", strerror(errno));
+		return;
+	}
+	ptr = data;
 
 	*(uint32_t *)ptr = 0x0002bef4;			ptr += 4;	/* Function field */
 	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <errno.h>
 
 
 /**
@@ -34,6 +35,10 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	struct player *p;
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
+	if (p == NULL) {
+		printf("(WW) new_player, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 	p->stats = new_plstat();
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
@@ -113,6 +118,11 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	pl->stats->activ_time = time(NULL);
 	/* Alloc adresses */
 	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
+	if (pl->cli_addr == NULL) {
+		printf("(WW) new_player_from_data, client address calloc failed : %s.\n", strerror(errno));
+		destroy_player(pl);
+		return NULL;
+	}
 	memcpy(pl->cli_addr, cli_addr, cli_len);
 	pl->cli_len = cli_len;
 

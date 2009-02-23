@@ -3,6 +3,8 @@
 #include <libconfig.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
+#include <stdio.h>
 
 #include "server.h"
 
@@ -59,8 +61,11 @@ struct config *config_parse(char *cfg_file)
 		printf("Error : no db tag.\n");
 		config_destroy(&cfg);
 		return 0;
-	} else {
-		cfg_s = (struct config *)calloc(1, sizeof(struct config));
+	}
+	cfg_s = (struct config *)calloc(1, sizeof(struct config));
+	if (cfg_s == NULL) {
+		printf("(EE) config_parse, calloc failed : %s.\n", strerror(errno));
+		return 0;
 	}
 	/* get the database type */
 	curr = config_setting_get_member(db, "type");

@@ -47,7 +47,8 @@ static int ar_next_available(const struct array *a)
 static int ar_grow(struct array *a)
 {
 	size_t old_size, new_size;
-	/*void **tmp_alloc;*/
+	void **tmp_alloc;
+
 	if (a == NULL || a->array == NULL) {
 		printf("(WW) ar_grow : passed array is not allocated.\n");
 		return 0;
@@ -58,13 +59,12 @@ static int ar_grow(struct array *a)
 		new_size = MIN(a->total_slots * 2, a->max_slots);
 
 		a->total_slots = new_size;
-		a->array = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
-		/*tmp_alloc = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
+		tmp_alloc = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
 		if (tmp_alloc == NULL) {
 			printf("(EE) ar_grow, realloc failed : %s\n", strerror(errno));
 			return 0;
 		}
-		a->array = tmp_alloc;*/
+		a->array = tmp_alloc;
 
 		/* realloc does not set to zero!! */
 		bzero(a->array + old_size, (a->total_slots - old_size) * sizeof(void *));
@@ -121,10 +121,10 @@ struct array *ar_new(size_t size)
 	a->total_slots = size;
 	a->used_slots = 0;
 	a->max_slots = (size_t) - 1;
-	if (a->array == NULL)
-		a->array = (void **)calloc(size, sizeof(void *));
+	a->array = (void **)calloc(size, sizeof(void *));
+
 	if (a->array == NULL) {
-		printf("(EE) ar_new, calloc failed : %s\n", strerror(errno));
+		printf("(EE) ar_new, a->array calloc failed : %s\n", strerror(errno));
 		free(a);
 		return NULL;
 	}

@@ -54,7 +54,7 @@ int audio_received(char *in, size_t len, struct server *s)
 		ch_in = sender->in_chan;
 		/* Security checks */
 		if (data_codec != ch_in->codec) {
-			printf("(EE) Player sent a wrong codec ID : " PRIu8 ", expected : " PRIu8 ".\n", data_codec, ch_in->codec);
+			printf("(EE) Player sent a wrong codec ID : %" PRIu8 ", expected : %" PRIu8 ".\n", data_codec, ch_in->codec);
 			return -1;
 		}
 

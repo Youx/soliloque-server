@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <stdio.h>
 
 /**
  * Create and initialize a new ban.
@@ -19,6 +21,11 @@
 struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 {
 	struct ban *b = (struct ban *)calloc(sizeof(struct ban), 1);
+
+	if (b == NULL) {
+		printf("(EE) new_ban, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 	
 	b->duration = duration;
 	b->ip = strdup(inet_ntoa(ip));
@@ -37,6 +44,11 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 struct ban *test_ban(int x)
 {
 	struct ban *b = (struct ban *)calloc(sizeof(struct ban), 1);
+
+	if (b == NULL) {
+		printf("(EE) test_ban, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 
 	if (x == 0) {
 		b->duration = 0;

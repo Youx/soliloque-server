@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 
 /**
  * Destroys a channel and all its fields
@@ -42,6 +43,11 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 {
 	struct channel *chan;
 	chan = (struct channel *)calloc(1, sizeof(struct channel));
+
+	if (chan == NULL) {
+		printf("(EE) new_channel, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 	
 	bzero(chan->password, 30);
 	chan->players = ar_new(4);

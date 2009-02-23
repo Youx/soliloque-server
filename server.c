@@ -58,6 +58,11 @@ struct server *new_server()
 	struct server *serv;
 	
 	serv = (struct server *)calloc(1, sizeof(struct server));
+	if (serv == NULL) {
+		printf("(WW) new_server, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
+
 	serv->chans = ar_new(4);
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
@@ -85,6 +90,12 @@ int add_channel(struct server *serv, struct channel *chan)
 	struct channel *tmp_chan;
 	char *used_ids;
 	
+	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
+	if (used_ids == NULL) {
+		printf("(WW) add_channel, used_ids allocation failed : %s.\n", strerror(errno));
+		return 0;
+	}
+
 	/* If there is no channel, make this channel the default one */
 	if (serv->chans->used_slots == 0)
 		chan->flags |= (CHANNEL_FLAG_DEFAULT | CHANNEL_FLAG_REGISTERED);
@@ -98,7 +109,6 @@ int add_channel(struct server *serv, struct channel *chan)
 	}
 	
 	/* Find the next available ID */
-	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	ar_each(struct channel *, tmp_chan, serv->chans)
 		used_ids[tmp_chan->id - 1] = 1;	/* id -1  -> ID start at 1 */
 	ar_end_each;
@@ -209,6 +219,10 @@ int add_player(struct server *serv, struct player *pl)
 	
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
+	if (used_ids == NULL) {
+		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
+		return 0;
+	}
 	ar_each(struct player *, tmp_pl, serv->players)
 		used_ids[tmp_pl->public_id - 1] = 1;	/* ID start at 1 */
 	ar_end_each;
@@ -327,6 +341,10 @@ int add_ban(struct server *s, struct ban *b)
 
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
+	if (used_ids == NULL) {
+		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
+		return 0;
+	}
 	ar_each(struct ban *, tmp_b, s->bans)
 		used_ids[tmp_b->id - 1] = 1;	/* ID start at 1 */
 	ar_end_each;

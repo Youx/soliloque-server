@@ -4,6 +4,7 @@
 #include <dbi/dbi.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "server.h"
 #include "configuration.h"
@@ -80,6 +81,11 @@ struct server **db_create_servers(struct config *c)
 		return NULL;
 	}
 	ss = (struct server **)calloc(nb_serv + 1, sizeof(struct server *));
+	if (ss == NULL) {
+		printf("(WW) db_create_server : calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
+
 	if (res) {
 		i = 0;
 		for (i = 0 ; dbi_result_next_row(res) ; i++) {

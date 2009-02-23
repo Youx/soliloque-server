@@ -5,6 +5,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 
 
 /**
@@ -36,7 +38,14 @@ int sp_to_bitfield(struct server_privileges *sp, char *data)
  */
 struct server_privileges *new_sp()
 {
-	return (struct server_privileges *)calloc(1, sizeof(struct server_privileges));
+	struct server_privileges *sp;
+
+	sp = (struct server_privileges *)calloc(1, sizeof(struct server_privileges));
+	if (sp == NULL) {
+		printf("(WW) new_sp, calloc failed : %s.\n", strerror(errno));
+		return NULL;
+	}
+	return sp;
 }
 
 /**

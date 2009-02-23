@@ -48,6 +48,10 @@ static void s_resp_chans(struct player *pl)
 
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_chans, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
 	*(uint16_t *)ptr = CTL_LIST_CH;			ptr += 2;	/* */
@@ -87,6 +91,10 @@ void s_notify_new_player(struct player *pl)
 
 	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_new_player, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -125,6 +133,10 @@ static void s_notify_player_left(struct player *p)
 	struct server *s = p->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_player_left, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -177,6 +189,10 @@ static void s_resp_players(struct player *pl)
 
 	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_players, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	while (nb_players > 0) {
 		bzero(data, data_size * sizeof(char));
 		ptr = data;
@@ -217,6 +233,10 @@ static void s_resp_unknown(struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_unknown, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 	/* initialize the packet */
 	*(uint32_t *)ptr = 0x0008bef0;			ptr += 4;
@@ -291,6 +311,10 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	struct server *s = kicker->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_kick_server, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -369,6 +393,10 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	struct server *s = kicker->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_kick_channel, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
@@ -445,6 +473,10 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_switch_channel, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -526,6 +558,10 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	int data_size = 30;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_channel_deleted, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -567,6 +603,10 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_cannot_delete_channel, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -639,6 +679,10 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_ban, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -724,6 +768,10 @@ static void s_resp_bans(struct player *pl)
 	ar_end_each;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_ban, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -827,6 +875,10 @@ static void s_resp_server_stats(struct player *pl)
 	compute_timed_stats(s->stats, stats);
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_server_stats, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;/* */
 	*(uint16_t *)ptr = CTL_SERVSTATS;		ptr += 2;/* */
@@ -889,6 +941,10 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_player_ch_priv_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -985,6 +1041,10 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_player_sv_right_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1072,6 +1132,10 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	struct server *s = pl->in_chan->in_server;
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_player_attr_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1134,6 +1198,10 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) send_message_to_all, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1179,6 +1247,10 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) send_message_to_channel, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1223,6 +1295,10 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) send_message_to_player, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1314,6 +1390,10 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(name) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_chan_name_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1386,6 +1466,10 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(topic) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_chan_topic_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1458,6 +1542,10 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(desc) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_resp_chan_desc_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1523,6 +1611,10 @@ void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + 2 + 2;
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_channel_flags_codec_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -1687,6 +1779,10 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 	data_size += channel_to_data_size(ch);
 
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_channel_created, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 
 
@@ -1782,6 +1878,10 @@ void s_res_player_stats(struct player *pl, struct player *tgt)
 
 	data_size = 164;
 	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_res_player_stats, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
 	ptr = data;
 	ip = inet_ntoa(tgt->cli_addr->sin_addr);
 

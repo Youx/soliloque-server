@@ -48,12 +48,27 @@ struct server_stat *new_sstat()
 	struct server_stat *st;
 
 	st = (struct server_stat *)calloc(sizeof(struct server_stat), 1);
+	if (st == NULL) {
+		printf("(WW) new_sstat, calloc of st failed : %s.\n", strerror(errno));
+		return NULL;
+	}
 	st->pkt_max = 10000;
 	st->pkt_sizes = (size_t *)calloc(sizeof(size_t), st->pkt_max);
 	st->pkt_timestamps = (struct timeval *)calloc(sizeof(struct timeval), st->pkt_max);
 	st->pkt_io = (char *)calloc(sizeof(char), st->pkt_max);
 	st->start_time = time(NULL);
 
+	if (st->pkt_sizes == NULL || st->pkt_timestamps == NULL || st->pkt_io == NULL) {
+		printf("(WW) new_sstat, calloc failed : %s.\n", strerror(errno));
+		if (st->pkt_sizes != NULL)
+			free(st->pkt_sizes);
+		if (st->pkt_timestamps != NULL)
+			free(st->pkt_timestamps);
+		if (st->pkt_io != NULL)
+			free(st->pkt_io);
+		free(st);
+		return NULL;
+	}
 	return st;
 }
 
@@ -70,6 +85,9 @@ struct server_stat *new_sstat()
 void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 {
 	struct timeval now, res;
+	size_t *tmp_sizes;
+	char *tmp_io;
+	struct timeval *tmp_timestamps;
 	int i;
 
 	if (in_out == 1) {
@@ -94,11 +112,31 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	}
 	st->pkt_max *= 2;
 	/* reallocate and clean */
-	st->pkt_sizes = (size_t *)realloc(st->pkt_sizes, sizeof(size_t) * st->pkt_max);
+	tmp_sizes = (size_t *)realloc(st->pkt_sizes, sizeof(size_t) * st->pkt_max);
+	if (tmp_sizes == NULL) {
+		printf("(WW) sstat_add_packet, pkt_sizes realloc failed : %s.\n", strerror(errno));
+		st->pkt_max /= 2;	/* restore the old size */
+		return;
+	}
+	st->pkt_sizes = tmp_sizes;
 	bzero(st->pkt_sizes + (st->pkt_max / 2), sizeof(size_t) * st->pkt_max / 2); /* realloc does not set to zero! */
+
 	/* reallocate */
-	st->pkt_timestamps = (struct timeval *)realloc(st->pkt_timestamps, sizeof(struct timeval) * st->pkt_max);
-	st->pkt_io = (char *)realloc(st->pkt_io, sizeof(char) * st->pkt_max);
+	tmp_timestamps = (struct timeval *)realloc(st->pkt_timestamps, sizeof(struct timeval) * st->pkt_max);
+	if (tmp_timestamps == NULL) {
+		printf("(WW) sstat_add_packet, pkt_timestamps realloc failed : %s.\n", strerror(errno));
+		st->pkt_max /= 2;
+		return;
+	}
+	st->pkt_timestamps = tmp_timestamps;
+
+	tmp_io = (char *)realloc(st->pkt_io, sizeof(char) * st->pkt_max);
+	if (tmp_io == NULL) {
+		printf("(WW) sstat_add_packet, pkt_io realloc failed : %s.\n", strerror(errno));
+		st->pkt_max /= 2;
+		return;
+	}
+	st->pkt_io = tmp_io;
 
 	/* insert */
 	st->pkt_sizes[(st->pkt_max / 2) + 1] = size;
