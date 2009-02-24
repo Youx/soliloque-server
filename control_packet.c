@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "server.h"
 #include "channel.h"

@@ -30,6 +30,14 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 	b->duration = duration;
 	b->ip = strdup(inet_ntoa(ip));
 	b->reason = strdup(reason);
+	if (b->ip == NULL || b->reason == NULL) {
+		if (b->ip != NULL)
+			free(b->ip);
+		if (b->reason != NULL)
+			free(b->reason);
+		free(b);
+		return NULL;
+	}
 
 	return b;
 }

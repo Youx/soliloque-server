@@ -43,7 +43,6 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 {
 	struct channel *chan;
 	chan = (struct channel *)calloc(1, sizeof(struct channel));
-
 	if (chan == NULL) {
 		printf("(EE) new_channel, calloc failed : %s.\n", strerror(errno));
 		return NULL;
@@ -52,7 +51,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	bzero(chan->password, 30);
 	chan->players = ar_new(4);
 	chan->players->max_slots = max_users;
-	
+	/* strdup : input strings are secure */
 	chan->name = strdup(name);
 	chan->topic = strdup(topic);
 	chan->desc = strdup(desc);
@@ -60,6 +59,17 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	chan->flags = flags;
 	chan->codec = codec;
 	chan->sort_order = sort_order;
+
+	if (chan->name == NULL || chan->topic == NULL || chan->desc == NULL) {
+		if (chan->name != NULL)
+			free(chan->name);
+		if (chan->topic != NULL)
+			free(chan->topic);
+		if (chan->desc != NULL)
+			free(chan->desc);
+		free(chan);
+		return NULL;
+	}
 	
 	return chan;
 }
@@ -179,10 +189,21 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 	/* ignore 0xFFFFFFFF field */		ptr += 4;
 	sort_order = *(uint16_t *)ptr;		ptr += 2;
 	max_users = *(uint16_t *)ptr;		ptr += 2;
+	/* FIXME : possibility of buffer overflow in 3 strdup */
 	name = strdup(ptr);			ptr += strlen(name) + 1;
 	topic = strdup(ptr);			ptr += strlen(topic) + 1;
 	desc = strdup(ptr);			ptr += strlen(desc) + 1;
 
+	if (name == NULL || topic == NULL || desc == NULL) {
+		if (name != NULL)
+			free(name);
+		if (topic != NULL)
+			free(topic);
+		if (desc != NULL)
+			free(desc);
+		printf("(WW) channel_from_data, allocation failed : %s.\n", strerror(errno));
+		return 0;
+	}
 	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);
 	return ptr - data;
 }
