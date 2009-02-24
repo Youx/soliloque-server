@@ -20,7 +20,7 @@
  */
 struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 {
-	struct ban *b = (struct ban *)calloc(sizeof(struct ban), 1);
+	struct ban *b = (struct ban *)calloc(1, sizeof(struct ban));
 
 	if (b == NULL) {
 		printf("(EE) new_ban, calloc failed : %s.\n", strerror(errno));
@@ -51,7 +51,7 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
  */
 struct ban *test_ban(int x)
 {
-	struct ban *b = (struct ban *)calloc(sizeof(struct ban), 1);
+	struct ban *b = (struct ban *)calloc(1, sizeof(struct ban));
 
 	if (b == NULL) {
 		printf("(EE) test_ban, calloc failed : %s.\n", strerror(errno));

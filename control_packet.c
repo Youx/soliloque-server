@@ -783,7 +783,7 @@ static void s_resp_bans(struct player *pl)
 	/* packet version */			ptr += 4;	/* filled later */
 	/* checksum */				ptr += 4;	/* filled at the end */
 	*(uint16_t *)ptr = s->bans->used_slots;	ptr += 4;	/* number of bans */
-	printf("number of bans : %i\n", s->bans->used_slots);
+	printf("number of bans : %zu\n", s->bans->used_slots);
 	ar_each(struct ban *, b, s->bans)
 		tmp_size = ban_to_data(b, ptr);
 		ptr += tmp_size;

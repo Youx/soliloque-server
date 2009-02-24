@@ -47,15 +47,15 @@ struct server_stat *new_sstat()
 {
 	struct server_stat *st;
 
-	st = (struct server_stat *)calloc(sizeof(struct server_stat), 1);
+	st = (struct server_stat *)calloc(1, sizeof(struct server_stat));
 	if (st == NULL) {
 		printf("(WW) new_sstat, calloc of st failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 	st->pkt_max = 10000;
-	st->pkt_sizes = (size_t *)calloc(sizeof(size_t), st->pkt_max);
-	st->pkt_timestamps = (struct timeval *)calloc(sizeof(struct timeval), st->pkt_max);
-	st->pkt_io = (char *)calloc(sizeof(char), st->pkt_max);
+	st->pkt_sizes = (size_t *)calloc(st->pkt_max, sizeof(size_t));
+	st->pkt_timestamps = (struct timeval *)calloc(st->pkt_max, sizeof(struct timeval));
+	st->pkt_io = (char *)calloc(st->pkt_max, sizeof(char));
 	st->start_time = time(NULL);
 
 	if (st->pkt_sizes == NULL || st->pkt_timestamps == NULL || st->pkt_io == NULL) {

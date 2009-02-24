@@ -47,7 +47,7 @@ int packet_check_crc(char *data, size_t len, unsigned int offset)
 	uint32_t new_crc;
 	uint32_t *crc_ptr;
 
-	buff = (char *)calloc(sizeof(char), len);
+	buff = (char *)calloc(len, sizeof(char));
 	if (buff == NULL) {
 		printf("(WW) packet_check_crc, buffer allocation failed : %s.\n", strerror(errno));
 		return 0;
