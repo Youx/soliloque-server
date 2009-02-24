@@ -18,6 +18,8 @@ void destroy_player(struct player *p)
 	/* not always initialized */
 	if (p->cli_addr)
 		free(p->cli_addr);
+	if (p->stats)
+		free(p->stats);
 	free(p);
 }
 

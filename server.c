@@ -238,6 +238,8 @@ int add_player(struct server *serv, struct player *pl)
 	ar_insert(serv->players, pl);
 
 	serv->stats->total_logins++;
+
+	free(used_ids);
 	return add_player_to_channel(def_chan, pl);
 }
 

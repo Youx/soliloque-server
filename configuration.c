@@ -65,6 +65,7 @@ struct config *config_parse(char *cfg_file)
 	cfg_s = (struct config *)calloc(1, sizeof(struct config));
 	if (cfg_s == NULL) {
 		printf("(EE) config_parse, calloc failed : %s.\n", strerror(errno));
+		config_destroy(&cfg);
 		return 0;
 	}
 	/* get the database type */
