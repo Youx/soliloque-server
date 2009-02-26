@@ -288,6 +288,35 @@ int db_create_registrations(struct config *c, struct server *s)
 }
 
 /**
+ * Add a new registration to the database
+ *
+ * @param c the db configuration
+ * @param s the server
+ * @param r the registration
+ *
+ * @return 1 on success
+ */
+int db_add_registration(struct config *c, struct server *s, struct registration *r)
+{
+	char *req = "INSERT INTO registrations (server_id, serveradmin, name, password) VALUES (%i, %i, %s, %s);";
+	char *quoted_name, *quoted_pass;
+	dbi_result res;
+
+	if (connect_db(c) == 0)
+		return 0;
+
+	dbi_conn_quote_string_copy(c->conn, r->name, &quoted_name);
+	dbi_conn_quote_string_copy(c->conn, r->password, &quoted_pass);
+
+	res = dbi_conn_queryf(c->conn, req, s->id, r->global_flags, quoted_name, quoted_pass);
+	dbi_result_free(res);
+	free(quoted_pass);
+	free(quoted_name);
+
+	return 1;
+}
+
+/**
  * Go through the database, read and add to the server all
  * the server permissions stored.
  *

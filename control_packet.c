@@ -11,6 +11,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "server.h"
 #include "channel.h"
@@ -20,6 +21,7 @@
 #include "server_stat.h"
 #include "database.h"
 #include "player.h"
+#include "registration.h"
 
 
 /**
@@ -1975,3 +1977,50 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 	return NULL;
 }
 
+/**
+ * Handle a packet to create a new registration with a name, password
+ * and server admin flag.
+ *
+ * @param data the packet
+ * @param len the length of the packet
+ * @param pl the player who issued the request
+ */
+void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
+{
+	char *name, *pass;
+	char name_len, pass_len;
+	char server_admin;
+	struct registration *reg;
+	struct server *s;
+
+	s = pl->in_chan->in_server;
+
+	send_acknowledge(pl);
+	if (player_has_privilege(pl, SP_PL_REGISTER_PLAYER, NULL)) {
+		name_len = MIN(29, data[24]);
+		name = strndup(data + 25, name_len);
+		pass_len = MIN(29, data[54]);
+		pass = strndup(data + 55, pass_len);
+		server_admin = data[84];
+		if (name == NULL || pass == NULL) {
+			printf("(EE) c_req_create_registration, strndup failed : %s.\n", strerror(errno));
+			if (name != NULL)
+				free(name);
+			if (pass != NULL)
+				free(pass);
+			return NULL;
+		}
+		reg = new_registration();
+		strcpy(reg->name, name);
+		strcpy(reg->password, pass);
+		reg->global_flags = server_admin;
+		add_registration(s, reg);
+		/* database callback to insert a new registration */
+		db_add_registration(s->conf, s, reg);
+
+		free(name);
+		free(pass);
+	}
+
+	return NULL;
+}

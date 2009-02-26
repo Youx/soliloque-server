@@ -52,5 +52,6 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl);
 void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
+void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
 
 #endif
