@@ -1,0 +1,90 @@
+Soliloque Server
+================
+
+Welcome to Soliloque Server!
+
+
+Getting the code
+----------------
+
+Check out https://code.coding-badger.net/projects/soliloque-server for the wiki, bug tracking, forums, etc...
+The bleeding edge code can be grabbed from the git repository on github :
+
+	$ git clone git://github.com/Youx/soliloque-server.git
+
+For information about Git, please see http://www.git-scm.com
+
+
+How to build soliloque server
+-----------------------------
+
+To build soliloque server from source, you will need : 
+- waf (http://code.google.com/p/waf), the project builder
+- a C compiler (most likely gcc)
+- libconfig (http://www.hyperrealm.com/libconfig/), a library to parse config files
+- libdbi (http://libdbi.sf.net), a database abstraction library, and the specific drivers (mysql, sqlite3, ...)
+
+Then run
+
+	$ waf configure
+	$ waf build
+
+You can install it, which isn't really recommended yet...
+
+	$ sudo waf install
+
+Or use the binary output/default/soliloque-server
+
+
+Preparing the database
+======================
+
+There are two scripts to prepare a database :
+
+db_generator.sql	: generate the tables
+db_sample.sql		: generate a server with some standard values
+
+Those script are compatible with sqlite3, and may work with mysql or postgresql, for example :
+
+	$ sqlite3 file.db3 < db_generator.sql
+	$ sqlite3 file.db3 < db_sample.sql
+
+Then edit your sol-server.cfg file accordingly (examples for mysql or sqlite3/sqlite are included)
+
+
+Known Incompatibilities
+-----------------------
+
+Big endian processors (PowerPC, Sparc, ...) are not currently supported, but will be in a close future.
+
+Full protocol support is not achieved yet.
+
+
+Hardware Requirements
+---------------------
+
+The application compiled takes ~67k or disk with debug flags, and 53-57k without the debug flags,
+depending on the optimization level.
+
+Soliloque server hopefully does not leak too much memory, and can run an empty server with ...
+~500kBytes of RAM (~350kBytes of those being the database library). Each additional player or
+channel takes about 300 Bytes, so it could probably run on an embedded linux device.
+
+
+Author(s)
+---------
+
+Hugo Camboulive (Youx) <hugo.camboulive [AT] gmail.com>
+
+
+Links
+-----
+
+For a documentation of the protocol (not complete yet) :
+https://code.coding-badger.net/projects/soliloque/wiki/Teamspeak_protocol
+
+To submit bugs, discuss, join the effort, etc etc :
+https://code.coding-badger.net/projects/soliloque-server 
+
+The code is hosted and can be forked from here :
+http://github.com/Youx/soliloque-server
