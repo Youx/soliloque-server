@@ -14,16 +14,17 @@ struct array {
 	size_t used_slots;
 	size_t total_slots;
 	size_t  max_slots;
+
+	size_t iterator;
 };
 
-extern size_t tmp_arr_iterator;
 
 #define AR_OK 1
 
 #define ar_each(type, el_ptr, a)\
-for(tmp_arr_iterator=0 ; tmp_arr_iterator < a->total_slots ; tmp_arr_iterator++) {\
-	if(a->array[tmp_arr_iterator] != NULL) {\
-		el_ptr = (type) a->array[tmp_arr_iterator];
+for(a->iterator=0 ; a->iterator < a->total_slots ; a->iterator++) {\
+	if(a->array[a->iterator] != NULL) {\
+		el_ptr = (type) a->array[a->iterator];
 
 #define ar_end_each }}
 

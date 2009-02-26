@@ -19,8 +19,6 @@
 
 #include "compat.h"
 
-size_t tmp_arr_iterator;
-
 /**
  * Find the next available slot in the array.
  *
