@@ -9,22 +9,24 @@
 #ifndef __ARRAY_H__
 #define __ARRAY_H__
 
+#include <pthread.h>
+
 struct array {
 	void **array;
 	size_t used_slots;
 	size_t total_slots;
 	size_t  max_slots;
 
-	size_t iterator;
+	pthread_mutex_t lock;
 };
 
 
 #define AR_OK 1
 
-#define ar_each(type, el_ptr, a)\
-for(a->iterator=0 ; a->iterator < a->total_slots ; a->iterator++) {\
-	if(a->array[a->iterator] != NULL) {\
-		el_ptr = (type) a->array[a->iterator];
+#define ar_each(type, el_ptr, iter, a)\
+for(iter=0 ; iter < a->total_slots ; iter++) {\
+	if(a->array[iter] != NULL) {\
+		el_ptr = (type) a->array[iter];
 
 #define ar_end_each }}
 

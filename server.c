@@ -89,6 +89,7 @@ int add_channel(struct server *serv, struct channel *chan)
 	uint32_t new_id;
 	struct channel *tmp_chan;
 	char *used_ids;
+	size_t iter;
 	
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
@@ -103,13 +104,13 @@ int add_channel(struct server *serv, struct channel *chan)
 	/* If this channel is the default one, remove the flag from the channel that previously has it.
 	 *  = Only one channel can have the default flag */
 	if (chan->flags & CHANNEL_FLAG_DEFAULT) {
-		ar_each(struct channel *, tmp_chan, serv->chans)
+		ar_each(struct channel *, tmp_chan, iter, serv->chans)
 			tmp_chan->flags &= (0xFFFF ^ CHANNEL_FLAG_DEFAULT);
 		ar_end_each;
 	}
 	
 	/* Find the next available ID */
-	ar_each(struct channel *, tmp_chan, serv->chans)
+	ar_each(struct channel *, tmp_chan, iter, serv->chans)
 		used_ids[tmp_chan->id - 1] = 1;	/* id -1  -> ID start at 1 */
 	ar_end_each;
 
@@ -143,8 +144,9 @@ int add_channel(struct server *serv, struct channel *chan)
 struct channel *get_channel_by_id(struct server *serv, uint32_t id)
 {
 	struct channel *tmp_chan;
+	size_t iter;
 	
-	ar_each(struct channel *, tmp_chan, serv->chans)
+	ar_each(struct channel *, tmp_chan, iter, serv->chans)
 		if(tmp_chan->id == id)
 			return tmp_chan;
 	ar_end_each;
@@ -164,8 +166,9 @@ struct channel *get_channel_by_id(struct server *serv, uint32_t id)
 int destroy_channel_by_id(struct server *serv, uint32_t id)
 {
 	struct channel *tmp_chan;
+	size_t iter;
 	
-	ar_each(struct channel *, tmp_chan, serv->chans)
+	ar_each(struct channel *, tmp_chan, iter, serv->chans)
 		if(tmp_chan->id == id) {
 			destroy_channel(tmp_chan);
 			ar_remove(serv->chans, tmp_chan);
@@ -187,8 +190,9 @@ int destroy_channel_by_id(struct server *serv, uint32_t id)
 struct channel *get_default_channel(struct server *serv)
 {
 	struct channel *new_chan, *tmp_chan;
+	size_t iter;
 	
-	ar_each(struct channel *, tmp_chan, serv->chans)
+	ar_each(struct channel *, tmp_chan, iter, serv->chans)
 		if (tmp_chan->flags & CHANNEL_FLAG_DEFAULT)
 			return tmp_chan;
 	ar_end_each;
@@ -214,6 +218,7 @@ int add_player(struct server *serv, struct player *pl)
 	char *used_ids;
 	int new_id;
 	struct player *tmp_pl;
+	size_t iter;
 	
 	def_chan = get_default_channel(serv);
 	
@@ -223,7 +228,7 @@ int add_player(struct server *serv, struct player *pl)
 		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
-	ar_each(struct player *, tmp_pl, serv->players)
+	ar_each(struct player *, tmp_pl, iter, serv->players)
 		used_ids[tmp_pl->public_id - 1] = 1;	/* ID start at 1 */
 	ar_end_each;
 
@@ -255,8 +260,9 @@ int add_player(struct server *serv, struct player *pl)
 struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id)
 {
 	struct player *pl;
+	size_t iter;
 
-	ar_each(struct player *, pl, s->players)
+	ar_each(struct player *, pl, iter, s->players)
 		if (pl->public_id == pub_id && pl->private_id == priv_id) {
 			return pl;
 		}
@@ -276,8 +282,9 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
 {
 	struct player *pl;
+	size_t iter;
 
-	ar_each(struct player *, pl, s->players)
+	ar_each(struct player *, pl, iter, s->players)
 		if (pl->public_id == pub_id) {
 			return pl;
 		}
@@ -340,6 +347,7 @@ int add_ban(struct server *s, struct ban *b)
 	struct ban *tmp_b;
 	char *used_ids;
 	int new_id;
+	size_t iter;
 
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
@@ -347,7 +355,7 @@ int add_ban(struct server *s, struct ban *b)
 		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
-	ar_each(struct ban *, tmp_b, s->bans)
+	ar_each(struct ban *, tmp_b, iter, s->bans)
 		used_ids[tmp_b->id - 1] = 1;	/* ID start at 1 */
 	ar_end_each;
 
@@ -372,8 +380,9 @@ int add_ban(struct server *s, struct ban *b)
 struct ban *get_ban_by_id(struct server *s, uint16_t ban_id)
 {
 	struct ban *b;
+	size_t iter;
 
-	ar_each(struct ban *, b, s->bans)
+	ar_each(struct ban *, b, iter, s->bans)
 		if(b->id == ban_id)
 			return b;
 	ar_end_each;
@@ -392,8 +401,9 @@ struct ban *get_ban_by_id(struct server *s, uint16_t ban_id)
 struct ban *get_ban_by_ip(struct server *s, struct in_addr ip)
 {
 	struct ban *b;
+	size_t iter;
 
-	ar_each(struct ban *, b, s->bans)
+	ar_each(struct ban *, b, iter, s->bans)
 		if (strcmp(b->ip, inet_ntoa(ip)) == 0)
 			return b;
 	ar_end_each;
@@ -417,8 +427,9 @@ void remove_ban(struct server *s, struct ban *b)
 struct registration *get_registration(struct server *s, char *login, char *pass)
 {
 	struct registration *r;
+	size_t iter;
 
-	ar_each(struct registration *, r, s->regs)
+	ar_each(struct registration *, r, iter, s->regs)
 		if (strcmp(r->name, login) == 0 && strcmp(r->password, pass) == 0)
 			return r;
 	ar_end_each;
@@ -441,12 +452,13 @@ void print_server(struct server *s)
 {
 	struct channel *tmp_chan;
 	struct player *tmp_pl;
+	size_t iter;
 
-	ar_each(struct channel *, tmp_chan, s->chans)
+	ar_each(struct channel *, tmp_chan, iter, s->chans)
 		print_channel(tmp_chan);
 	ar_end_each;
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 		print_player(tmp_pl);
 	ar_end_each;
 }

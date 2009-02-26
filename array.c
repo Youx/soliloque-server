@@ -84,10 +84,12 @@ int ar_insert(struct array *a, void *elem)
 	int i;
 	int err;
 
+	pthread_mutex_lock(&a->lock);
 	if (a->used_slots == a->total_slots) {
 		err = ar_grow(a);
 		if (err != AR_OK) {
 			printf("(EE) Could not grow array any further. Insertion impossible.\n");
+			pthread_mutex_unlock(&a->lock);
 			return 0;
 		}
 	}
@@ -95,8 +97,10 @@ int ar_insert(struct array *a, void *elem)
 	if (i != -1) {
 		a->array[i] = elem;
 		a->used_slots++;
+		pthread_mutex_unlock(&a->lock);
 		return AR_OK;
 	}
+	pthread_mutex_unlock(&a->lock);
 	return 0;
 }
 
@@ -120,12 +124,12 @@ struct array *ar_new(size_t size)
 	a->used_slots = 0;
 	a->max_slots = (size_t) - 1;
 	a->array = (void **)calloc(size, sizeof(void *));
-
 	if (a->array == NULL) {
 		printf("(EE) ar_new, a->array calloc failed : %s\n", strerror(errno));
 		free(a);
 		return NULL;
 	}
+	pthread_mutex_init(&a->lock, NULL);
 	return a;
 }
 
@@ -141,6 +145,7 @@ static void ar_remove_index(struct array *a, size_t index)
 {
 	if (a == NULL || a->array == NULL) {
 		printf("(WW) ar_remove_index, passed array is unallocated.\n");
+		pthread_mutex_unlock(&a->lock);
 		return;
 	}
 	if (a->array[index] != NULL) {
@@ -163,12 +168,14 @@ static void ar_remove_index(struct array *a, size_t index)
 void ar_remove(struct array *a, void *el) 
 {
 	size_t i;
+	pthread_mutex_lock(&a->lock);
 
 	for (i=0 ; i < a->total_slots ; i++) {
 		if (a->array[i] == el) {
 			ar_remove_index(a, i);
 		}
 	}
+	pthread_mutex_unlock(&a->lock);
 }	
 
 /**
@@ -188,8 +195,11 @@ int ar_get_n_elems_start_at(struct array *a, int max_elem, size_t start_at, void
 	size_t nb_elem = 0;
 	int el_counter = 0;
 
-	if (a->used_slots <= start_at)
+	pthread_mutex_lock(&a->lock);
+	if (a->used_slots <= start_at) {
+		pthread_mutex_unlock(&a->lock);
 		return 0;
+	}
 
 	for (i=0 ; i < a->total_slots ; i++) {
 		if (a->array[i] != NULL) {
@@ -200,6 +210,7 @@ int ar_get_n_elems_start_at(struct array *a, int max_elem, size_t start_at, void
 			nb_elem++;
 		}
 	}
+	pthread_mutex_unlock(&a->lock);
 	return el_counter;
 }
 
@@ -207,16 +218,21 @@ int ar_free(struct array *a)
 {
 	size_t i;
 
+	pthread_mutex_lock(&a->lock);
 	if (a == NULL || a->array == NULL) {
 		printf("(EE) ar_free : Trying to free an unallocated array.\n");
+		pthread_mutex_unlock(&a->lock);
 		return 0;
 	}
 
 	for (i = 0 ; i < a->total_slots ; i++) {
-		if (a->array[i] != NULL)
+		if (a->array[i] != NULL) {
+			pthread_mutex_unlock(&a->lock);
 			return 0;
+		}
 	}
 	free(a->array);
+	pthread_mutex_unlock(&a->lock);
 	free(a);
 	return AR_OK;
 }

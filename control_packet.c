@@ -39,11 +39,12 @@ static void s_resp_chans(struct player *pl)
 	char *ptr;
 	int ch_size;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	/* compute the size of the packet */
 	data_size += 24;	/* header */
 	data_size += 4;		/* number of channels in packet */
-	ar_each(struct channel *, ch, s->chans)
+	ar_each(struct channel *, ch, iter, s->chans)
 		data_size += channel_to_data_size(ch);
 	ar_end_each;
 
@@ -63,7 +64,7 @@ static void s_resp_chans(struct player *pl)
 	/* empty checksum */				ptr += 4;
 	*(uint32_t *)ptr = s->chans->used_slots;	ptr += 4;	/* number of channels sent */
 	/* dump the channels to the packet */
-	ar_each(struct channel *, ch, s->chans)
+	ar_each(struct channel *, ch, iter, s->chans)
 		ch_size = channel_to_data_size(ch);
 		channel_to_data(ch, ptr);
 		ptr += ch_size;
@@ -89,6 +90,7 @@ void s_notify_new_player(struct player *pl)
 	char *data, *ptr;
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
@@ -107,7 +109,7 @@ void s_notify_new_player(struct player *pl)
 	player_to_data(pl, ptr);
 	
 	/* customize and send for each player on the server */
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 		if (tmp_pl != pl) {
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -132,6 +134,7 @@ static void s_notify_player_left(struct player *p)
 	struct player *tmp_pl;
 	int data_size = 64;
 	struct server *s = p->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -151,7 +154,7 @@ static void s_notify_player_left(struct player *p)
 	*(uint32_t *)ptr = 1;			ptr += 4;	/* visible notification */
 	/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -310,6 +313,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	struct player *tmp_pl;
 	int data_size = 64;
 	struct server *s = kicker->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -331,7 +335,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	*(uint8_t *)ptr = MIN(29, strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -392,6 +396,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	struct player *tmp_pl;
 	int data_size = 68;
 	struct server *s = kicker->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -414,7 +419,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));		ptr += 29;	/* reason message */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -472,6 +477,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	struct player *tmp_pl;
 	int data_size = 38;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -492,7 +498,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
 	*(uint16_t *)ptr = 1;			ptr += 2;	/* 1 = no pass, 0 = pass */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -557,6 +563,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 30;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -576,7 +583,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	*(uint32_t *)ptr = 1;			ptr += 4;	/* ????? the previous 
 								   ptr += 2 is not an error*/
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -678,6 +685,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	struct player *tmp_pl;
 	int data_size = 64;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -699,7 +707,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -760,11 +768,12 @@ static void s_resp_bans(struct player *pl)
 	int data_size, tmp_size;
 	struct ban *b;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 	
 	data_size = 24;
 	data_size += 4;	/* number of bans */
 
-	ar_each(struct ban *, b, s->bans)
+	ar_each(struct ban *, b, iter, s->bans)
 		data_size += ban_to_data_size(b);
 	ar_end_each;
 
@@ -784,7 +793,7 @@ static void s_resp_bans(struct player *pl)
 	/* checksum */				ptr += 4;	/* filled at the end */
 	*(uint16_t *)ptr = s->bans->used_slots;	ptr += 4;	/* number of bans */
 	printf("number of bans : %zu\n", s->bans->used_slots);
-	ar_each(struct ban *, b, s->bans)
+	ar_each(struct ban *, b, iter, s->bans)
 		tmp_size = ban_to_data(b, ptr);
 		ptr += tmp_size;
 	ar_end_each;
@@ -940,6 +949,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	struct player *tmp_pl;
 	int data_size = 34;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -960,7 +970,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the privilege (1<<right) */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of the player who changed the priv */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1040,6 +1050,7 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 	struct player *tmp_pl;
 	int data_size = 34;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -1060,7 +1071,7 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the flag (1 << right) */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of player who changed the flag */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1131,6 +1142,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	struct player *tmp_pl;
 	int data_size = 30;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
@@ -1149,7 +1161,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
 	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1196,6 +1208,8 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	struct player *tmp_pl;
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
+
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
@@ -1218,7 +1232,7 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1245,6 +1259,8 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	struct player *tmp_pl;
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
+	size_t iter;
+
 	/* header size (24) + color (4) + type (1) + name size (1) + name (29) + msg (?) */
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
@@ -1267,7 +1283,7 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
 	strcpy(ptr, msg);
 
-	ar_each(struct player *, tmp_pl, ch->players)
+	ar_each(struct player *, tmp_pl, iter, ch->players)
 		*(uint32_t *)(data + 4) = tmp_pl->private_id;
 		*(uint32_t *)(data + 8) = tmp_pl->public_id;
 		*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1387,6 +1403,7 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
 	struct player *tmp_pl;
+	size_t iter;
 
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(name) + 1);
@@ -1408,7 +1425,7 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 	strcpy(ptr, name);
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1463,6 +1480,7 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
 	struct player *tmp_pl;
+	size_t iter;
 
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(topic) + 1);
@@ -1484,7 +1502,7 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 	strcpy(ptr, topic);
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1539,6 +1557,7 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
 	struct player *tmp_pl;
+	size_t iter;
 
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + (strlen(desc) + 1);
@@ -1560,7 +1579,7 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 	strcpy(ptr, desc);
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1608,6 +1627,7 @@ void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
 	int data_size;
 	struct server *s = pl->in_chan->in_server;
 	struct player *tmp_pl;
+	size_t iter;
 
 	/* header size (24) + chan_id (4) + user_id (4) + name (?) */
 	data_size = 24 + 4 + 4 + 2 + 2;
@@ -1630,7 +1650,7 @@ void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
 	*(uint16_t *)ptr = ch->codec;		ptr += 2;/* new codec */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
@@ -1775,6 +1795,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 	int data_size;
 	struct player *tmp_pl;
 	struct server *s = ch->in_server;
+	size_t iter;
 
 	data_size = 24 + 4;
 	data_size += channel_to_data_size(ch);
@@ -1797,7 +1818,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 	*(uint32_t *)ptr = creator->public_id;	ptr += 4;/* id of creator */
 	channel_to_data(ch, ptr);
 
-	ar_each(struct player *, tmp_pl, s->players)
+	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
