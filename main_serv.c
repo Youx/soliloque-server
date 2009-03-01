@@ -219,6 +219,7 @@ int main(void)
 
 	for (i = 0 ; ss[i] != NULL ; i++) {
 		db_create_channels(c, ss[i]);
+		init_channel_arbo(ss[i]);
 		db_create_registrations(c, ss[i]);
 		db_create_sv_privileges(c, ss[i]);
 		sp_print(ss[i]->privileges);

@@ -232,16 +232,22 @@ int db_create_channels(struct config *c, struct server *s)
 			name = dbi_result_get_string_copy(res, "name");
 			topic = dbi_result_get_string_copy(res, "topic");
 			desc = dbi_result_get_string_copy(res, "description");
-			flags = (CHANNEL_FLAG_REGISTERED |
-					dbi_result_get_uint(res, "flag_moderated") << CHANNEL_FLAG_MODERATED |
-					dbi_result_get_uint(res, "flag_hierarchical") << CHANNEL_FLAG_SUBCHANNELS |
-					dbi_result_get_uint(res, "flag_default") << CHANNEL_FLAG_DEFAULT),
+			printf("flag_hierarchical = %i\n", dbi_result_get_uint(res, "flag_hierarchical"));
+			flags = CHANNEL_FLAG_REGISTERED;
+			if (dbi_result_get_uint(res, "flag_moderated"))
+				flags |= CHANNEL_FLAG_MODERATED;
+			if (dbi_result_get_uint(res, "flag_hierarchical"))
+				flags |= CHANNEL_FLAG_SUBCHANNELS;
+			if (dbi_result_get_uint(res, "flag_default"))
+				flags |= CHANNEL_FLAG_DEFAULT;
 			/* create the channel */
 			ch = new_channel(name, topic, desc, flags,
 					dbi_result_get_uint(res, "codec"),
 					dbi_result_get_int(res, "ordr"),
 					dbi_result_get_uint(res, "maxusers"));
 			ch->db_id = dbi_result_get_uint(res, "id");
+			ch->parent_db_id = dbi_result_get_uint(res, "parent_id");
+
 			add_channel(s, ch);
 			/* free temporary variables */
 			free(name); free(topic); free(desc);

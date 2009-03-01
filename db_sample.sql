@@ -5,11 +5,13 @@ INSERT INTO servers (id, name, welcome_msg, maxusers, port, password, clan_serve
 
 /* Create a few channels */
 INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchical, flag_default, codec, ordr, maxusers, name, topic, description, password, created_at) VALUES
-(2, 1, -1, 0, 0, 0, 11, 0, 32, 'Another channel', 'Topic', 'Blablabla desc', '', 'NOW()');
-INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchical, flag_default, codec, ordr, maxusers, name, topic, description, password, created_at) VALUES
 (1, 1, -1, 0, 0, 1, 10, 0, 16, 'Default channel', 'Topic of channel', 'Blablabla default channel description', '', 'NOW()');
 INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchical, flag_default, codec, ordr, maxusers, name, topic, description, password, created_at) VALUES
+(2, 1, -1, 0, 1, 0, 11, 0, 32, 'Another channel', 'Topic', 'Blablabla desc', '', 'NOW()');
+INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchical, flag_default, codec, ordr, maxusers, name, topic, description, password, created_at) VALUES
 (3, 1, -1, 0, 0, 0, 10, 0, 64, 'Yet Another One', 'Topicblablabla', 'Blabla desc desc\nsaut de ligne\nazeazklnlkazebldbazdvbazdmaz', 'PASS', 'NOW()');
+INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchical, flag_default, codec, ordr, maxusers, name, topic, description, password, created_at) VALUES
+(4, 1, 2, 0, 0, 0, 10, 0, 64, 'Subchannel', 'Topic', 'Blabla desc ddvbazdmaz', '', '');
 
 /* Create a few registrations */
 INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES

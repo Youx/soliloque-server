@@ -51,6 +51,11 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	bzero(chan->password, 30);
 	chan->players = ar_new(4);
 	chan->players->max_slots = max_users;
+	/* subchannels */
+	chan->subchannels = ar_new(4);
+	chan->parent = NULL;
+	chan->parent_db_id = 0;
+
 	/* strdup : input strings are secure */
 	chan->name = strdup(name);
 	chan->topic = strdup(topic);
@@ -146,7 +151,11 @@ int channel_to_data(struct channel *ch, char *data)
 	*(uint32_t *)ptr = ch->id;		ptr += 4;
 	*(uint16_t *)ptr = ch->flags;		ptr += 2;
 	*(uint16_t *)ptr = ch->codec;		ptr += 2;
-	*(uint32_t *)ptr = 0xFFFFFFFF;		ptr += 4;
+	if (ch->parent == NULL) {
+		*(uint32_t *)ptr = 0xFFFFFFFF;		ptr += 4;
+	} else {
+		*(uint32_t *)ptr = ch->parent->id;	ptr += 4;
+	}
 	*(uint16_t *)ptr = ch->sort_order;	ptr += 2;
 	*(uint16_t *)ptr = ch->players->max_slots;	ptr += 2;
 	strcpy(ptr, ch->name);			ptr += (strlen(ch->name) +1);
@@ -179,6 +188,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 	uint16_t codec;
 	uint16_t sort_order;
 	uint16_t max_users;
+	uint32_t parent_id;
 	char *name, *topic, *desc, *ptr;
 
 	ptr = data;
@@ -186,7 +196,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 	/* ignore ID field */			ptr += 4;
 	flags = *(uint16_t *)ptr;		ptr += 2;
 	codec = *(uint16_t *)ptr;		ptr += 2;
-	/* ignore 0xFFFFFFFF field */		ptr += 4;
+	parent_id = *(uint32_t *)ptr;		ptr += 4;
 	sort_order = *(uint16_t *)ptr;		ptr += 2;
 	max_users = *(uint16_t *)ptr;		ptr += 2;
 	/* TODO : check if the len - (ptr - data) - X formula is correct */
@@ -205,5 +215,37 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 		return 0;
 	}
 	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);
+
+	if (parent_id != 0xFFFFFFFF)
+		(*dst)->parent_id = parent_id;
+
 	return ptr - data;
+}
+
+int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
+{
+	if (ch != subchannel->parent) {
+		printf("(WW) channel_remove_subchannel, subchannel's parent is not the same as passed parent.\n");
+		return 0;
+	}
+	if (ch == NULL) {
+		printf("(WW) channel_remove_subchannel, parent is null.\n");
+		return 0;
+	}
+	ar_remove(ch->subchannels, subchannel);
+	subchannel->parent = NULL;
+
+	return 1;
+}
+
+int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
+{
+	if ((ch->flags & CHANNEL_FLAG_SUBCHANNELS) == 0) {
+		printf("(WW) channel_add_subchannel, channel %i:%s can not have subchannels.\n", ch->id, ch->name);
+		return 0;
+	}
+	channel_remove_subchannel(subchannel->parent, subchannel);
+	subchannel->parent = ch;
+	ar_insert(ch->subchannels, subchannel);
+	return 1;
 }

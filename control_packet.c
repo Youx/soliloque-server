@@ -1865,6 +1865,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	size_t bytes_read;
 	char *ptr;
 	struct server *s;
+	struct channel *parent;
 	int priv_nok = 0;
 
 	s = pl->in_chan->in_server;
@@ -1897,6 +1898,10 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 
 	if (priv_nok == 0) {
 		add_channel(s, ch);
+		if (ch->parent_id != 0) {
+			parent = get_channel_by_id(s, ch->parent_id);
+			channel_add_subchannel(parent, ch);
+		}
 		printf("New channel created\n");
 		print_channel(ch);
 		if (! (ch->flags & CHANNEL_FLAG_UNREGISTERED))

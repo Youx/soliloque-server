@@ -206,6 +206,34 @@ struct channel *get_default_channel(struct server *serv)
 	return new_chan;
 }
 
+static struct channel *get_channel_by_db_id(struct server *s, uint32_t db_id)
+{
+	struct channel *ch;
+	size_t iter;
+
+	ar_each(struct channel *, ch, iter, s->chans)
+		if (ch->db_id == db_id)
+			return ch;
+	ar_end_each;
+
+	return NULL;
+}
+
+void init_channel_arbo(struct server *s)
+{
+	struct channel *sub, *parent;
+	size_t iter;
+
+	ar_each(struct channel *, sub, iter, s->chans)
+		if (sub->parent_db_id != 0xFFFFFFFF) {
+			printf("parent_db_id = %i.\n", sub->parent_db_id);
+			parent = get_channel_by_db_id(s, sub->parent_db_id);
+			channel_add_subchannel(parent, sub);
+		}
+	ar_end_each;
+
+}
+
 /**
  * Add a player to the server and put it into the default channel.
  *

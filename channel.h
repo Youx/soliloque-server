@@ -28,8 +28,13 @@ struct channel {
 
 	struct array *players;
 	struct server *in_server;
+	/* channel tree */
+	struct array *subchannels;
+	struct channel *parent;
+	uint32_t parent_id;
 
 	uint32_t db_id;
+	uint32_t parent_db_id;
 };
 
 
@@ -47,5 +52,7 @@ void print_channel(struct channel *chan);
 int channel_to_data(struct channel *ch, char *data);
 int channel_to_data_size(struct channel *ch);
 size_t channel_from_data(char *data, int len, struct channel **dst);
-
+/* subchannels */
+int channel_remove_subchannel(struct channel *ch, struct channel *subchannel);
+int channel_add_subchannel(struct channel *ch, struct channel *subchannel);
 #endif
