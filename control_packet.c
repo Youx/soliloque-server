@@ -405,7 +405,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
  * @param kicked_to the channel the player is moved to
  */
 static void s_notify_kick_channel(struct player *kicker, struct player *kicked, 
-		char *reason, struct channel *kicked_to)
+		char *reason, struct channel *kicked_from)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -427,9 +427,9 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	/* packet counter */				ptr += 4;	/* filled later */
 	/* packet version */				ptr += 4;	/* not done yet */
 	/* empty checksum */				ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = kicked->public_id;		ptr += 4;	/* ID of player who left */
-	*(uint32_t *)ptr = kicker->public_id;		ptr += 4;	/* kicker ID */
-	*(uint32_t *)ptr = kicked_to->id;		ptr += 4;	/* channel the player is moved to */
+	*(uint32_t *)ptr = kicked->public_id;		ptr += 4;	/* ID of player who was kicked */
+	*(uint32_t *)ptr = kicked_from->id;		ptr += 4;	/* channel the player was kicked from */
+	*(uint32_t *)ptr = kicker->public_id;		ptr += 4;	/* ID of the kicker */
 	*(uint16_t *)ptr = 0;				ptr += 2;	/* visible notification : kicked */
 	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));		ptr += 29;	/* reason message */
@@ -471,7 +471,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 		if (player_has_privilege(pl, SP_OTHER_CH_KICK, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			printf("Reason for kicking player %s : %s\n", target->name, reason);
-			s_notify_kick_channel(pl, target, reason, def_chan);
+			s_notify_kick_channel(pl, target, reason, pl->in_chan);
 			move_player(pl, def_chan);
 			/* TODO update player channel privileges etc... */
 
