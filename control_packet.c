@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <openssl/sha.h>
+
 #include "server.h"
 #include "channel.h"
 #include "acknowledge_packet.h"
@@ -2009,6 +2011,8 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 	char server_admin;
 	struct registration *reg;
 	struct server *s;
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	char *digest_readable;
 
 	s = pl->in_chan->in_server;
 
@@ -2029,7 +2033,12 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 		}
 		reg = new_registration();
 		strcpy(reg->name, name);
-		strcpy(reg->password, pass);
+		/* hash the password */
+		SHA256((unsigned char *)pass, strlen(pass), digest);
+		digest_readable = ustrtohex(digest, SHA256_DIGEST_LENGTH);
+		strcpy(reg->password, digest_readable);
+		free(digest_readable);
+
 		reg->global_flags = server_admin;
 		add_registration(s, reg);
 		/* database callback to insert a new registration */

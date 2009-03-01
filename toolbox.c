@@ -45,3 +45,20 @@ char *strndup (char const *s, size_t n)
 	return memcpy(res, s, i);
 }
 #endif /* HAVE_STRNDUP */
+
+#include <stddef.h>
+
+char *ustrtohex (unsigned char *data, size_t len)
+{
+	char *dst;
+	size_t i;
+
+	dst = calloc(2 * len + 1, sizeof(char));
+
+	for (i = 0 ; i < len ; i++) {
+		sprintf(dst + (i * 2), "%02x", data[i]);
+	}
+
+	/*printf("%s\n", dst); */
+	return dst;
+}

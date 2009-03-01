@@ -277,7 +277,7 @@ int db_create_registrations(struct config *c, struct server *s)
 			name = dbi_result_get_string_copy(res, "name");
 			strncpy(r->name, name, MIN(29, strlen(name)));
 			pass = dbi_result_get_string_copy(res, "password");
-			strncpy(r->password, pass, MIN(29, strlen(pass)));
+			strcpy(r->password, pass);
 			add_registration(s, r);
 			/* free temporary variables */
 			free(pass); free(name);

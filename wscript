@@ -14,9 +14,11 @@ flags_dbg4='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-pr
 flags_dbg5='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align -Wwrite-strings -Wchar-subscripts -Winline -Wnested-externs -Wredundant-decls'
 
 def set_options(opt):
+  opt.add_option('--with-openssl', type='string', help='Define the location of openssl libraries.', dest='openssl')
   pass
 
 def configure(conf):
+  import Options
   conf.check_tool('gcc')
   # default environment
   conf.setenv('default')
@@ -24,6 +26,13 @@ def configure(conf):
   conf.check_cfg(package='libconfig', args='--cflags --libs', uselib_store='LIBCONFIG', mandatory=True)
   conf.check_cc(lib='dbi', uselib_store='LIBDBI', mandatory=True)
   conf.check_cc(lib='pthread', uselib_store='PTHREAD', mandatory=True)
+  # Check for OpenSSL library and support for SHA256
+  if (Options.options.openssl):
+    conf.check_cc(lib='crypto', cppflags='-I'+Options.options.openssl+'/include',
+		    ldflags='-L'+Options.options.openssl+'/lib', uselib_store='OPENSSL', mandatory=True)
+  else:
+    conf.check_cc(lib='crypto', uselib_store='OPENSSL', mandatory=True)
+  conf.check(define_name='HAVE_SHA256', uselib='OPENSSL', function_name='SHA256', header_name='openssl/sha.h', mandatory=True)
   # Check for strndup (not present on OSX)
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
   conf.write_config_header('config.h')
@@ -36,5 +45,5 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
-  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI'
+  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
   sol_serv.cflags = '-O2 -ggdb -ansi '+flags_dbg2+' -D_GNU_SOURCE -D_BSD_SOURCE'

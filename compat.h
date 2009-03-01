@@ -17,6 +17,7 @@ char *strndup(char const *s, size_t n);
 
 #endif
 
+char *ustrtohex (unsigned char *data, size_t len);
 
 #ifdef __APPLE__
 #include <machine/endian.h>

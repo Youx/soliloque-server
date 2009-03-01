@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <poll.h>
 #include <inttypes.h>
+#include <openssl/sha.h>
 
 #include "main_serv.h"
 #include "server.h"

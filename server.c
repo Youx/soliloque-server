@@ -16,6 +16,8 @@
 #include <sys/utsname.h>
 #include <stdio.h>
 
+#include <openssl/sha.h>
+
 #define MAX_MSG 1024
 
 static void get_machine_name(struct server *s)
@@ -428,12 +430,20 @@ struct registration *get_registration(struct server *s, char *login, char *pass)
 {
 	struct registration *r;
 	size_t iter;
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	char *digest_readable;
+
+	SHA256((unsigned char *)pass, strlen(pass), digest);
+	digest_readable = ustrtohex(digest, SHA256_DIGEST_LENGTH);
 
 	ar_each(struct registration *, r, iter, s->regs)
-		if (strcmp(r->name, login) == 0 && strcmp(r->password, pass) == 0)
+		if (strcmp(r->name, login) == 0 && strcmp(r->password, digest_readable) == 0) {
+			free(digest_readable);
 			return r;
+		}
 	ar_end_each;
 
+	free(digest_readable);
 	return NULL;
 }
 
