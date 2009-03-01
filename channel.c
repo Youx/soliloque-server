@@ -189,10 +189,10 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 	/* ignore 0xFFFFFFFF field */		ptr += 4;
 	sort_order = *(uint16_t *)ptr;		ptr += 2;
 	max_users = *(uint16_t *)ptr;		ptr += 2;
-	/* FIXME : possibility of buffer overflow in 3 strdup */
-	name = strdup(ptr);			ptr += strlen(name) + 1;
-	topic = strdup(ptr);			ptr += strlen(topic) + 1;
-	desc = strdup(ptr);			ptr += strlen(desc) + 1;
+	/* TODO : check if the len - (ptr - data) - X formula is correct */
+	name = strndup(ptr, len - (ptr - data) - 3);		ptr += strlen(name) + 1;
+	topic = strndup(ptr, len - (ptr - data) - 2);		ptr += strlen(topic) + 1;
+	desc = strndup(ptr, len - (ptr - data) - 1);		ptr += strlen(desc) + 1;
 
 	if (name == NULL || topic == NULL || desc == NULL) {
 		if (name != NULL)
