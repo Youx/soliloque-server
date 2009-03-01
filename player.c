@@ -89,6 +89,10 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	uint16_t version[4];
 
 	/* Verify fields */
+	if (len != 180) {
+		printf("(WW) new_player_from_data, packet has invalid size.\n");
+		return NULL;
+	}
 	
 	/* Copy fields */
 	/* Bypass header */				ptr += 16;

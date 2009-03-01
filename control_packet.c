@@ -273,6 +273,10 @@ static void s_resp_unknown(struct player *pl)
  */
 void *c_req_chans(char *data, unsigned int len, struct player *pl)
 {
+	if (len != 120) {
+		printf("(WW) c_req_chans, packet has an invalid size : %i instead of %i.\n", len, 120);
+		return NULL;
+	}
 	send_acknowledge(pl);		/* ACK */
 	s_resp_chans(pl);	/* list of channels */
 	s_resp_players(pl);	/* list of players */
@@ -292,6 +296,10 @@ void *c_req_chans(char *data, unsigned int len, struct player *pl)
  */
 void *c_req_leave(char *data, unsigned int len, struct player *pl)
 {
+	if (len != 24) {
+		printf("(WW) c_req_leave, packet has invalid size : %i instead of %i.\n", len, 24);
+		return NULL;
+	}
 	send_acknowledge(pl);		/* ACK */
 	/* send a notification to all players */
 	s_notify_player_left(pl);
@@ -364,6 +372,11 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 	char *reason;
 	struct player *target;
 	struct server *s = pl->in_chan->in_server;
+
+	if (len != 60) {
+		printf("(WW) c_req_kick_server, packet has invalid size : %i instead of %i.\n", len, 60);
+		return NULL;
+	}
 
 	memcpy(&target_id, data + 24, 4);
 	target = get_player_by_public_id(s, target_id);
@@ -445,6 +458,10 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 	struct channel *def_chan;
 	struct server *s = pl->in_chan->in_server;
 
+	if (len != 60) {
+		printf("(WW) c_req_kick_channel, packet has invalid size : %i instead of %i.\n", len, 60);
+		return NULL;
+	}
 	memcpy(&target_id, data + 24, 4);
 	target = get_player_by_public_id(s, target_id);
 	def_chan = get_default_channel(s);
