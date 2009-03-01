@@ -198,7 +198,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
  * @param pl the player to send this to
  * @param ka_id the counter of the keepalived we received
  */
-static void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id)
+static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 {
 	char *data, *ptr;
 
@@ -233,7 +233,7 @@ static void s_resp_keepalive(struct server *s, struct player *pl, uint32_t ka_id
  * @param cli_addr the adress of the client
  * @param cli_len the length of cli_addr
  */
-void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 {
 	struct player *pl;
 	uint32_t pub_id, priv_id, ka_id;
@@ -251,5 +251,5 @@ void handle_player_keepalive(char *data, unsigned int len, struct sockaddr_in *c
 	/* Get the counter */
 	ka_id = *(uint32_t *)(data + 12);
 	/* Send the keepalive response */
-	s_resp_keepalive(s, pl, ka_id);
+	s_resp_keepalive(pl, ka_id);
 }

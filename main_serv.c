@@ -93,7 +93,7 @@ static void handle_connection_type_packet(char *data, int len, struct sockaddr_i
 		handle_player_connect(data, len, cli_addr, cli_len, s);
 		break;
 	case 1:
-		handle_player_keepalive(data, len, cli_addr, cli_len, s);
+		handle_player_keepalive(data, len, s);
 		break;
 	default:
 		printf("(WW) Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
@@ -148,12 +148,12 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 	}
 }
 
-static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
 	printf("(II) Packet : ACK.\n");
 }
 
-static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
 	int res;
 	printf("(II) Packet : Audio data.\n");
@@ -184,10 +184,10 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 		handle_control_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	case 0xbef1:		/* acknowledge */
-		handle_ack_type_packet(data, len, cli_addr, cli_len, s);
+		handle_ack_type_packet(data, len, cli_addr, s);
 		break;
 	case 0xbef2: 		/* audio data */
-		handle_data_type_packet(data, len, cli_addr, cli_len, s);
+		handle_data_type_packet(data, len, cli_addr, s);
 		break;
 	case 0xbef4:		/* connection and keepalives */
 		handle_connection_type_packet(data, len, cli_addr, cli_len, s);
