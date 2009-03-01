@@ -37,7 +37,7 @@ struct channel {
 /* Channel functions */
 struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 		uint16_t codec, uint16_t sort_order, uint16_t max_users);
-struct channel *new_predef_channel();
+struct channel *new_predef_channel(void);
 int destroy_channel(struct channel *chan);
 
 int add_player_to_channel(struct channel *chan, struct player *player);

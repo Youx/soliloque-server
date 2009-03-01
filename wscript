@@ -7,6 +7,12 @@ srcdir = '.'
 blddir = 'output'
 SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c'
 
+flags_dbg1='-Wall -Werror'
+flags_dbg2='-Wall -Werror -W -Wno-unused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith'
+flags_dbg3='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align'
+flags_dbg4='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align -Wwrite-strings'
+flags_dbg5='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align -Wwrite-strings -Wchar-subscripts -Winline -Wnested-externs -Wredundant-decls'
+
 def set_options(opt):
   pass
 
@@ -31,4 +37,4 @@ def build(bld):
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ''
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI'
-  sol_serv.cflags = '-O2 -ggdb -ansi -Wall -D_GNU_SOURCE -D_BSD_SOURCE'
+  sol_serv.cflags = '-O2 -ggdb -ansi '+flags_dbg2+' -D_GNU_SOURCE -D_BSD_SOURCE'

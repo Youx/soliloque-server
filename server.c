@@ -18,7 +18,7 @@
 
 #define MAX_MSG 1024
 
-void get_machine_name(struct server *s)
+static void get_machine_name(struct server *s)
 {
 	struct utsname mc;
 	int len = 0;
@@ -463,7 +463,7 @@ void print_server(struct server *s)
 	ar_end_each;
 }
 
-void *server_run(void *args)
+static void *server_run(void *args)
 {
 	struct server *s = (struct server *)args;
 	struct sockaddr_in cli_addr;

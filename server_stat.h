@@ -29,7 +29,7 @@ struct server_stat
 
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
                       const struct sockaddr *dest_addr, socklen_t addrlen);
-struct server_stat *new_sstat();
+struct server_stat *new_sstat(void);
 void sstat_add_packet(struct server_stat *st, size_t size, char in_out);
 void compute_timed_stats(struct server_stat *st, uint32_t *res);
 /*

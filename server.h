@@ -48,7 +48,7 @@ struct server {
 };
 
 
-struct server *new_server();
+struct server *new_server(void);
 
 /* Server - channel functions */
 struct channel *get_channel_by_id(struct server *serv, uint32_t id);
@@ -76,4 +76,5 @@ int add_registration(struct server *s, struct registration *r);
 void print_server(struct server *s);
 
 void server_start(struct server *s);
+void server_stop(struct server *s);
 #endif

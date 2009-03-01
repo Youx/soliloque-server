@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include "compat.h"
 
 char *strndup (char const *s, size_t n)
 {

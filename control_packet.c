@@ -1623,7 +1623,7 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 	return NULL;
 }
 
-void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
+static void s_notify_channel_flags_codec_changed(struct player *pl, struct channel *ch)
 {
 	char *data, *ptr;
 	int data_size;
@@ -1894,7 +1894,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
  * @param pl the player asking for it
  * @param tgt the player whose statistics we want
  */
-void s_res_player_stats(struct player *pl, struct player *tgt)
+static void s_res_player_stats(struct player *pl, struct player *tgt)
 {
 	int data_size;
 	char *data, *ptr;

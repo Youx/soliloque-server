@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "crc.h"
 #include "compat.h"
 
 static void crc32_table(uint32_t poly, uint32_t *table)

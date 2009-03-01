@@ -25,6 +25,6 @@ struct player_stat
 	int bytes_received;
 };
 
-struct player_stat *new_plstat();
+struct player_stat *new_plstat(void);
 
 #endif

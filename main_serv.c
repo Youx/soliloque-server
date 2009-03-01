@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <poll.h>
 #include <inttypes.h>
+
+#include "main_serv.h"
 #include "server.h"
 #include "connection_packet.h"
 #include "control_packet.h"
@@ -23,8 +25,8 @@
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
 packet_function f0_callbacks[2][255];
 
-
-void test_init_server(struct server *s)
+#if 0
+static void test_init_server(struct server *s)
 {
 	/* Add channels */
 	add_channel(s, new_predef_channel());
@@ -45,8 +47,9 @@ void test_init_server(struct server *s)
 	*/
 	print_server(s);
 }
+#endif
 
-static void init_callbacks()
+static void init_callbacks(void)
 {
 	bzero(f0_callbacks[0], 255 * sizeof(packet_function));
 	bzero(f0_callbacks[1], 255 * sizeof(packet_function));
@@ -80,7 +83,7 @@ static void init_callbacks()
 	/* callbacks[0] = myfunc1; ... */
 }
 
-void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+static void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	printf("(II) Packet : Connection.\n");
 	switch (((uint16_t *)data)[1]) {
@@ -96,7 +99,7 @@ void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_
 	}
 }
 
-packet_function get_f0_function(unsigned char * code)
+static packet_function get_f0_function(unsigned char * code)
 {
 	/* Function packets */
 	if (code[3] == 0 || code[3] == 1) { /* 0 = server packet, 1 = client packet*/
@@ -107,7 +110,7 @@ packet_function get_f0_function(unsigned char * code)
 
 
 
-void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
+static void handle_control_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
 	packet_function func;
 	uint8_t code[4] = {0,0,0,0};
@@ -193,7 +196,7 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 	}
 }
 
-int main()
+int main(void)
 {
 	struct server **ss;
 	struct config *c;

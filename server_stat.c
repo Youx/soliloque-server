@@ -29,7 +29,7 @@
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 		const struct sockaddr *dest_addr, socklen_t addrlen)
 {
-	size_t ret;
+	ssize_t ret;
 
 	sstat_add_packet(s->stats, len, 1);
 	ret = sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
