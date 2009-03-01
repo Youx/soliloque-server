@@ -141,15 +141,15 @@ struct array *ar_new(size_t size)
  * @param a the array
  * @param index the index of the element that has to be removed
  */
-static void ar_remove_index(struct array *a, size_t index)
+static void ar_remove_index(struct array *a, size_t idx)
 {
 	if (a == NULL || a->array == NULL) {
 		printf("(WW) ar_remove_index, passed array is unallocated.\n");
 		pthread_mutex_unlock(&a->lock);
 		return;
 	}
-	if (a->array[index] != NULL) {
-		a->array[index] = NULL; /* clear the pointer */
+	if (a->array[idx] != NULL) {
+		a->array[idx] = NULL; /* clear the pointer */
 		a->used_slots--;
 	}
 	return;
