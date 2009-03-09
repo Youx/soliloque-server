@@ -19,19 +19,18 @@ How to build soliloque server
 -----------------------------
 
 To build soliloque server from source, you will need : 
-- waf (http://code.google.com/p/waf), the project builder
 - a C compiler (most likely gcc)
 - libconfig (http://www.hyperrealm.com/libconfig/), a library to parse config files
 - libdbi (http://libdbi.sf.net), a database abstraction library, and the specific drivers (mysql, sqlite3, ...)
 
 Then run
 
-	$ waf configure
-	$ waf build
+	$ ./waf configure
+	$ ./waf build
 
 You can install it, which isn't really recommended yet...
 
-	$ sudo waf install
+	$ sudo ./waf install
 
 Or use the binary output/default/soliloque-server
 
@@ -58,6 +57,8 @@ Known Incompatibilities
 Big endian processors (PowerPC, Sparc, ...) are not currently supported, but will be in a close future.
 
 Full protocol support is not achieved yet.
+
+Some problems seem to happen when using sqlite3 v3.5.9 + libdbi v0.8.2, but sqlite3 v3.6.10 + libdbi v0.8.3 works fine.
 
 
 Hardware Requirements
