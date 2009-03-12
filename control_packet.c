@@ -558,7 +558,7 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 		 * - there is no password on the channel
 		 * - he has the privilege to join without giving a password
 		 * - he gives the correct password */
-		if (!(to->flags & CHANNEL_FLAG_PASSWORD)
+		if (!(ch_getflags(to) & CHANNEL_FLAG_PASSWORD)
 				|| player_has_privilege(pl, SP_CHA_JOIN_WO_PASS, to)
 				|| strcmp(pass, to->password) == 0) {
 			printf("Player switching to channel %s.\n", to->name);
@@ -681,8 +681,8 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else {
 			/* if the channel is registered, remove it from the db */
-			printf("Flags : %i\n", del->flags);
-			if ((del->flags & CHANNEL_FLAG_UNREGISTERED) == 0)
+			printf("Flags : %i\n", ch_getflags(del));
+			if ((ch_getflags(del) & CHANNEL_FLAG_UNREGISTERED) == 0)
 				db_unregister_channel(s->conf, del);
 			s_notify_channel_deleted(s, del_id);
 			destroy_channel_by_id(s, del->id);
@@ -1694,7 +1694,7 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
  */
 void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *pl)
 {
-	uint16_t new_flags;
+	uint16_t new_flags, flags;
 	uint16_t new_codec;
 	uint32_t ch_id;
 	struct channel *ch;
@@ -1713,9 +1713,10 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 	if (ch == NULL)
 		return NULL;
 
+	flags = ch_getflags(ch);
 	/* For each flag, check if it is changed, and if we have the permission to change it */
 	/* Registered / unregistered flag */
-	if ((ch->flags & CHANNEL_FLAG_UNREGISTERED) != (new_flags & CHANNEL_FLAG_UNREGISTERED)) {
+	if ((flags & CHANNEL_FLAG_UNREGISTERED) != (new_flags & CHANNEL_FLAG_UNREGISTERED)) {
 		if ((new_flags & CHANNEL_FLAG_UNREGISTERED)  /* we want to unregister the channel */
 				&& !player_has_privilege(pl, SP_CHA_CREATE_UNREGISTERED, NULL))
 			priv_nok++;
@@ -1724,19 +1725,19 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 			priv_nok++;
 	}
 	/* default flag */
-	if ((ch->flags & CHANNEL_FLAG_DEFAULT) != (new_flags & CHANNEL_FLAG_DEFAULT)
+	if ((flags & CHANNEL_FLAG_DEFAULT) != (new_flags & CHANNEL_FLAG_DEFAULT)
 			&& !player_has_privilege(pl, SP_CHA_CREATE_DEFAULT, ch))
 		priv_nok++;
 	/* moderated flag */
-	if ((ch->flags & CHANNEL_FLAG_MODERATED) != (new_flags & CHANNEL_FLAG_MODERATED)
+	if ((flags & CHANNEL_FLAG_MODERATED) != (new_flags & CHANNEL_FLAG_MODERATED)
 			&& !player_has_privilege(pl, SP_CHA_CREATE_MODERATED, ch))
 		priv_nok++;
 	/* subchannels flag */
-	if ((ch->flags & CHANNEL_FLAG_SUBCHANNELS) != (new_flags & CHANNEL_FLAG_SUBCHANNELS)
+	if ((flags & CHANNEL_FLAG_SUBCHANNELS) != (new_flags & CHANNEL_FLAG_SUBCHANNELS)
 			&& !player_has_privilege(pl, SP_CHA_CREATE_SUBCHANNELED, ch))
 		priv_nok++;
 	/* password flag */
-	if ((ch->flags & CHANNEL_FLAG_PASSWORD) != (new_flags & CHANNEL_FLAG_PASSWORD)
+	if ((flags & CHANNEL_FLAG_PASSWORD) != (new_flags & CHANNEL_FLAG_PASSWORD)
 			&& !player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch))
 		priv_nok++;
 	/* codec changed ? */
@@ -1746,11 +1747,13 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 
 	/* Do the actual work */
 	if (priv_nok == 0) {
-		ch->flags = new_flags;
+		/* The flags of a subchannel cannot be changed */
+		if (ch->parent == NULL) {
+			ch->flags = new_flags;
+			if ((ch_getflags(ch) & CHANNEL_FLAG_PASSWORD) == 0)
+				bzero(ch_getpass(ch), 30 * sizeof(char));
+		}
 		ch->codec = new_codec;
-
-		if ((ch->flags & CHANNEL_FLAG_PASSWORD) == 0)
-			bzero(ch->password, 30 * sizeof(char));
 
 		s_notify_channel_flags_codec_changed(pl, ch);
 	}
@@ -1782,15 +1785,15 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 
 	ch = get_channel_by_id(s, ch_id);
 	send_acknowledge(pl);
-	if (ch != NULL && player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch)) {
+	if (ch != NULL && player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch) && ch->parent == NULL) {
 		printf("Change channel password : %s->%s\n", ch->name, password);
-		old_flags = ch->flags;
+		old_flags = ch_getflags(ch);
 
 		/* We either remove or change the password */
 		if (pass_len == 0) {
 			printf("(EE) This should not happened. Password removal is done using the change flags/codec function.\n");
 			bzero(ch->password, 30 * sizeof(char));
-			ch->flags &= (0xFFFF ^ CHANNEL_FLAG_PASSWORD);
+			ch->flags &= (~CHANNEL_FLAG_PASSWORD);
 		} else {
 			bzero(ch->password, 30 * sizeof(char));
 			strcpy(ch->password, password);
@@ -1798,7 +1801,7 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 		}
 		/* If we change the password when there is already one, the channel
 		 * flags do not change, no need to notify. */
-		if (old_flags != ch->flags) {
+		if (old_flags != ch_getflags(ch)) {
 			s_notify_channel_flags_codec_changed(pl, ch);
 		}
 	}
@@ -1867,6 +1870,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	struct server *s;
 	struct channel *parent;
 	int priv_nok = 0;
+	int flags;
 
 	s = pl->in_chan->in_server;
 	send_acknowledge(pl);
@@ -1875,24 +1879,26 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	bytes_read = channel_from_data(ptr, len - (ptr - data), &ch);
 	ptr += bytes_read;
 	strncpy(ch->password, ptr, MIN(29, len - (ptr - data) - 1));
+
+	flags = ch_getflags(ch);
 	/* Check the privileges */
 	/* TODO : when we support subchannels, context will have to
 	 * be changed to the parent channel (NULL if we create the
 	 * channel at the root */
-	if (ch->flags & CHANNEL_FLAG_UNREGISTERED) {
+	if (flags & CHANNEL_FLAG_UNREGISTERED) {
 		if (!player_has_privilege(pl, SP_CHA_CREATE_UNREGISTERED, NULL))
 			priv_nok++;
 	} else {
 		if (!player_has_privilege(pl, SP_CHA_CREATE_REGISTERED, NULL))
 			priv_nok++;
 	}
-	if (ch->flags & CHANNEL_FLAG_DEFAULT
+	if (flags & CHANNEL_FLAG_DEFAULT
 			&& !player_has_privilege(pl, SP_CHA_CREATE_DEFAULT, NULL))
 		priv_nok++;
-	if (ch->flags & CHANNEL_FLAG_MODERATED
+	if (flags & CHANNEL_FLAG_MODERATED
 			&& !player_has_privilege(pl, SP_CHA_CREATE_MODERATED, NULL))
 		priv_nok++;
-	if (ch->flags & CHANNEL_FLAG_SUBCHANNELS
+	if (flags & CHANNEL_FLAG_SUBCHANNELS
 			&& !player_has_privilege(pl, SP_CHA_CREATE_SUBCHANNELED, NULL))
 		priv_nok++;
 
@@ -1904,7 +1910,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 		}
 		printf("New channel created\n");
 		print_channel(ch);
-		if (! (ch->flags & CHANNEL_FLAG_UNREGISTERED))
+		if (! (ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED))
 			db_register_channel(s->conf, ch);
 		print_channel(ch);
 		s_notify_channel_created(ch, pl);

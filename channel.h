@@ -34,7 +34,6 @@ struct channel {
 	uint32_t parent_id;
 
 	uint32_t db_id;
-	uint32_t parent_db_id;
 };
 
 
@@ -55,4 +54,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst);
 /* subchannels */
 int channel_remove_subchannel(struct channel *ch, struct channel *subchannel);
 int channel_add_subchannel(struct channel *ch, struct channel *subchannel);
+
+int ch_getflags(struct channel *ch);
+char *ch_getpass(struct channel *ch);
 #endif

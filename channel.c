@@ -54,7 +54,6 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	/* subchannels */
 	chan->subchannels = ar_new(4);
 	chan->parent = NULL;
-	chan->parent_db_id = 0;
 
 	/* strdup : input strings are secure */
 	chan->name = strdup(name);
@@ -105,7 +104,7 @@ void print_channel(struct channel *chan)
 		printf("\t name    : %s\n", chan->name);
 		printf("\t topic   : %s\n", chan->topic);
 		printf("\t desc    : %s\n", chan->desc);
-		if(chan->flags & CHANNEL_FLAG_DEFAULT)
+		if(ch_getflags(chan) & CHANNEL_FLAG_DEFAULT)
 			printf("\t default : y\n");
 	}
 }
@@ -240,7 +239,7 @@ int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
 
 int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
 {
-	if ((ch->flags & CHANNEL_FLAG_SUBCHANNELS) == 0) {
+	if ((ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) == 0) {
 		printf("(WW) channel_add_subchannel, channel %i:%s can not have subchannels.\n", ch->id, ch->name);
 		return 0;
 	}
@@ -248,4 +247,51 @@ int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
 	subchannel->parent = ch;
 	ar_insert(ch->subchannels, subchannel);
 	return 1;
+}
+
+/**
+ * Return a channel flags if it is a top channel, or
+ * the parent's flag if it is a subchannel.
+ *
+ * @param ch the channel we want the flags of
+ *
+ * @return the channel flags
+ */
+int ch_getflags(struct channel *ch)
+{
+	int flags;
+
+	if (ch->parent == NULL)
+		return ch->flags;
+
+	flags = ch->parent->flags;
+	/* A subchannel can not have subchannels and
+	 * cannot be default. Remove those flags. */
+	flags &= ~CHANNEL_FLAG_SUBCHANNELS;
+	flags &= ~CHANNEL_FLAG_DEFAULT;
+	
+	return flags;
+}
+
+/**
+ * Return the password of the channel (top channel),
+ * the password of the parent channel (subchannel), or
+ * NULL.
+ *
+ * @param ch the channel we want the password of.
+ *
+ * @return the password (SHA256-hashed) or NULL if the channel is
+ * not password protected.
+ */
+char *ch_getpass(struct channel *ch)
+{
+	if (ch->parent != NULL)
+		return ch_getpass(ch->parent);
+
+	if (ch->flags & CHANNEL_FLAG_PASSWORD) {
+		return ch->password;
+	} else {
+		printf("(WW) channel_getpassword, asked for the password of a channel that is not protected.\n");
+		return NULL;
+	}
 }

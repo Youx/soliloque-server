@@ -52,10 +52,10 @@ struct server *new_server(void);
 
 /* Server - channel functions */
 struct channel *get_channel_by_id(struct server *serv, uint32_t id);
+struct channel *get_channel_by_db_id(struct server *s, uint32_t db_id);
 int add_channel(struct server *serv, struct channel *chan);
 int destroy_channel_by_id(struct server *serv, uint32_t id);
 struct channel *get_default_channel(struct server *serv);
-void init_channel_arbo(struct server *serv);
 
 /* Server - player functions */
 struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id);

@@ -210,7 +210,7 @@ int db_unregister_channel(struct config *c, struct channel *ch)
  */
 int db_create_channels(struct config *c, struct server *s)
 {
-	char *q = "SELECT * FROM channels WHERE server_id = %i;";
+	char *q = "SELECT * FROM channels WHERE server_id = %i AND parent_id = -1;";
 	struct channel *ch;
 	dbi_result res;
 	char *name, *topic, *desc;
@@ -246,7 +246,6 @@ int db_create_channels(struct config *c, struct server *s)
 					dbi_result_get_int(res, "ordr"),
 					dbi_result_get_uint(res, "maxusers"));
 			ch->db_id = dbi_result_get_uint(res, "id");
-			ch->parent_db_id = dbi_result_get_uint(res, "parent_id");
 
 			add_channel(s, ch);
 			/* free temporary variables */
@@ -255,6 +254,59 @@ int db_create_channels(struct config *c, struct server *s)
 		dbi_result_free(res);
 	}
 	return 1;
+}
+
+int db_create_subchannels(struct config *c, struct server *s)
+{
+	char *q = "SELECT * FROM channels WHERE server_id = %i AND parent_id != -1;";
+	struct channel *ch, *parent;
+	dbi_result res;
+	char *name, *topic, *desc;
+	int parent_db_id;
+
+	if (connect_db(c) == 0)
+		return 0;
+
+	res = dbi_conn_queryf(c->conn, q, s->id);
+
+	if (res) {
+		while (dbi_result_next_row(res)) {
+			/* temporary variables to be readable */
+			name = dbi_result_get_string_copy(res, "name");
+			topic = dbi_result_get_string_copy(res, "topic");
+			desc = dbi_result_get_string_copy(res, "description");
+			/* create the sub channel */
+			ch = new_channel(name, topic, desc, 0x00,
+					dbi_result_get_uint(res, "codec"),
+					dbi_result_get_int(res, "ordr"),
+					dbi_result_get_uint(res, "maxusers"));
+			ch->db_id = dbi_result_get_uint(res, "id");
+
+			parent_db_id = dbi_result_get_uint(res, "parent_id");
+
+			parent = get_channel_by_db_id(s, parent_db_id);
+			if (parent == NULL) {
+				printf("(WW) db_create_subchannels, channel with db_id %i does not exist.\n",
+						parent_db_id);
+				destroy_channel(ch);
+			} else if (parent->parent != NULL) {
+				printf("(WW) db_create_subchannels, a subchannel can not have subchannels.\n");
+				destroy_channel(ch);
+			} else if ((parent->flags & CHANNEL_FLAG_SUBCHANNELS) == 0) {
+				printf("(WW) db_create_subchannels, channel %s can not have subchannel.\n",
+						parent->name);
+				destroy_channel(ch);
+			} else {
+				add_channel(s, ch);
+				channel_add_subchannel(parent, ch);
+			}
+			/* free temporary variables */
+			free(name); free(topic); free(desc);
+		}
+		dbi_result_free(res);
+	}
+	return 1;
+
 }
 
 /**
