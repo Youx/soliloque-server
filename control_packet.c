@@ -1481,6 +1481,10 @@ void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl)
 			name = strdup(data + 28);
 			free(ch->name);
 			ch->name = name;
+			/* Update the channel in the db if it is registered */
+			if ((ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED) == 0) {
+				db_update_channel(ch->in_server->conf, ch);
+			}
 			s_resp_chan_name_changed(pl, ch, name);
 		}
 	}
@@ -1558,6 +1562,10 @@ void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl)
 			topic = strdup(data + 28);
 			free(ch->topic);
 			ch->topic = topic;
+			/* Update the channel in the db if it is registered */
+			if ((ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED) == 0) {
+				db_update_channel(ch->in_server->conf, ch);
+			}
 			s_resp_chan_topic_changed(pl, ch, topic);
 		}
 	}
@@ -1636,6 +1644,10 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 			desc = strdup(data + 28);
 			free(ch->desc);
 			ch->desc = desc;
+			/* Update the channel in the db if it is registered */
+			if ((ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED) == 0) {
+				db_update_channel(ch->in_server->conf, ch);
+			}
 			s_resp_chan_desc_changed(pl, ch, desc);
 		}
 	}
@@ -1764,8 +1776,8 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 				db_register_channel(s->conf, ch);
 			}
 		} else if ((flags & CHANNEL_FLAG_UNREGISTERED) == 0) {
-			/* TODO : If the channel was already registered, update the db */
-			/* db_update_channel(s->conf, ch); */
+			/* update the channel in the database */
+			db_update_channel(s->conf, ch);
 		}
 		s_notify_channel_flags_codec_changed(pl, ch);
 	}
@@ -1815,6 +1827,10 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 		 * flags do not change, no need to notify. */
 		if (old_flags != ch_getflags(ch)) {
 			s_notify_channel_flags_codec_changed(pl, ch);
+		}
+		/* Update the channel in the db if it is registered */
+		if ((ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED) == 0) {
+			db_update_channel(s->conf, ch);
 		}
 	}
 	return NULL;

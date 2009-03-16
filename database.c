@@ -224,6 +224,59 @@ int db_unregister_channel(struct config *c, struct channel *ch)
 }
 
 /**
+ * Update a registered channel's fields.
+ *
+ * @param c the db config
+ * @param ch the channel to update
+ *
+ * @return 1 on success
+ */
+int db_update_channel(struct config *c, struct channel *ch)
+{
+	char *q = "UPDATE channels SET name = %s, topic = %s, description = %s, \
+		    codec = %i, maxusers = %i, ordr = %i, \
+		    flag_default = %i, flag_hierarchical = %i, flag_moderated = %i, \
+		    password = %s \
+		    WHERE id = %i;";
+	char *name_clean, *topic_clean, *desc_clean, *pass_clean;
+	int flag_default, flag_hierar, flag_mod;
+	dbi_result res;
+
+	if (ch->db_id == 0) /* does not exist in the db */
+		return 0;
+	if (connect_db(c) == 0)
+		return 0;
+
+	/* Secure the input before inserting */
+	dbi_conn_quote_string_copy(c->conn, ch->name, &name_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->topic, &topic_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->desc, &desc_clean);
+	dbi_conn_quote_string_copy(c->conn, ch->password, &pass_clean);
+
+	/* better here than in the query function */
+	flag_default = (ch->flags & CHANNEL_FLAG_DEFAULT);
+	flag_hierar = (ch->flags & CHANNEL_FLAG_SUBCHANNELS);
+	flag_mod = (ch->flags & CHANNEL_FLAG_MODERATED);
+	
+	res = dbi_conn_queryf(c->conn, q,
+			name_clean, topic_clean, desc_clean,
+			ch->codec, ch->players->max_slots, ch->sort_order,
+			flag_default, flag_hierar, flag_mod,
+			pass_clean, ch->db_id);
+	if (res == NULL) {
+		printf("Insertion request failed : \n");
+		printf(q, name_clean, topic_clean, desc_clean,
+			ch->codec, ch->players->max_slots, ch->sort_order,
+			flag_default, flag_hierar, flag_mod,
+			pass_clean, ch->db_id);
+		printf("\n");
+	}
+	free(name_clean); free(topic_clean); free(desc_clean); free(pass_clean);
+
+	return 1;
+}
+
+/**
  * Go through the database, read and add to the server all the channels
  * stored.
  *

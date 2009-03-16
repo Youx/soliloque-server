@@ -16,5 +16,6 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 
 int db_unregister_channel(struct config *c, struct channel *ch);
 int db_register_channel(struct config *c, struct channel *ch);
+int db_update_channel(struct config *c, struct channel *ch);
 
 #endif
