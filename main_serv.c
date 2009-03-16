@@ -64,7 +64,7 @@ static void init_callbacks(void)
 	f0_callbacks[0][0xd0] = &c_req_change_chan_desc;
 	f0_callbacks[0][0xd1] = &c_req_delete_channel;
 	f0_callbacks[0][0xd2] = &c_req_change_chan_max_users;
-	/*f0_callbacks[0][0xd4] = &c_req_change_chan_order;*/
+	f0_callbacks[0][0xd4] = &c_req_change_chan_order;
 
 	f0_callbacks[1][0x2c] = &c_req_leave;		/* client wants to leave */
 	f0_callbacks[1][0x2d] = &c_req_kick_server;	/* client wants to kick someone from the server */
