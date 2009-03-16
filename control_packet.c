@@ -1835,6 +1835,86 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 	}
 	return NULL;
 }
+
+/**
+ * Notify all players that the number of max users for a channel changed.
+ *
+ * @param pl the player who changed the max users
+ * @param ch the channel whose max users changed
+ */
+static void s_notify_channel_max_users_changed(struct player *pl, struct channel *ch)
+{
+	char *data, *ptr;
+	int data_size;
+	struct server *s = pl->in_chan->in_server;
+	struct player *tmp_pl;
+	size_t iter;
+
+	/* header size (24) + chan_id (4) + user_id (4) + nb users (2) */
+	data_size = 24 + 4 + 2 + 4;
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		printf("(WW) s_notify_channel_max_users_changed, packet allocation failed : %s.\n", strerror(errno));
+		return;
+	}
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_CH_MAX_USERS;	ptr += 2;	/* */
+	/* private ID */			ptr += 4;/* filled later */
+	/* public ID */				ptr += 4;/* filled later */
+	/* packet counter */			ptr += 4;/* filled later */
+	/* packet version */			ptr += 4;/* not done yet */
+	/* empty checksum */			ptr += 4;/* filled later */
+	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
+	*(uint16_t *)ptr = ch->players->max_slots;	ptr += 2;/* new channel flags */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+
+	ar_each(struct player *, tmp_pl, iter, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0,
+					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+
+	free(data);
+
+}
+
+/**
+ * Handle a request from a player to change a channel's max users value.
+ *
+ * @param data the data packet
+ * @param len the length of data
+ * @param pl the player who made the request
+ *
+ * @return NULL
+ */
+void *c_req_change_chan_max_users(char *data, unsigned int len, struct player *pl)
+{
+	uint16_t max_users;
+	uint32_t ch_id;
+	struct channel *ch;
+	struct server *s = pl->in_chan->in_server;
+
+	ch_id = *(uint32_t *)(data + 24);
+	max_users = *(uint16_t *)(data + 28);
+
+	ch = get_channel_by_id(s, ch_id);
+	send_acknowledge(pl);
+	if (ch != NULL && player_has_privilege(pl, SP_CHA_CHANGE_MAXUSERS, ch)) {
+		ch->players->max_slots = max_users;
+		if ((ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED) == 0) {
+			db_update_channel(s->conf, ch);
+		}
+		s_notify_channel_max_users_changed(pl, ch);
+	}
+	return NULL;
+}
+
 /**
  * Notify all players on a server that a new channel has been created
  *

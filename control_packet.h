@@ -23,6 +23,7 @@
 #define CTL_CHANGE_CH_FLAGS_CODEC 0x0071 /* change channel flags or codec */
 #define CTL_CHANGE_CH_DESC	0x0072	/* channel desc changed */
 #define CTL_CHANDELETE		0x0073	/* channel deleted */
+#define CTL_CHANGE_CH_MAX_USERS	0x0074	/* channel max users changed */
 #define CTL_MESSAGE		0x0082	/* message (all/channel/private) */
 #define CTL_CHANDELETE_ERROR	0xff93	/* error deleting channel */
 #define CTL_PLAYERSTATS		0x0194	/* player stats */
@@ -50,6 +51,7 @@ void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *pl);
 void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl);
+void *c_req_change_chan_max_users(char *data, unsigned int len, struct player *pl);
 void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
