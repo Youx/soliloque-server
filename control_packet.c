@@ -1754,7 +1754,19 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 				bzero(ch_getpass(ch), 30 * sizeof(char));
 		}
 		ch->codec = new_codec;
-
+		/* If the channel changed registered or unregistered */
+		if ( (flags & CHANNEL_FLAG_UNREGISTERED) != (new_flags & CHANNEL_FLAG_UNREGISTERED)) {
+			if (new_flags & CHANNEL_FLAG_UNREGISTERED) {
+				/* unregister the channel */
+				db_unregister_channel(s->conf, ch);
+			} else {
+				/* register the channel */
+				db_register_channel(s->conf, ch);
+			}
+		} else if ((flags & CHANNEL_FLAG_UNREGISTERED) == 0) {
+			/* TODO : If the channel was already registered, update the db */
+			/* db_update_channel(s->conf, ch); */
+		}
 		s_notify_channel_flags_codec_changed(pl, ch);
 	}
 	return NULL;
@@ -1907,6 +1919,10 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 		if (ch->parent_id != 0) {
 			parent = get_channel_by_id(s, ch->parent_id);
 			channel_add_subchannel(parent, ch);
+			/* if the parent is registered, register this one */
+			if (ch_getflags(parent) & CHANNEL_FLAG_REGISTERED) {
+				db_register_channel(s->conf, ch);
+			}
 		}
 		printf("New channel created\n");
 		print_channel(ch);

@@ -132,15 +132,17 @@ int db_register_channel(struct config *c, struct channel *ch)
 		   (server_id, name, topic, description, \
 		    codec, maxusers, ordr, \
 		    flag_default, flag_hierarchical, flag_moderated, \
-		    parent_id, password, created_at) \
+		    parent_id, password) \
 		   VALUES \
 		   (%i, %s, %s, %s, \
 		    %i, %i, %i, \
 		    %i, %i, %i, \
-		    %i, %s, NOW());";
+		    %i, %s);";
 	char *name_clean, *topic_clean, *desc_clean, *pass_clean;
 	int flag_default, flag_hierar, flag_mod;
-	int insert_id;
+	int insert_id, parent_id;
+	size_t iter;
+	struct channel *tmp_ch;
 	dbi_result res;
 
 	if (ch->db_id != 0) /* already exists in the db */
@@ -158,24 +160,36 @@ int db_register_channel(struct config *c, struct channel *ch)
 	flag_default = (ch->flags & CHANNEL_FLAG_DEFAULT);
 	flag_hierar = (ch->flags & CHANNEL_FLAG_SUBCHANNELS);
 	flag_mod = (ch->flags & CHANNEL_FLAG_MODERATED);
+	
+	/* Add the ID of the parent or -1 */
+	if (ch->parent == NULL)
+		parent_id = 0xFFFFFFFF;
+	else
+		parent_id = ch->parent->db_id;
 
 	res = dbi_conn_queryf(c->conn, q,
 			ch->in_server->id, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
-			0xFFFFFFFF, pass_clean);
+			parent_id, pass_clean);
 	if (res == NULL) {
 		printf("Insertion request failed : \n");
 		printf(q, ch->in_server->id, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
-			0xFFFFFFFF, pass_clean);
+			parent_id, pass_clean);
 		printf("\n");
 	}
 
 	insert_id = dbi_conn_sequence_last(c->conn, NULL);
 	ch->db_id = insert_id;
 
+	/* Register all the subchannels */
+	if (ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) {
+		ar_each(struct channel *, tmp_ch, iter, ch->subchannels)
+			db_register_channel(c, tmp_ch);
+		ar_end_each;	
+	}
 	/* free allocated data */
 	free(name_clean); free(topic_clean); free(desc_clean); free(pass_clean);
 
@@ -193,10 +207,18 @@ int db_register_channel(struct config *c, struct channel *ch)
 int db_unregister_channel(struct config *c, struct channel *ch)
 {
 	char *q = "DELETE FROM channels WHERE id = %i;";
+	size_t iter;
+	struct channel *tmp_ch;
 
 	if (connect_db(c) == 0)
 		return 0;
 	dbi_conn_queryf(c->conn, q, ch->db_id);
+
+	if (ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) {
+		ar_each(struct channel *, tmp_ch, iter, ch->subchannels)
+			db_register_channel(c, tmp_ch);
+		ar_end_each;	
+	}
 	
 	return 1;
 }
