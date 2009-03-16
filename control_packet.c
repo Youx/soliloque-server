@@ -1750,7 +1750,7 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 		/* The flags of a subchannel cannot be changed */
 		if (ch->parent == NULL) {
 			ch->flags = new_flags;
-			if ((ch_getflags(ch) & CHANNEL_FLAG_PASSWORD) == 0)
+			if ((ch_getflags(ch) & CHANNEL_FLAG_PASSWORD) != 0)
 				bzero(ch_getpass(ch), 30 * sizeof(char));
 		}
 		ch->codec = new_codec;
