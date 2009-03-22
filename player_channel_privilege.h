@@ -1,0 +1,6 @@
+#ifndef __PLAYER_CHANNEL_PRIVILEGE_H__
+#define __PLAYER_CHANNEL_PRIVILEGE_H__
+
+
+
+#endif

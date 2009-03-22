@@ -127,3 +127,15 @@ CREATE TABLE server_privileges (
   other_text_in_ch integer,
   other_text_all integer
 );
+
+CREATE TABLE player_channel_privileges (
+  id integer primary key autoincrement,
+  player_id integer,
+  channel_id integer,
+  /* privileges */
+  channel_admin integer,
+  operator integer,
+  voice integer,
+  auto_operator integer,
+  auto_voice integer
+);
