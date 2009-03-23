@@ -73,6 +73,8 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	/* subchannels */
 	chan->subchannels = ar_new(4);
 	chan->parent = NULL;
+	/* player privileges */
+	chan->pl_privileges = ar_new(4);
 
 	/* strdup : input strings are secure */
 	chan->name = strdup(name);

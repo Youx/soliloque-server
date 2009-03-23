@@ -48,6 +48,9 @@ struct channel {
 	struct server *in_server;
 	/* channel tree */
 	struct array *subchannels;
+	/* player privileges */
+	struct array *pl_privileges;
+
 	struct channel *parent;
 	uint32_t parent_id;
 

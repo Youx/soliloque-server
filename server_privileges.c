@@ -111,11 +111,11 @@ static int player_is_in_group(struct player *pl, int group, struct channel *cont
 	case PRIV_SERVER_ADMIN:
 		return pl->global_flags & GLOBAL_FLAG_SERVERADMIN;
 	case PRIV_CHANNEL_ADMIN:
-		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_CHANADMIN);
+		return (pl->in_chan == context && player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_CHANADMIN);
 	case PRIV_OPERATOR:
-		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_OP);
+		return (pl->in_chan == context && player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_OP);
 	case PRIV_VOICE:
-		return (pl->in_chan == context && pl->chan_privileges & CHANNEL_PRIV_VOICE);
+		return (pl->in_chan == context && player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE);
 	case PRIV_REGISTERED:
 		return pl->global_flags & GLOBAL_FLAG_REGISTERED;
 	case PRIV_ANONYMOUS:	/* Everyone is this group */

@@ -59,7 +59,6 @@ struct player {
 
 	uint16_t version[4];
 	
-	uint16_t chan_privileges;
 	uint16_t global_flags;
 	uint16_t player_attributes;
 
@@ -92,4 +91,6 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 int player_to_data(struct player *pl, char *data);
 int player_to_data_size(struct player *pl);
 void print_player(struct player *pl);
+uint16_t player_get_channel_privileges(struct player *pl, struct channel *ch);
+
 #endif

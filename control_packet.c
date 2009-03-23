@@ -43,6 +43,8 @@
 #include "player.h"
 #include "registration.h"
 #include "log.h"
+#include "player_channel_privilege.h"
+
 
 /**
  * Reply to a c_req_chans by sending packets containing
@@ -1044,12 +1046,12 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
-		logger(LOG_INFO, "Player priv before : 0x%x", tgt->chan_privileges);
+		logger(LOG_INFO, "Player priv before : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		if (on_off == 2)
-			tgt->chan_privileges &= (0xFF ^ (1 << right));
+			player_clr_channel_privilege(tgt, tgt->in_chan, (1 << right));
 		else if(on_off == 0)
-			tgt->chan_privileges |= (1 << right);
-		logger(LOG_INFO, "Player priv after  : 0x%x", tgt->chan_privileges);
+			player_set_channel_privilege(tgt, tgt->in_chan, (1 << right));
+		logger(LOG_INFO, "Player priv after  : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		s_notify_player_ch_priv_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
@@ -2130,7 +2132,7 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	*ptr = MIN(strlen(tgt->login), 29);	ptr += 1;/* size of login */
 	strncpy(ptr, tgt->login, *(ptr - 1));	ptr += 29;/* login */
 	*(uint32_t *)ptr = tgt->in_chan->id;	ptr += 4;/* id of channel */
-	*(uint16_t *)ptr = tgt->chan_privileges;ptr += 2;/* channel privileges */
+	*(uint16_t *)ptr = player_get_channel_privileges(tgt, tgt->in_chan);	ptr += 2;/* channel privileges */
 	*(uint16_t *)ptr = tgt->global_flags;	ptr += 2;/* global flags */
 	*ptr = MIN(strlen(tgt->machine), 29);	ptr += 1;/* size of platform */
 	strncpy(ptr, tgt->machine, *(ptr - 1));	ptr += 29;/*platform */

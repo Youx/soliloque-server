@@ -20,6 +20,7 @@
 #include "player_stat.h"
 #include "log.h"
 #include "queue.h"
+#include "player_channel_privilege.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +72,6 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	strcpy(p->machine, machine);
 	strcpy(p->client, login);
 	p->global_flags = GLOBAL_FLAG_SERVERADMIN | GLOBAL_FLAG_REGISTERED;	/* remove later */
-	p->chan_privileges = CHANNEL_PRIV_CHANADMIN;
 	p->f0_s_counter = 1;
 	p->f0_c_counter = 1;
 	p->f1_s_counter = 1;
@@ -177,7 +177,7 @@ int player_to_data(struct player *pl, char *data)
 
 	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* public ID */
 	*(uint32_t *)ptr = pl->in_chan->id;		ptr += 4;	/* channel ID */
-	*(uint16_t *)ptr = pl->chan_privileges;		ptr += 2;	/* player chan privileges */
+	*(uint16_t *)ptr = player_get_channel_privileges(pl, pl->in_chan);	ptr += 2;	/* player chan privileges */
 	*(uint16_t *)ptr = pl->global_flags;		ptr += 2;	/* player global flags */
 	*(uint16_t *)ptr = pl->player_attributes;	ptr += 2;	/* player attributes */
 	*ptr = MIN(29, strlen(pl->name));		ptr += 1;	/* player name size */
@@ -206,4 +206,36 @@ void print_player(struct player *pl)
 	logger(LOG_INFO, "\tprivate ID : 0x%x", pl->private_id);
 	logger(LOG_INFO, "\tmachine    : %s", pl->machine);
 	logger(LOG_INFO, "\tclient     : %s", pl->client);
+}
+
+/**
+ * For a given player and channel, return the corresponding
+ * channel privileges as a bit field
+ *
+ * @param pl the player
+ * @param ch the channel
+ *
+ * @return the channel privileges bitfield
+ */
+uint16_t player_get_channel_privileges(struct player *pl, struct channel *ch)
+{
+	uint16_t res = 0;
+	size_t iter;
+	struct player_channel_privilege *tmp_priv;
+	struct channel *tmp_ch;
+
+	/* if this is a subchannel, look in the parent channel */
+	tmp_ch = ch;
+	if (ch->parent != NULL)
+		tmp_ch = ch->parent;
+
+	/* look in the current channel */
+	ar_each(struct player_channel_privilege *, tmp_priv, iter, tmp_ch->pl_privileges)
+		if (tmp_priv->reg == PL_CH_PRIV_REGISTERED && tmp_priv->pl_or_reg.reg == pl->reg)
+			res = tmp_priv->flags;
+		else if (tmp_priv->reg == PL_CH_PRIV_UNREGISTERED && tmp_priv->pl_or_reg.pl == pl)
+			res = tmp_priv->flags;
+	ar_end_each;
+
+	return res;
 }
