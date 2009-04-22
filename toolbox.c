@@ -19,14 +19,14 @@
 
 #include "config.h"
 
-#ifndef HAVE_STRNDUP
-
 #include <string.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
 #include "compat.h"
+
+#ifndef HAVE_STRNDUP
 
 char *strndup (char const *s, size_t n)
 {
