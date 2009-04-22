@@ -7,11 +7,9 @@ srcdir = '.'
 blddir = 'output'
 SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c'
 
-flags_dbg1='-Wall -Werror'
-flags_dbg2='-Wall -Werror -W -Wno-unused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith'
-flags_dbg3='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align'
-flags_dbg4='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align -Wwrite-strings'
-flags_dbg5='-Wall -Werror -W -Wunused-parameter -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wreturn-type -Wcast-qual -Wswitch -Wshadow -Wcast-align -Wwrite-strings -Wchar-subscripts -Winline -Wnested-externs -Wredundant-decls'
+flags_dbg1= ['-Wall', '-Werror']
+flags_dbg2= ['-W', '-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith'].append(flags_dbg1)
+flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-align'].append(flags_dbg2)
 
 def set_options(opt):
   opt.add_option('--with-openssl', type='string', help='Define the location of openssl libraries.', dest='openssl')
@@ -44,6 +42,6 @@ def build(bld):
   sol_serv.target = APPNAME
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
-  sol_serv.defines = ''
+  sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
-  sol_serv.cflags = '-O2 -ggdb -ansi '+flags_dbg2+' -D_GNU_SOURCE -D_BSD_SOURCE'
+  sol_serv.ccflags = ['-O2', '-ggdb', '-ansi'].append(flags_dbg2)
