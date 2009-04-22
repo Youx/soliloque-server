@@ -337,3 +337,33 @@ char ch_isfull(struct channel *ch)
 	/* Else it is specified */
 	return ch->players->used_slots >= ch->players->max_slots;
 }
+
+/**
+ * Retrieve a player channel privileges for a given channel.
+ *
+ * @param pl the player we want the privileges for
+ * @param ch the channel
+ *
+ * @return the privilege structure
+ */
+struct player_channel_privilege *get_player_channel_privilege(struct player *pl, struct channel *ch)
+{
+	struct channel *tmp_ch;
+	struct player_channel_privilege *tmp_priv;
+	size_t iter;
+
+	tmp_ch = ch;
+	if (ch->parent != NULL)
+		tmp_ch = ch->parent;
+
+	ar_each(struct player_channel_privilege *, tmp_priv, iter, tmp_ch->pl_privileges)
+		if (tmp_priv->reg == PL_CH_PRIV_REGISTERED && tmp_priv->pl_or_reg.reg == pl->reg)
+			return tmp_priv;
+		if (tmp_priv->reg == PL_CH_PRIV_UNREGISTERED && tmp_priv->pl_or_reg.pl == pl)
+			return tmp_priv;
+	ar_end_each;
+
+	logger(LOG_INFO, "Could not find privileges for this channel-player couple.");
+
+	return NULL;
+}

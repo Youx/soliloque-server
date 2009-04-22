@@ -23,6 +23,7 @@
 #include "server.h"
 #include "compat.h"
 #include "audio_packet.h"
+#include "player_channel_privilege.h"
 
 
 #define CHANNEL_FLAG_REGISTERED   0
@@ -79,5 +80,6 @@ int channel_add_subchannel(struct channel *ch, struct channel *subchannel);
 int ch_getflags(struct channel *ch);
 char *ch_getpass(struct channel *ch);
 char ch_isfull(struct channel *ch);
+struct player_channel_privilege *get_player_channel_privilege(struct player *pl, struct channel *ch);
 
 #endif
