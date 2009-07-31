@@ -135,10 +135,13 @@ void print_channel(struct channel *chan)
  * @param pl an existing player
  *
  * @return 1 if the insertion succeeded, 
- * 	   0 if it failed (maximum number of users in channel already reached
+ * 	   0 if it failed (maximum number of users in channel already reached)
  */
 int add_player_to_channel(struct channel *chan, struct player *pl)
 {
+	if (ch_isfull(chan))
+		return 0;
+
 	if (ar_insert(chan->players, pl) == AR_OK) {
 		pl->in_chan = chan;
 		return 1;
@@ -312,4 +315,21 @@ char *ch_getpass(struct channel *ch)
 		printf("(WW) channel_getpassword, asked for the password of a channel that is not protected.\n");
 		return NULL;
 	}
+}
+
+/**
+ * Return wether a channel is full or not
+ *
+ * @param ch the channel
+ *
+ * @return 0 if the channel is not full, 1 if it is
+ */
+char ch_isfull(struct channel *ch)
+{
+	/* Max number of players in default channel is maximum
+	 * number of element in the array */
+	if (ch->flags & CHANNEL_FLAG_DEFAULT)
+		return ch->players->used_slots == (size_t) -1;
+	/* Else it is specified */
+	return ch->players->used_slots >= ch->players->max_slots;
 }

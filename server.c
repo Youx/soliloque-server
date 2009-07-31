@@ -347,10 +347,17 @@ void remove_player(struct server *s, struct player *p)
  *
  * @param p the player we are moving
  * @param to the channel we are moving him to
+ *
+ * @return 0 if the destination channel is full, 1 if it isn't
  */
 int move_player(struct player *p, struct channel *to)
 {
 	struct channel *old;
+
+	/* if the destination channel is full, we
+	 * cannot move to it */
+	if (ch_isfull(to))
+		return 0;
 
 	if (p->in_chan == NULL) {
 		return add_player_to_channel(to, p);

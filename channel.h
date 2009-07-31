@@ -75,4 +75,6 @@ int channel_add_subchannel(struct channel *ch, struct channel *subchannel);
 
 int ch_getflags(struct channel *ch);
 char *ch_getpass(struct channel *ch);
+char ch_isfull(struct channel *ch);
+
 #endif
