@@ -53,6 +53,114 @@ void destroy_config(struct config *c)
 	free(c);
 }
 
+static int config_parse_log(config_setting_t *log, struct config *cfg)
+{
+	config_setting_t *curr;
+	char *file;
+
+	curr = config_setting_get_member(log, "output");
+	if (curr == NULL) {
+		cfg->log.output = stderr;
+	} else {
+		file = strdup(config_setting_get_string(curr));
+		if (strcmp(file, "stderr") == 0) {
+			cfg->log.output = stderr;
+		} else if (strcmp(file, "stdout") == 0) {
+			cfg->log.output = stdout;
+		} else {
+			cfg->log.output = fopen(file, "a");
+			if (cfg->log.output == NULL) {
+				cfg->log.output = stderr;
+				printf("(WW) config_parse_log : could not open file %s (%s)", file, strerror(errno));
+			}
+		}
+	}
+
+	curr = config_setting_get_member(log, "level");
+	if (curr == NULL)
+		cfg->log.level = 3;
+	else
+		cfg->log.level = config_setting_get_int(curr);
+	return 1;
+}
+
+static int config_parse_db_sqlite(config_setting_t *db, struct config *cfg)
+{
+	config_setting_t *curr;
+
+	/* sqlite 2.x or 3.x use a filename to connect */
+	curr = config_setting_get_member(db, "dir");
+	if (curr == NULL)
+		cfg->db.file.path = "./";
+	else
+		cfg->db.file.path = strdup(config_setting_get_string(curr));
+
+	curr = config_setting_get_member(db, "db");
+	if (curr == NULL)
+		cfg->db.file.db = "soliloque.sqlite3";
+	else
+		cfg->db.file.db = strdup(config_setting_get_string(curr));
+
+	return 1;
+}
+
+static int config_parse_db_other(config_setting_t *db, struct config *cfg)
+{
+	config_setting_t *curr;
+
+	/* anything else uses a host, port, user, pass, db */
+
+	/* get the hostname */
+	curr = config_setting_get_member(db, "host");
+	if (curr == NULL)
+		cfg->db.connection.host = "localhost";
+	else
+		cfg->db.connection.host = strdup(config_setting_get_string(curr));
+	/* get the port */
+	curr = config_setting_get_member(db, "port");
+	if (curr == NULL)
+		cfg->db.connection.port = 3306;
+	else
+		cfg->db.connection.port = config_setting_get_int(curr);
+	/* get the username */
+	curr = config_setting_get_member(db, "user");
+	if (curr == NULL)
+		cfg->db.connection.user = "root";
+	else
+		cfg->db.connection.user = strdup(config_setting_get_string(curr));
+	/* get the password */
+	curr = config_setting_get_member(db, "pass");
+	if (curr == NULL)
+		cfg->db.connection.pass = "";
+	else
+		cfg->db.connection.pass = strdup(config_setting_get_string(curr));
+	/* get the database */
+	curr = config_setting_get_member(db, "db");
+	if (curr == NULL)
+		cfg->db.connection.db = "soliloque";
+	else
+		cfg->db.connection.db = strdup(config_setting_get_string(curr));
+
+	return 1;
+}
+
+static int config_parse_db(config_setting_t *db, struct config *cfg)
+{
+	config_setting_t *curr;
+
+	/* get the database type */
+	curr = config_setting_get_member(db, "type");
+	if (curr == NULL) /* default : sqlite3 */
+		cfg->db_type = "sqlite3";
+	else
+		cfg->db_type = strdup(config_setting_get_string(curr));
+
+	if (strcmp(cfg->db_type, "sqlite") == 0 || strcmp(cfg->db_type, "sqlite3") == 0)
+		return config_parse_db_sqlite(db, cfg);
+	else
+		return config_parse_db_other(db, cfg);
+}
+
 /**
  * Parse a file and generate a configuration structure
  *
@@ -64,6 +172,7 @@ struct config *config_parse(char *cfg_file)
 {
 	config_t cfg;
 	config_setting_t *db;
+	config_setting_t *log;
 	config_setting_t *curr;
 	struct config *cfg_s;
 
@@ -86,60 +195,24 @@ struct config *config_parse(char *cfg_file)
 		config_destroy(&cfg);
 		return 0;
 	}
-	/* get the database type */
-	curr = config_setting_get_member(db, "type");
-	if (curr == NULL) /* default : sqlite3 */
-		cfg_s->db_type = "sqlite3";
-	else
-		cfg_s->db_type = strdup(config_setting_get_string(curr));
-
-	if (strcmp(cfg_s->db_type, "sqlite") == 0 || strcmp(cfg_s->db_type, "sqlite3") == 0) {
-		/* sqlite 2.x or 3.x use a filename to connect */
-		curr = config_setting_get_member(db, "dir");
-		if (curr == NULL)
-			cfg_s->db.file.path = "./";
-		else
-			cfg_s->db.file.path = strdup(config_setting_get_string(curr));
-
-		curr = config_setting_get_member(db, "db");
-		if (curr == NULL)
-			cfg_s->db.file.db = "soliloque.sqlite3";
-		else
-			cfg_s->db.file.db = strdup(config_setting_get_string(curr));
-	} else {
-		/* anything else uses a host, port, user, pass, db */
-
-		/* get the hostname */
-		curr = config_setting_get_member(db, "host");
-		if (curr == NULL)
-			cfg_s->db.connection.host = "localhost";
-		else
-			cfg_s->db.connection.host = strdup(config_setting_get_string(curr));
-		/* get the port */
-		curr = config_setting_get_member(db, "port");
-		if (curr == NULL)
-			cfg_s->db.connection.port = 3306;
-		else
-			cfg_s->db.connection.port = config_setting_get_int(curr);
-		/* get the username */
-		curr = config_setting_get_member(db, "user");
-		if (curr == NULL)
-			cfg_s->db.connection.user = "root";
-		else
-			cfg_s->db.connection.user = strdup(config_setting_get_string(curr));
-		/* get the password */
-		curr = config_setting_get_member(db, "pass");
-		if (curr == NULL)
-			cfg_s->db.connection.pass = "";
-		else
-			cfg_s->db.connection.pass = strdup(config_setting_get_string(curr));
-		/* get the database */
-		curr = config_setting_get_member(db, "db");
-		if (curr == NULL)
-			cfg_s->db.connection.db = "soliloque";
-		else
-			cfg_s->db.connection.db = strdup(config_setting_get_string(curr));
+	if (config_parse_db(db, cfg_s) == 0) {
+		printf("(EE) config_parse_db failed.\n");
+		config_destroy(&cfg);
+		return 0;
 	}
+
+	log = config_lookup(&cfg, "log");
+	if (db == NULL) {
+		printf("Error : no log tag.\n");
+		config_destroy(&cfg);
+		return 0;
+	}
+	if (config_parse_log(log, cfg_s) == 0) {
+		printf("(EE) config_parse_log failed.\n");
+		config_destroy(&cfg);
+		return 0;
+	}
+
 	config_destroy(&cfg);
 	return cfg_s;
 }

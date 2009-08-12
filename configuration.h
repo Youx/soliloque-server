@@ -21,6 +21,7 @@
 
 #include "server.h"
 #include <dbi/dbi.h>
+#include <stdio.h>
 
 struct config
 {
@@ -38,6 +39,10 @@ struct config
 			char *db;
 		} connection;
 	} db;
+	struct {
+		FILE *output;
+		int level;
+	} log;
 	dbi_conn conn;
 };
 
