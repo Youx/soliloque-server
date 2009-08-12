@@ -1,11 +1,10 @@
-#!./waf-1.5.2
 
 
 VERSION='0.1'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
-SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c'
+SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c log.c'
 
 flags_dbg1= ['-Wall', '-Werror']
 flags_dbg2= ['-W', '-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith'].append(flags_dbg1)
