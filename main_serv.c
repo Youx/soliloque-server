@@ -223,17 +223,12 @@ static void print_help(char *progname)
 	printf("Usage : \n");
 	printf(" -c <filename> filename of the config-file\n");
 	printf(" -v show version\n");
-	printf(" -V show compile-time flags\n");
 	printf(" -h show this help\n");
 }
 
 static void print_version()
 {
 	printf("Soliloque Server version %s\n", VERSION);
-}
-
-static void print_compileargs(char *progname)
-{
 }
 
 
@@ -249,7 +244,7 @@ int main(int argc, char **argv)
 	/* do some initialization of the finite state machine */
 	init_callbacks();
 	/* parse command line arguments */
-	while ((val = getopt(argc, argv, "vVhc:")) != -1) {
+	while ((val = getopt(argc, argv, "vhc:")) != -1) {
 		switch (val) {
 			case 'c':
 				configfile = optarg;
@@ -262,10 +257,6 @@ int main(int argc, char **argv)
 				print_version();
 				terminate = 1;
 				break;
-			case 'V':
-				print_compileargs(argv[0]);
-				terminate = 1;
-				break;
 			case '?':
 				wrongopt = 1;
 				terminate = 1;
@@ -275,7 +266,7 @@ int main(int argc, char **argv)
 	if (terminate != 0) {
 		if (wrongopt == 1 && helpshown == 0)
 			print_help(argv[0]);
-		exit(0);
+		exit(1);
 	}
 
 	if (configfile == NULL)
