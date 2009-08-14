@@ -19,13 +19,16 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+#include <stdarg.h>
+
 #include "configuration.h"
 
-#define LOG_ERR = 1
-#define LOG_WARN = 2
-#define LOG_INFO = 3
-#define LOG_DBG = 4
+#define LOG_ERR 1
+#define LOG_WARN 2
+#define LOG_INFO 3
+#define LOG_DBG 4
 
-void logger(struct config *cfg, int loglevel, char *str, ...);
+void logger(int loglevel, char *str, ...);
+void set_config(struct config *cfg);
 
 #endif

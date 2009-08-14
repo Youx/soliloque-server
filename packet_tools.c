@@ -24,6 +24,7 @@
 #include "packet_tools.h"
 #include "compat.h"
 #include "crc.h"
+#include "log.h"
 
 /**
  * Add a crc to a given data packet.
@@ -59,7 +60,7 @@ int packet_check_crc(char *data, size_t len, unsigned int offset)
 
 	buff = (char *)calloc(len, sizeof(char));
 	if (buff == NULL) {
-		printf("(WW) packet_check_crc, buffer allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "packet_check_crc, buffer allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
 	memcpy(buff, data, len);

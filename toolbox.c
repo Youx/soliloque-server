@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include "compat.h"
+#include "log.h"
 
 #ifndef HAVE_STRNDUP
 
@@ -42,7 +43,7 @@ char *strndup (char const *s, size_t n)
 	}
 	res = calloc(i + 1, sizeof(char));
 	if (res == NULL) {
-		printf("(EE) strndup, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "strndup, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 	return memcpy(res, s, i);

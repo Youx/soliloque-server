@@ -17,6 +17,7 @@
  */
 
 #include "ban.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -41,7 +42,7 @@ struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason)
 	struct ban *b = (struct ban *)calloc(1, sizeof(struct ban));
 
 	if (b == NULL) {
-		printf("(EE) new_ban, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "new_ban, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 	
@@ -72,7 +73,7 @@ struct ban *test_ban(int x)
 	struct ban *b = (struct ban *)calloc(1, sizeof(struct ban));
 
 	if (b == NULL) {
-		printf("(EE) test_ban, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "test_ban, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 

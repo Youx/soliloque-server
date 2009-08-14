@@ -19,6 +19,7 @@
 #include "server_stat.h"
 #include "server.h"
 #include "server_stat.h"
+#include "log.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -52,7 +53,7 @@ ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 	sstat_add_packet(s->stats, len, 1);
 	ret = sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
 	if (ret == -1)
-		printf("(WW) send_to failed : %s\n", strerror(errno));
+		logger(LOG_WARN, "send_to failed : %s\n", strerror(errno));
 	return ret;
 }
 
@@ -67,7 +68,7 @@ struct server_stat *new_sstat()
 
 	st = (struct server_stat *)calloc(1, sizeof(struct server_stat));
 	if (st == NULL) {
-		printf("(WW) new_sstat, calloc of st failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_sstat, calloc of st failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 	st->pkt_max = 10000;
@@ -77,7 +78,7 @@ struct server_stat *new_sstat()
 	st->start_time = time(NULL);
 
 	if (st->pkt_sizes == NULL || st->pkt_timestamps == NULL || st->pkt_io == NULL) {
-		printf("(WW) new_sstat, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_sstat, calloc failed : %s.\n", strerror(errno));
 		if (st->pkt_sizes != NULL)
 			free(st->pkt_sizes);
 		if (st->pkt_timestamps != NULL)
@@ -132,7 +133,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	/* reallocate and clean */
 	tmp_sizes = (size_t *)realloc(st->pkt_sizes, sizeof(size_t) * st->pkt_max);
 	if (tmp_sizes == NULL) {
-		printf("(WW) sstat_add_packet, pkt_sizes realloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "sstat_add_packet, pkt_sizes realloc failed : %s.\n", strerror(errno));
 		st->pkt_max /= 2;	/* restore the old size */
 		return;
 	}
@@ -142,7 +143,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	/* reallocate */
 	tmp_timestamps = (struct timeval *)realloc(st->pkt_timestamps, sizeof(struct timeval) * st->pkt_max);
 	if (tmp_timestamps == NULL) {
-		printf("(WW) sstat_add_packet, pkt_timestamps realloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "sstat_add_packet, pkt_timestamps realloc failed : %s.\n", strerror(errno));
 		st->pkt_max /= 2;
 		return;
 	}
@@ -150,7 +151,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 
 	tmp_io = (char *)realloc(st->pkt_io, sizeof(char) * st->pkt_max);
 	if (tmp_io == NULL) {
-		printf("(WW) sstat_add_packet, pkt_io realloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "sstat_add_packet, pkt_io realloc failed : %s.\n", strerror(errno));
 		st->pkt_max /= 2;
 		return;
 	}

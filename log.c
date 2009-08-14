@@ -23,16 +23,31 @@
 #include "log.h"
 #include "configuration.h"
 
-void logger(struct config *cfg, int loglevel, char *str, ...)
+static struct config *c = NULL;
+
+void logger(int loglevel, char *str, ...)
 {
 	va_list args;
 	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+	FILE *dst = stderr;
+	int lvl = LOG_INFO;
+
+	if (c != NULL) {
+		lvl = c->log.level;
+		dst = c->log.output;
+	}
 
 	pthread_mutex_lock(&mutex);
 	va_start(args, str);
-	if (loglevel <= cfg->log.level) {
-		vfprintf(cfg->log.output, str, args);
+	if (loglevel <= lvl) {
+		vfprintf(dst, str, args);
+		fflush(dst);
 	}
 	va_end(args);
 	pthread_mutex_unlock(&mutex);
+}
+
+void set_config(struct config *cfg)
+{
+	c = cfg;
 }

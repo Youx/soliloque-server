@@ -18,10 +18,10 @@
 
 #include "server.h"
 #include "server_stat.h"
-
 #include "channel.h"
 #include "main_serv.h"
 #include "registration.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -79,7 +79,7 @@ struct server *new_server()
 	
 	serv = (struct server *)calloc(1, sizeof(struct server));
 	if (serv == NULL) {
-		printf("(WW) new_server, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_server, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 
@@ -113,7 +113,7 @@ int add_channel(struct server *serv, struct channel *chan)
 	
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		printf("(WW) add_channel, used_ids allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "add_channel, used_ids allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
 
@@ -258,7 +258,7 @@ int add_player(struct server *serv, struct player *pl)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "add_player, used_ids allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
 	ar_each(struct player *, tmp_pl, iter, serv->players)
@@ -392,7 +392,7 @@ int add_ban(struct server *s, struct ban *b)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		printf("(WW) add_player, used_ids allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "add_player, used_ids allocation failed : %s.\n", strerror(errno));
 		return 0;
 	}
 	ar_each(struct ban *, tmp_b, iter, s->bans)
@@ -523,19 +523,19 @@ static void *server_run(void *args)
 		pollres = poll(&s->socket_poll, 1, -1);
 		switch(pollres) {
 		case 0:
-			printf("(EE) Time limit expired\n");
+			logger(LOG_ERR, "Time limit expired\n");
 			break;
 		case -1:
-			printf("(EE) Error occured while polling : %s\n", strerror(errno));
+			logger(LOG_ERR, "Error occured while polling : %s\n", strerror(errno));
 			break;
 		default:
 			cli_len = sizeof(cli_addr);
 			n = recvfrom(s->socket_desc, data, MAX_MSG, 0,
 					(struct sockaddr *) &cli_addr, &cli_len);
 			if (n == -1) {
-				fprintf(stderr, "(EE) %s\n", strerror(errno));
+				logger(LOG_ERR, "%s\n", strerror(errno));
 			} else {
-				printf("(II) %i bytes received.\n", n);
+				logger(LOG_INFO, "%i bytes received.\n", n);
 				handle_packet(data, n, &cli_addr, cli_len, s);
 			}
 		}

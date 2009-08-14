@@ -17,6 +17,7 @@
  */
 
 #include "configuration.h"
+#include "log.h"
 
 #include <libconfig.h>
 #include <string.h>
@@ -71,7 +72,7 @@ static int config_parse_log(config_setting_t *log, struct config *cfg)
 			cfg->log.output = fopen(file, "a");
 			if (cfg->log.output == NULL) {
 				cfg->log.output = stderr;
-				printf("(WW) config_parse_log : could not open file %s (%s)", file, strerror(errno));
+				logger(LOG_WARN, "config_parse_log : could not open file %s (%s)", file, strerror(errno));
 			}
 		}
 	}
@@ -178,37 +179,37 @@ struct config *config_parse(char *cfg_file)
 
 	config_init(&cfg);
 	if (config_read_file(&cfg, cfg_file) == CONFIG_FALSE) {
-		printf("Error loading file %s\n", cfg_file);
+		logger(LOG_ERR, "Error loading file %s\n", cfg_file);
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	db = config_lookup(&cfg, "db");
 	if (db == NULL) {
-		printf("Error : no db tag.\n");
+		logger(LOG_ERR, "Error : no db tag.\n");
 		config_destroy(&cfg);
 		return 0;
 	}
 	cfg_s = (struct config *)calloc(1, sizeof(struct config));
 	if (cfg_s == NULL) {
-		printf("(EE) config_parse, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "config_parse, calloc failed : %s.\n", strerror(errno));
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_db(db, cfg_s) == 0) {
-		printf("(EE) config_parse_db failed.\n");
+		logger(LOG_ERR, "config_parse_db failed.\n");
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	log = config_lookup(&cfg, "log");
 	if (db == NULL) {
-		printf("Error : no log tag.\n");
+		logger(LOG_ERR, "Error : no log tag.\n");
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_log(log, cfg_s) == 0) {
-		printf("(EE) config_parse_log failed.\n");
+		logger(LOG_ERR, "config_parse_log failed.\n");
 		config_destroy(&cfg);
 		return 0;
 	}

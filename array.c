@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "array.h"
 #include <sys/types.h>
 #include <assert.h>
 #include <strings.h>
@@ -27,6 +26,8 @@
 #include <limits.h>
 #include <errno.h>
 
+#include "array.h"
+#include "log.h"
 #include "compat.h"
 
 /**
@@ -58,7 +59,7 @@ static int ar_grow(struct array *a)
 	void **tmp_alloc;
 
 	if (a == NULL || a->array == NULL) {
-		printf("(WW) ar_grow : passed array is not allocated.\n");
+		logger(LOG_WARN, "ar_grow : passed array is not allocated.\n");
 		return 0;
 	}
 
@@ -69,7 +70,7 @@ static int ar_grow(struct array *a)
 		a->total_slots = new_size;
 		tmp_alloc = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
 		if (tmp_alloc == NULL) {
-			printf("(EE) ar_grow, realloc failed : %s\n", strerror(errno));
+			logger(LOG_ERR, "ar_grow, realloc failed : %s\n", strerror(errno));
 			return 0;
 		}
 		a->array = tmp_alloc;
@@ -98,7 +99,7 @@ int ar_insert(struct array *a, void *elem)
 	if (a->used_slots == a->total_slots) {
 		err = ar_grow(a);
 		if (err != AR_OK) {
-			printf("(EE) Could not grow array any further. Insertion impossible.\n");
+			logger(LOG_ERR, "Could not grow array any further. Insertion impossible.\n");
 			pthread_mutex_unlock(&a->lock);
 			return 0;
 		}
@@ -127,7 +128,7 @@ struct array *ar_new(size_t size)
 
 	a = (struct array *)calloc(1, sizeof(struct array));
 	if (a == NULL) {
-		printf("(EE) ar_new, calloc failed : %s\n", strerror(errno));
+		logger(LOG_ERR, "ar_new, calloc failed : %s\n", strerror(errno));
 		return NULL;
 	}
 	a->total_slots = size;
@@ -135,7 +136,7 @@ struct array *ar_new(size_t size)
 	a->max_slots = (size_t) - 1;
 	a->array = (void **)calloc(size, sizeof(void *));
 	if (a->array == NULL) {
-		printf("(EE) ar_new, a->array calloc failed : %s\n", strerror(errno));
+		logger(LOG_ERR, "ar_new, a->array calloc failed : %s\n", strerror(errno));
 		free(a);
 		return NULL;
 	}
@@ -154,7 +155,7 @@ struct array *ar_new(size_t size)
 static void ar_remove_index(struct array *a, size_t idx)
 {
 	if (a == NULL || a->array == NULL) {
-		printf("(WW) ar_remove_index, passed array is unallocated.\n");
+		logger(LOG_WARN, "ar_remove_index, passed array is unallocated.\n");
 		pthread_mutex_unlock(&a->lock);
 		return;
 	}
@@ -230,7 +231,7 @@ int ar_free(struct array *a)
 
 	pthread_mutex_lock(&a->lock);
 	if (a == NULL || a->array == NULL) {
-		printf("(EE) ar_free : Trying to free an unallocated array.\n");
+		logger(LOG_ERR, "ar_free : Trying to free an unallocated array.\n");
 		pthread_mutex_unlock(&a->lock);
 		return 0;
 	}
@@ -246,28 +247,3 @@ int ar_free(struct array *a)
 	free(a);
 	return AR_OK;
 }
-#ifdef TEST_ARRAY
-
-int main()
-{
-	uint32_t i, j;
-	struct array *arr_test;
-	void *test[4] = {NULL, NULL, NULL, NULL};
-	int res;
-
-	arr_test = ar_new(100);
-
-	for (i = 0 ; i < arr_test->total_slots ; i++) {
-		ar_insert(arr_test, (void *)i+1);
-	}
-	for (i = 0 ; i < arr_test->total_slots ; i++) {
-		printf("%i\n", arr_test->array[i]);
-	}
-	res = ar_get_n_elems_start_at(arr_test, 4, 98, test);
-	for (i = 0 ; i < 4 ; i++) {
-		printf("%i\n", test[i]);
-	}
-	printf("NB elem : %i\n", res);
-}
-
-#endif

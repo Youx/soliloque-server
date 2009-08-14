@@ -27,6 +27,7 @@
 #include "server.h"
 #include "configuration.h"
 #include "registration.h"
+#include "log.h"
 
 /**
  * Initialize the database from a configuration
@@ -67,9 +68,9 @@ int init_db(struct config *c)
  */
 int connect_db(struct config *c)
 {
-	printf("Connecting to db\n");
+	logger(LOG_INFO, "Connecting to db\n");
 	if (dbi_conn_connect(c->conn) < 0) {
-		printf("Could not connect. Please check the option settings\n");
+		logger(LOG_ERR, "Could not connect. Please check the option settings\n");
 		return 0;
 	}
 	return 1;
@@ -100,7 +101,7 @@ struct server **db_create_servers(struct config *c)
 	}
 	ss = (struct server **)calloc(nb_serv + 1, sizeof(struct server *));
 	if (ss == NULL) {
-		printf("(WW) db_create_server : calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "db_create_server : calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 
@@ -191,12 +192,11 @@ int db_register_channel(struct config *c, struct channel *ch)
 			flag_default, flag_hierar, flag_mod,
 			parent_id, pass_clean);
 	if (res == NULL) {
-		printf("Insertion request failed : \n");
-		printf(q, ch->in_server->id, name_clean, topic_clean, desc_clean,
+		logger(LOG_ERR, "Insertion request failed : \n");
+		logger(LOG_ERR, q, ch->in_server->id, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			parent_id, pass_clean);
-		printf("\n");
 	}
 
 	insert_id = dbi_conn_sequence_last(c->conn, NULL);
@@ -282,12 +282,11 @@ int db_update_channel(struct config *c, struct channel *ch)
 			flag_default, flag_hierar, flag_mod,
 			pass_clean, ch->db_id);
 	if (res == NULL) {
-		printf("Insertion request failed : \n");
-		printf(q, name_clean, topic_clean, desc_clean,
+		logger(LOG_ERR, "Insertion request failed : \n");
+		logger(LOG_ERR, q, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			pass_clean, ch->db_id);
-		printf("\n");
 	}
 	free(name_clean); free(topic_clean); free(desc_clean); free(pass_clean);
 
@@ -325,7 +324,7 @@ int db_create_channels(struct config *c, struct server *s)
 			name = dbi_result_get_string_copy(res, "name");
 			topic = dbi_result_get_string_copy(res, "topic");
 			desc = dbi_result_get_string_copy(res, "description");
-			printf("flag_hierarchical = %i\n", dbi_result_get_uint(res, "flag_hierarchical"));
+			logger(LOG_INFO, "flag_hierarchical = %i\n", dbi_result_get_uint(res, "flag_hierarchical"));
 			flags = CHANNEL_FLAG_REGISTERED;
 			if (dbi_result_get_uint(res, "flag_moderated"))
 				flags |= CHANNEL_FLAG_MODERATED;
@@ -379,14 +378,14 @@ int db_create_subchannels(struct config *c, struct server *s)
 
 			parent = get_channel_by_db_id(s, parent_db_id);
 			if (parent == NULL) {
-				printf("(WW) db_create_subchannels, channel with db_id %i does not exist.\n",
+				logger(LOG_WARN, "db_create_subchannels, channel with db_id %i does not exist.\n",
 						parent_db_id);
 				destroy_channel(ch);
 			} else if (parent->parent != NULL) {
-				printf("(WW) db_create_subchannels, a subchannel can not have subchannels.\n");
+				logger(LOG_WARN, "db_create_subchannels, a subchannel can not have subchannels.\n");
 				destroy_channel(ch);
 			} else if ((parent->flags & CHANNEL_FLAG_SUBCHANNELS) == 0) {
-				printf("(WW) db_create_subchannels, channel %s can not have subchannel.\n",
+				logger(LOG_WARN, "db_create_subchannels, channel %s can not have subchannel.\n",
 						parent->name);
 				destroy_channel(ch);
 			} else {
@@ -482,14 +481,14 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 	int g;
 	struct server_privileges *sp = s->privileges;
 
-	printf("Loading server privileges.\n");
+	logger(LOG_INFO, "Loading server privileges.\n");
 	if (connect_db(c) == 0)
 		return 0;
 
 	res = dbi_conn_queryf(c->conn, q, s->id);
 	if (res) {
 		while (dbi_result_next_row(res)) {
-			printf("sp row...\n");
+			logger(LOG_INFO, "sp row...\n");
 			/* Get the id of the group from the string */
 			group = dbi_result_get_string(res, "user_group");
 			if (strcmp(group, "server_admin") == 0) {
@@ -505,13 +504,13 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 			} else if (strcmp(group, "anonymous") == 0) {
 				g = PRIV_ANONYMOUS;
 			} else {
-				printf("(EE) server_privileges.user_group = %s, \
+				logger(LOG_ERR, "server_privileges.user_group = %s, \
 						expected : server_admin, channel_admin, \
 						operator, voice, registered, anonymous.\n",
 						group);
 				continue;
 			}
-			printf("GROUP : %i\n", g);
+			logger(LOG_INFO, "GROUP : %i\n", g);
 			/* Copy all privileges to the server... */
 			sp->priv[g][SP_ADM_DEL_SERVER] = dbi_result_get_uint(res, "adm_del_server");
 			sp->priv[g][SP_ADM_ADD_SERVER] = dbi_result_get_uint(res, "adm_add_server");

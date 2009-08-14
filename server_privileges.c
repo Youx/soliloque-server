@@ -20,6 +20,7 @@
 
 #include "player.h"
 #include "channel.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -60,7 +61,7 @@ struct server_privileges *new_sp()
 
 	sp = (struct server_privileges *)calloc(1, sizeof(struct server_privileges));
 	if (sp == NULL) {
-		printf("(WW) new_sp, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_sp, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 	return sp;
@@ -150,12 +151,15 @@ int player_has_privilege(struct player *pl, int privilege, struct channel *conte
 void sp_print(struct server_privileges *sp)
 {
 	int i, j;
+	char *dst = (char *)calloc(sizeof(char), 100);
 
 	for (i = 0 ; i < 6 ; i++) {
-		printf("%i = ", i);
+		sprintf(dst, "%i = ", i);
 		for (j = 0 ; j < SP_SIZE ; j++) {
-			printf("%i", sp->priv[i][j]);
+			sprintf(dst, "%s%i", dst, sp->priv[i][j]);
 		}
-		printf("\n");
+		sprintf(dst, "%s\n", dst);
+		logger(LOG_INFO, dst);
+		bzero(dst, 100);
 	}
 }

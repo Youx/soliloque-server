@@ -17,6 +17,7 @@
  */
 
 #include "registration.h"
+#include "log.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -35,7 +36,7 @@ struct registration *new_registration()
 
 	r = (struct registration *)calloc(1, sizeof(struct registration));
 	if (r == NULL) {
-		printf("(WW) new_registration, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_registration, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
 
