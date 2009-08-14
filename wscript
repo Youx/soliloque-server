@@ -37,9 +37,9 @@ def git_version():
   hd =git_head()
 
   if(tag):
-    return("{0} (git-{1}/{2})".format(tag, hd, com))
+    return("{0} (git-{1})".format(tag, com))
   else:
-    return("git-{0}/{1}".format(hd, com))
+    return("git-{0}".format(com))
 
 
 def configure(conf):
