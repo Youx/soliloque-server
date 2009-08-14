@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from subprocess import *
 
 VERSION='0.1'
 APPNAME='soliloque-server'
@@ -17,19 +16,20 @@ def set_options(opt):
   pass
 
 def git_version():
+  S = __import__('subprocess')
   def git_tag():
-    return Popen(['git', 'tag'], stdout=PIPE).communicate()[0].rstrip('\n')
+    return S.Popen(['git', 'tag'], stdout=S.PIPE).communicate()[0].rstrip('\n')
 
   def git_commit():
-    git = Popen(['git', 'show', '--abbrev-commit', 'HEAD'], stdout=PIPE)
-    grep = Popen(['grep', 'commit'], stdin = git.stdout, stdout=PIPE)
-    head = Popen(['head', '-n', '1'], stdin = grep.stdout, stdout=PIPE)
-    cut = Popen(['cut', '-d ', '-f2'], stdin = head.stdout, stdout=PIPE)
+    git = S.Popen(['git', 'show', '--abbrev-commit', 'HEAD'], stdout=S.PIPE)
+    grep = S.Popen(['grep', 'commit'], stdin = git.stdout, stdout=S.PIPE)
+    head = S.Popen(['head', '-n', '1'], stdin = grep.stdout, stdout=S.PIPE)
+    cut = S.Popen(['cut', '-d ', '-f2'], stdin = head.stdout, stdout=S.PIPE)
     return cut.communicate()[0].rstrip('\n')
 
   def git_head():
-    git = Popen(['git', 'symbolic-ref', 'HEAD'], stdout=PIPE)
-    cut = Popen(['cut', '-d/', '-f3'], stdin = git.stdout, stdout = PIPE)
+    git = S.Popen(['git', 'symbolic-ref', 'HEAD'], stdout=S.PIPE)
+    cut = S.Popen(['cut', '-d/', '-f3'], stdin = git.stdout, stdout = S.PIPE)
     return cut.communicate()[0].rstrip('\n')
 
   tag=git_tag()
