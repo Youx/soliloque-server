@@ -1,4 +1,6 @@
+#!/usr/bin/env python
 
+from subprocess import *
 
 VERSION='0.1'
 APPNAME='soliloque-server'
@@ -13,6 +15,32 @@ flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-ali
 def set_options(opt):
   opt.add_option('--with-openssl', type='string', help='Define the location of openssl libraries.', dest='openssl')
   pass
+
+def git_version():
+  def git_tag():
+    return Popen(['git', 'tag'], stdout=PIPE).communicate()[0].rstrip('\n')
+
+  def git_commit():
+    git = Popen(['git', 'show', '--abbrev-commit', 'HEAD'], stdout=PIPE)
+    grep = Popen(['grep', 'commit'], stdin = git.stdout, stdout=PIPE)
+    head = Popen(['head', '-n', '1'], stdin = grep.stdout, stdout=PIPE)
+    cut = Popen(['cut', '-d ', '-f2'], stdin = head.stdout, stdout=PIPE)
+    return cut.communicate()[0].rstrip('\n')
+
+  def git_head():
+    git = Popen(['git', 'symbolic-ref', 'HEAD'], stdout=PIPE)
+    cut = Popen(['cut', '-d/', '-f3'], stdin = git.stdout, stdout = PIPE)
+    return cut.communicate()[0].rstrip('\n')
+
+  tag=git_tag()
+  com=git_commit()
+  hd =git_head()
+
+  if(tag):
+    return("{0} (git-{1}/{2})".format(tag, hd, com))
+  else:
+    return("git-{0}/{1}".format(hd, com))
+
 
 def configure(conf):
   import Options
@@ -32,6 +60,7 @@ def configure(conf):
   conf.check(define_name='HAVE_SHA256', uselib='OPENSSL', function_name='SHA256', header_name='openssl/sha.h', mandatory=True)
   # Check for strndup (not present on OSX)
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
+  conf.define('VERSION', git_version())
   conf.write_config_header('config.h')
 
 def build(bld):

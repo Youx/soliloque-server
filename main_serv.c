@@ -25,6 +25,7 @@
 #include <poll.h>
 #include <inttypes.h>
 #include <openssl/sha.h>
+#include <unistd.h>
 
 #include "main_serv.h"
 #include "server.h"
@@ -37,6 +38,7 @@
 #include "configuration.h"
 #include "server_privileges.h"
 #include "database.h"
+#include "config.h"
 
 #define MAX_MSG 1024
 
@@ -215,15 +217,71 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 	}
 }
 
-int main(void)
+static void print_help(char *progname)
+{
+	printf("%s\n", progname);
+	printf("Usage : \n");
+	printf(" -c <filename> filename of the config-file\n");
+	printf(" -v show version\n");
+	printf(" -V show compile-time flags\n");
+	printf(" -h show this help\n");
+}
+
+static void print_version()
+{
+	printf("Soliloque Server version %s\n", VERSION);
+}
+
+static void print_compileargs(char *progname)
+{
+}
+
+
+int main(int argc, char **argv)
 {
 	struct server **ss;
 	struct config *c;
 	int i;
+	int val;
+	int terminate = 0, wrongopt = 0, helpshown = 0;
+	char *configfile = NULL;
 
 	/* do some initialization of the finite state machine */
 	init_callbacks();
-	c = config_parse("sol-server.cfg");
+	/* parse command line arguments */
+	while ((val = getopt(argc, argv, "vVhc:")) != -1) {
+		switch (val) {
+			case 'c':
+				configfile = optarg;
+				break;
+			case 'h':
+				print_help(argv[0]);
+				terminate = 1;
+				helpshown = 1;
+			case 'v':
+				print_version();
+				terminate = 1;
+				break;
+			case 'V':
+				print_compileargs(argv[0]);
+				terminate = 1;
+				break;
+			case '?':
+				wrongopt = 1;
+				terminate = 1;
+				break;
+		}
+	}
+	if (terminate != 0) {
+		if (wrongopt == 1 && helpshown == 0)
+			print_help(argv[0]);
+		exit(0);
+	}
+
+	if (configfile == NULL)
+		configfile = "sol-server.cfg";
+	c = config_parse(configfile);
+
 	if (c == NULL) {
 		printf("(EE) Unable to read configuration file. Exiting.\n");
 		exit(0);
