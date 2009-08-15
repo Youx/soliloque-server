@@ -7,7 +7,7 @@ Welcome to Soliloque Server!
 Getting the code
 ----------------
 
-Check out https://code.coding-badger.net/projects/soliloque-server for the wiki, bug tracking, forums, etc...
+Check out http://github.com/Youx/soliloque-server for the wiki, bug tracking, etc...
 The bleeding edge code can be grabbed from the git repository on github :
 
 	$ git clone git://github.com/Youx/soliloque-server.git
@@ -82,10 +82,10 @@ Links
 -----
 
 For a documentation of the protocol (not complete yet) :
-https://code.coding-badger.net/projects/soliloque/wiki/Teamspeak_protocol
+http://wiki.github.com/Youx/soliloque-server/teamspeak-protocol
 
 To submit bugs, discuss, join the effort, etc etc :
-https://code.coding-badger.net/projects/soliloque-server 
+http://github.com/Youx/soliloque-server/issues
 
 The code is hosted and can be forked from here :
 http://github.com/Youx/soliloque-server
