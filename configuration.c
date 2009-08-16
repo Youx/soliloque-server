@@ -179,37 +179,37 @@ struct config *config_parse(char *cfg_file)
 
 	config_init(&cfg);
 	if (config_read_file(&cfg, cfg_file) == CONFIG_FALSE) {
-		logger(LOG_ERR, "Error loading file %s\n", cfg_file);
+		logger(LOG_ERR, "Error loading file %s", cfg_file);
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	db = config_lookup(&cfg, "db");
 	if (db == NULL) {
-		logger(LOG_ERR, "Error : no db tag.\n");
+		logger(LOG_ERR, "Error : no db tag.");
 		config_destroy(&cfg);
 		return 0;
 	}
 	cfg_s = (struct config *)calloc(1, sizeof(struct config));
 	if (cfg_s == NULL) {
-		logger(LOG_ERR, "config_parse, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "config_parse, calloc failed : %s.", strerror(errno));
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_db(db, cfg_s) == 0) {
-		logger(LOG_ERR, "config_parse_db failed.\n");
+		logger(LOG_ERR, "config_parse_db failed.");
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	log = config_lookup(&cfg, "log");
 	if (db == NULL) {
-		logger(LOG_ERR, "Error : no log tag.\n");
+		logger(LOG_ERR, "Error : no log tag.");
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_log(log, cfg_s) == 0) {
-		logger(LOG_ERR, "config_parse_log failed.\n");
+		logger(LOG_ERR, "config_parse_log failed.");
 		config_destroy(&cfg);
 		return 0;
 	}

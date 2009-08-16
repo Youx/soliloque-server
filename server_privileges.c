@@ -61,7 +61,7 @@ struct server_privileges *new_sp()
 
 	sp = (struct server_privileges *)calloc(1, sizeof(struct server_privileges));
 	if (sp == NULL) {
-		logger(LOG_WARN, "new_sp, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_sp, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	return sp;
@@ -158,7 +158,6 @@ void sp_print(struct server_privileges *sp)
 		for (j = 0 ; j < SP_SIZE ; j++) {
 			sprintf(dst, "%s%i", dst, sp->priv[i][j]);
 		}
-		sprintf(dst, "%s\n", dst);
 		logger(LOG_INFO, dst);
 		bzero(dst, 100);
 	}

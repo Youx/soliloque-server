@@ -63,7 +63,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	struct channel *chan;
 	chan = (struct channel *)calloc(1, sizeof(struct channel));
 	if (chan == NULL) {
-		logger(LOG_ERR, "new_channel, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "new_channel, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	
@@ -117,14 +117,14 @@ struct channel *new_predef_channel()
 void print_channel(struct channel *chan)
 {
 	if (chan == NULL) {
-		logger(LOG_INFO, "Channel NULL\n");
+		logger(LOG_INFO, "Channel NULL");
 	} else {
-		logger(LOG_INFO, "Channel ID %i\n", chan->id);
-		logger(LOG_INFO, "\t name    : %s\n", chan->name);
-		logger(LOG_INFO, "\t topic   : %s\n", chan->topic);
-		logger(LOG_INFO, "\t desc    : %s\n", chan->desc);
+		logger(LOG_INFO, "Channel ID %i", chan->id);
+		logger(LOG_INFO, "\t name    : %s", chan->name);
+		logger(LOG_INFO, "\t topic   : %s", chan->topic);
+		logger(LOG_INFO, "\t desc    : %s", chan->desc);
 		if(ch_getflags(chan) & CHANNEL_FLAG_DEFAULT)
-			logger(LOG_INFO, "\t default : y\n");
+			logger(LOG_INFO, "\t default : y");
 	}
 }
 
@@ -232,7 +232,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 			free(topic);
 		if (desc != NULL)
 			free(desc);
-		logger(LOG_WARN, "channel_from_data, allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "channel_from_data, allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);
@@ -246,11 +246,11 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
 {
 	if (ch != subchannel->parent) {
-		logger(LOG_WARN, "channel_remove_subchannel, subchannel's parent is not the same as passed parent.\n");
+		logger(LOG_WARN, "channel_remove_subchannel, subchannel's parent is not the same as passed parent.");
 		return 0;
 	}
 	if (ch == NULL) {
-		logger(LOG_WARN, "channel_remove_subchannel, parent is null.\n");
+		logger(LOG_WARN, "channel_remove_subchannel, parent is null.");
 		return 0;
 	}
 	ar_remove(ch->subchannels, subchannel);
@@ -262,7 +262,7 @@ int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
 int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
 {
 	if ((ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) == 0) {
-		logger(LOG_WARN, "channel_add_subchannel, channel %i:%s can not have subchannels.\n", ch->id, ch->name);
+		logger(LOG_WARN, "channel_add_subchannel, channel %i:%s can not have subchannels.", ch->id, ch->name);
 		return 0;
 	}
 	channel_remove_subchannel(subchannel->parent, subchannel);
@@ -313,7 +313,7 @@ char *ch_getpass(struct channel *ch)
 	if (ch->flags & CHANNEL_FLAG_PASSWORD) {
 		return ch->password;
 	} else {
-		logger(LOG_WARN, "channel_getpassword, asked for the password of a channel that is not protected.\n");
+		logger(LOG_WARN, "channel_getpassword, asked for the password of a channel that is not protected.");
 		return NULL;
 	}
 }

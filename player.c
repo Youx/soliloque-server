@@ -58,7 +58,7 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
 	if (p == NULL) {
-		logger(LOG_WARN, "new_player, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_player, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	/* create packet queue */
@@ -113,7 +113,7 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 
 	/* Verify fields */
 	if (len != 180) {
-		logger(LOG_WARN, "new_player_from_data, packet has invalid size.\n");
+		logger(LOG_WARN, "new_player_from_data, packet has invalid size.");
 		return NULL;
 	}
 	
@@ -148,14 +148,14 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	/* Alloc adresses */
 	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
 	if (pl->cli_addr == NULL) {
-		logger(LOG_WARN, "new_player_from_data, client address calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "new_player_from_data, client address calloc failed : %s.", strerror(errno));
 		destroy_player(pl);
 		return NULL;
 	}
 	memcpy(pl->cli_addr, cli_addr, cli_len);
 	pl->cli_len = cli_len;
 
-	logger(LOG_INFO, "machine : %s, login : %s, nickname : %s\n", pl->machine, pl->client, pl->name);
+	logger(LOG_INFO, "machine : %s, login : %s, nickname : %s", pl->machine, pl->client, pl->name);
 	free(client); free(machine); free(nickname); free(login); free(password);
 	return pl;
 }
@@ -199,9 +199,9 @@ int player_to_data_size(struct player *pl)
 
 void print_player(struct player *pl)
 {
-	logger(LOG_INFO, "Player : %s\n", pl->name);
-	logger(LOG_INFO, "\tpublic ID  : 0x%x\n", pl->public_id);
-	logger(LOG_INFO, "\tprivate ID : 0x%x\n", pl->private_id);
-	logger(LOG_INFO, "\tmachine    : %s\n", pl->machine);
-	logger(LOG_INFO, "\tclient     : %s\n", pl->client);
+	logger(LOG_INFO, "Player : %s", pl->name);
+	logger(LOG_INFO, "\tpublic ID  : 0x%x", pl->public_id);
+	logger(LOG_INFO, "\tprivate ID : 0x%x", pl->private_id);
+	logger(LOG_INFO, "\tmachine    : %s", pl->machine);
+	logger(LOG_INFO, "\tclient     : %s", pl->client);
 }

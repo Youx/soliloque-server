@@ -85,7 +85,7 @@ static void init_callbacks(void)
 
 static void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
-	logger(LOG_INFO, "Packet : Connection.\n");
+	logger(LOG_INFO, "Packet : Connection.");
 	switch (((uint16_t *)data)[1]) {
 	/* Client requesting a connection */
 	case 3:
@@ -95,7 +95,7 @@ static void handle_connection_type_packet(char *data, int len, struct sockaddr_i
 		handle_player_keepalive(data, len, s);
 		break;
 	default:
-		logger(LOG_WARN, "Unknown connection packet : 0xf4be%x.\n", ((uint16_t *)data)[1]);
+		logger(LOG_WARN, "Unknown connection packet : 0xf4be%x.", ((uint16_t *)data)[1]);
 	}
 }
 
@@ -119,18 +119,18 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
-	logger(LOG_INFO, "Packet : Control (0x%x).\n", *(uint32_t *)code);
+	logger(LOG_INFO, "Packet : Control (0x%x).", *(uint32_t *)code);
 
 	func = get_f0_function(code);
 	if (func != NULL) {
 		/* Check header size */
 		if (len < 24) {
-			logger(LOG_WARN, "Control packet too small to be valid.\n");
+			logger(LOG_WARN, "Control packet too small to be valid.");
 			return;
 		}
 		/* Check CRC */
 		/*if (packet_check_crc_d(data, len)) {
-			logger(LOG_WARN, "Control packet has invalid CRC\n");
+			logger(LOG_WARN, "Control packet has invalid CRC");
 			return;
 		}*/
 		/* Check if player exists */
@@ -143,7 +143,7 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 			(*func)(data, len, pl);
 		}
 	} else {
-		logger(LOG_WARN, "Function with code : 0x%"PRIx32" is invalid or is not implemented yet.\n", *(uint32_t *)code);
+		logger(LOG_WARN, "Function with code : 0x%"PRIx32" is invalid or is not implemented yet.", *(uint32_t *)code);
 	}
 }
 
@@ -156,7 +156,7 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	char *sent;
 	int valid_ack = 0;
 
-	logger(LOG_INFO, "Packet : ACK.\n");
+	logger(LOG_INFO, "Packet : ACK.");
 	/* parse ACK packet */
 	public_id = *(uint32_t *)(data + 8);
 	private_id = *(uint32_t *)(data + 4);
@@ -182,9 +182,9 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
 	int res;
-	logger(LOG_INFO, "Packet : Audio data.\n");
+	logger(LOG_INFO, "Packet : Audio data.");
 	res = audio_received(data, len, s);
-	logger(LOG_INFO, "Return value : %i.\n", res);
+	logger(LOG_INFO, "Return value : %i.", res);
 }
 
 /* Manage an incoming packet */
@@ -219,7 +219,7 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 		handle_connection_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	default:
-		logger(LOG_WARN, "Unvalid packet type field : 0x%x.\n", ((uint16_t *)data)[0]);
+		logger(LOG_WARN, "Unvalid packet type field : 0x%x.", ((uint16_t *)data)[0]);
 	}
 }
 
@@ -280,14 +280,14 @@ int main(int argc, char **argv)
 	c = config_parse(configfile);
 
 	if (c == NULL) {
-		logger(LOG_ERR, "Unable to read configuration file. Exiting.\n");
+		logger(LOG_ERR, "Unable to read configuration file. Exiting.");
 		exit(0);
 	}
 	set_config(c);
 
 	init_db(c);
 	if (!connect_db(c)) {
-		logger(LOG_ERR, "Unable to connect to the database. Exiting.\n");
+		logger(LOG_ERR, "Unable to connect to the database. Exiting.");
 		exit(0);
 	}
 	ss = db_create_servers(c);
@@ -299,14 +299,14 @@ int main(int argc, char **argv)
 		db_create_sv_privileges(c, ss[i]);
 		sp_print(ss[i]->privileges);
 		/* test_init_server(ss[i]); */
-		logger(LOG_INFO, "Launching server %i\n", i);
+		logger(LOG_INFO, "Launching server %i", i);
 		server_start(ss[i]);
 	}
 	for (i = 0 ; ss[i] != NULL ; i++) {
 		pthread_join(ss[i]->main_thread, NULL);
 		pthread_join(ss[i]->packet_sender, NULL);
 	}
-	logger(LOG_INFO, "Servers initialized.\n");
+	logger(LOG_INFO, "Servers initialized.");
 	/* exit */
 	return 0;
 }

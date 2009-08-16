@@ -39,11 +39,11 @@ static void send_curr_packet(struct player *p)
 
 		/* add packet to server statistics */
 		sstat_add_packet(s->stats, p_size, 1);
-		logger(LOG_INFO, "Really sending packet type 0x%x\n", *(uint32_t *)packet);
+		logger(LOG_INFO, "Really sending packet type 0x%x", *(uint32_t *)packet);
 		ret = sendto(s->socket_desc, packet, p_size, 0,
 				p->cli_addr, p->cli_len);
 		if (ret == -1)
-			logger(LOG_WARN, "send_curr_packet failed : %s\n", strerror(errno));
+			logger(LOG_WARN, "send_curr_packet failed : %s", strerror(errno));
 		/* update packet version counter */
 		(*(uint16_t *)(packet + 16))++;
 		/* update checksum */

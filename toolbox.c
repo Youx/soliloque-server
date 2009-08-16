@@ -43,7 +43,7 @@ char *strndup (char const *s, size_t n)
 	}
 	res = calloc(i + 1, sizeof(char));
 	if (res == NULL) {
-		logger(LOG_ERR, "strndup, calloc failed : %s.\n", strerror(errno));
+		logger(LOG_ERR, "strndup, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	return memcpy(res, s, i);
@@ -63,6 +63,5 @@ char *ustrtohex (unsigned char *data, size_t len)
 		sprintf(dst + (i * 2), "%02x", data[i]);
 	}
 
-	/*printf("%s\n", dst); */
 	return dst;
 }

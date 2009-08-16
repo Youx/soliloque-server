@@ -19,11 +19,14 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <pthread.h>
+#include <string.h>
+#include <time.h>
 
 #include "log.h"
 #include "configuration.h"
 
 static struct config *c = NULL;
+static char *log_header[5] = {"", "(EE)", "(WW)", "(II)", "(DBG)"};
 
 void logger(int loglevel, char *str, ...)
 {
@@ -31,6 +34,9 @@ void logger(int loglevel, char *str, ...)
 	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 	FILE *dst = stderr;
 	int lvl = LOG_INFO;
+	time_t t;
+	char time_fmt[26];
+	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 40);
 
 	if (c != NULL) {
 		lvl = c->log.level;
@@ -40,7 +46,11 @@ void logger(int loglevel, char *str, ...)
 	pthread_mutex_lock(&mutex);
 	va_start(args, str);
 	if (loglevel <= lvl) {
-		vfprintf(dst, str, args);
+		time(&t);
+		ctime_r(&t, time_fmt);
+		time_fmt[24] = '\0';	/* remove the trailing \n */
+		sprintf(str2, "%s %s %s\n", log_header[loglevel], time_fmt, str);
+		vfprintf(dst, str2, args);
 		fflush(dst);
 	}
 	va_end(args);

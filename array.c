@@ -59,7 +59,7 @@ static int ar_grow(struct array *a)
 	void **tmp_alloc;
 
 	if (a == NULL || a->array == NULL) {
-		logger(LOG_WARN, "ar_grow : passed array is not allocated.\n");
+		logger(LOG_WARN, "ar_grow : passed array is not allocated.");
 		return 0;
 	}
 
@@ -70,7 +70,7 @@ static int ar_grow(struct array *a)
 		a->total_slots = new_size;
 		tmp_alloc = (void **)realloc(a->array, sizeof(void *) * (a->total_slots));
 		if (tmp_alloc == NULL) {
-			logger(LOG_ERR, "ar_grow, realloc failed : %s\n", strerror(errno));
+			logger(LOG_ERR, "ar_grow, realloc failed : %s", strerror(errno));
 			return 0;
 		}
 		a->array = tmp_alloc;
@@ -99,7 +99,7 @@ int ar_insert(struct array *a, void *elem)
 	if (a->used_slots == a->total_slots) {
 		err = ar_grow(a);
 		if (err != AR_OK) {
-			logger(LOG_ERR, "Could not grow array any further. Insertion impossible.\n");
+			logger(LOG_ERR, "Could not grow array any further. Insertion impossible.");
 			pthread_mutex_unlock(&a->lock);
 			return 0;
 		}
@@ -128,7 +128,7 @@ struct array *ar_new(size_t size)
 
 	a = (struct array *)calloc(1, sizeof(struct array));
 	if (a == NULL) {
-		logger(LOG_ERR, "ar_new, calloc failed : %s\n", strerror(errno));
+		logger(LOG_ERR, "ar_new, calloc failed : %s", strerror(errno));
 		return NULL;
 	}
 	a->total_slots = size;
@@ -136,7 +136,7 @@ struct array *ar_new(size_t size)
 	a->max_slots = (size_t) - 1;
 	a->array = (void **)calloc(size, sizeof(void *));
 	if (a->array == NULL) {
-		logger(LOG_ERR, "ar_new, a->array calloc failed : %s\n", strerror(errno));
+		logger(LOG_ERR, "ar_new, a->array calloc failed : %s", strerror(errno));
 		free(a);
 		return NULL;
 	}
@@ -155,7 +155,7 @@ struct array *ar_new(size_t size)
 static void ar_remove_index(struct array *a, size_t idx)
 {
 	if (a == NULL || a->array == NULL) {
-		logger(LOG_WARN, "ar_remove_index, passed array is unallocated.\n");
+		logger(LOG_WARN, "ar_remove_index, passed array is unallocated.");
 		pthread_mutex_unlock(&a->lock);
 		return;
 	}
@@ -231,7 +231,7 @@ int ar_free(struct array *a)
 
 	pthread_mutex_lock(&a->lock);
 	if (a == NULL || a->array == NULL) {
-		logger(LOG_ERR, "ar_free : Trying to free an unallocated array.\n");
+		logger(LOG_ERR, "ar_free : Trying to free an unallocated array.");
 		pthread_mutex_unlock(&a->lock);
 		return 0;
 	}

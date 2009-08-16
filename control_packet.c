@@ -73,7 +73,7 @@ static void s_resp_chans(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chans, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_chans, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -94,7 +94,7 @@ static void s_resp_chans(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	logger(LOG_INFO, "size of all channels : %i\n", data_size);
+	logger(LOG_INFO, "size of all channels : %i", data_size);
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
 }
@@ -116,7 +116,7 @@ void s_notify_new_player(struct player *pl)
 	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_new_player, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_new_player, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -157,7 +157,7 @@ static void s_notify_player_left(struct player *p)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_left, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_player_left, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -210,7 +210,7 @@ static void s_resp_players(struct player *pl)
 	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_players, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_players, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	while (nb_players > 0) {
@@ -236,7 +236,7 @@ static void s_resp_players(struct player *pl)
 		}
 		packet_add_crc_d(data, data_size);
 
-		logger(LOG_INFO, "size of all players : %i\n", data_size);
+		logger(LOG_INFO, "size of all players : %i", data_size);
 		send_to(s, data, data_size, 0, pl);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
@@ -253,7 +253,7 @@ static void s_resp_unknown(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_unknown, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_unknown, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -286,7 +286,7 @@ static void s_resp_unknown(struct player *pl)
 void *c_req_chans(char *data, unsigned int len, struct player *pl)
 {
 	if (len != 120) {
-		logger(LOG_WARN, "c_req_chans, packet has an invalid size : %i instead of %i.\n", len, 120);
+		logger(LOG_WARN, "c_req_chans, packet has an invalid size : %i instead of %i.", len, 120);
 		return NULL;
 	}
 	send_acknowledge(pl);		/* ACK */
@@ -309,7 +309,7 @@ void *c_req_chans(char *data, unsigned int len, struct player *pl)
 void *c_req_leave(char *data, unsigned int len, struct player *pl)
 {
 	if (len != 24) {
-		logger(LOG_WARN, "c_req_leave, packet has invalid size : %i instead of %i.\n", len, 24);
+		logger(LOG_WARN, "c_req_leave, packet has invalid size : %i instead of %i.", len, 24);
 		return NULL;
 	}
 	send_acknowledge(pl);		/* ACK */
@@ -339,7 +339,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_kick_server, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_kick_server, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -383,7 +383,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 
 	if (len != 60) {
-		logger(LOG_WARN, "c_req_kick_server, packet has invalid size : %i instead of %i.\n", len, 60);
+		logger(LOG_WARN, "c_req_kick_server, packet has invalid size : %i instead of %i.", len, 60);
 		return NULL;
 	}
 
@@ -394,7 +394,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 		send_acknowledge(pl);		/* ACK */
 		if(player_has_privilege(pl, SP_OTHER_SV_KICK, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
-			logger(LOG_INFO, "Reason for kicking player %s : %s\n", target->name, reason);
+			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_server(pl, target, reason);
 			remove_player(s, pl);
 			free(reason);
@@ -424,7 +424,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_kick_channel, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_kick_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -465,7 +465,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 
 	if (len != 60) {
-		logger(LOG_WARN, "c_req_kick_channel, packet has invalid size : %i instead of %i.\n", len, 60);
+		logger(LOG_WARN, "c_req_kick_channel, packet has invalid size : %i instead of %i.", len, 60);
 		return NULL;
 	}
 	memcpy(&target_id, data + 24, 4);
@@ -476,7 +476,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 		send_acknowledge(pl);		/* ACK */
 		if (player_has_privilege(pl, SP_OTHER_CH_KICK, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
-			logger(LOG_INFO, "Reason for kicking player %s : %s\n", target->name, reason);
+			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_channel(pl, target, reason, pl->in_chan);
 			move_player(pl, def_chan);
 			/* TODO update player channel privileges etc... */
@@ -506,7 +506,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_switch_channel, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -562,11 +562,11 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 		if (!(ch_getflags(to) & CHANNEL_FLAG_PASSWORD)
 				|| player_has_privilege(pl, SP_CHA_JOIN_WO_PASS, to)
 				|| strcmp(pass, to->password) == 0) {
-			logger(LOG_INFO, "Player switching to channel %s.\n", to->name);
+			logger(LOG_INFO, "Player switching to channel %s.", to->name);
 			from = pl->in_chan;
 			if (move_player(pl, to)) {
 				s_notify_switch_channel(pl, from, to);
-				logger(LOG_INFO, "Player moved, notify sent.\n");
+				logger(LOG_INFO, "Player moved, notify sent.");
 				/* TODO change privileges */
 			}
 		}
@@ -589,7 +589,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_deleted, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_channel_deleted, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -630,7 +630,7 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_cannot_delete_channel, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_cannot_delete_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -676,7 +676,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else {
 			/* if the channel is registered, remove it from the db */
-			logger(LOG_INFO, "Flags : %i\n", ch_getflags(del));
+			logger(LOG_INFO, "Flags : %i", ch_getflags(del));
 			if ((ch_getflags(del) & CHANNEL_FLAG_UNREGISTERED) == 0)
 				db_unregister_channel(s->conf, del);
 			s_notify_channel_deleted(s, del_id);
@@ -705,7 +705,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_ban, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -759,7 +759,7 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
 		if(player_has_privilege(pl, SP_ADM_BAN_IP, target->in_chan)) {
 			reason = strndup(data + 29, MIN(29, data[28]));
 			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
-			logger(LOG_INFO, "Reason for banning player %s : %s\n", target->name, reason);
+			logger(LOG_INFO, "Reason for banning player %s : %s", target->name, reason);
 			s_notify_ban(pl, target, duration, reason);
 			remove_player(s, target);
 			free(reason);
@@ -792,7 +792,7 @@ static void s_resp_bans(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_ban, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -805,14 +805,14 @@ static void s_resp_bans(struct player *pl)
 	/* packet version */			ptr += 4;	/* filled later */
 	/* checksum */				ptr += 4;	/* filled at the end */
 	*(uint16_t *)ptr = s->bans->used_slots;	ptr += 4;	/* number of bans */
-	logger(LOG_INFO, "number of bans : %zu\n", s->bans->used_slots);
+	logger(LOG_INFO, "number of bans : %zu", s->bans->used_slots);
 	ar_each(struct ban *, b, iter, s->bans)
 		tmp_size = ban_to_data(b, ptr);
 		ptr += tmp_size;
 	ar_end_each;
 	
 	packet_add_crc_d(data, data_size);
-	logger(LOG_INFO, "list of bans : sending %i bytes\n", data_size);
+	logger(LOG_INFO, "list of bans : sending %i bytes", data_size);
 	send_to(s, data, data_size, 0, pl);
 
 	pl->f0_s_counter++;
@@ -896,7 +896,7 @@ static void s_resp_server_stats(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_server_stats, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_server_stats, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -962,7 +962,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_ch_priv_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_player_ch_priv_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1030,12 +1030,12 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
-		logger(LOG_INFO, "Player priv before : 0x%x\n", tgt->chan_privileges);
+		logger(LOG_INFO, "Player priv before : 0x%x", tgt->chan_privileges);
 		if (on_off == 2)
 			tgt->chan_privileges &= (0xFF ^ (1 << right));
 		else if(on_off == 0)
 			tgt->chan_privileges |= (1 << right);
-		logger(LOG_INFO, "Player priv after  : 0x%x\n", tgt->chan_privileges);
+		logger(LOG_INFO, "Player priv after  : 0x%x", tgt->chan_privileges);
 		s_notify_player_ch_priv_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
@@ -1060,7 +1060,7 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_sv_right_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_player_sv_right_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1119,12 +1119,12 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
-		logger(LOG_INFO, "Player sv rights before : 0x%x\n", tgt->global_flags);
+		logger(LOG_INFO, "Player sv rights before : 0x%x", tgt->global_flags);
 		if (on_off == 2)
 			tgt->global_flags &= (0xFF ^ (1 << right));
 		else if(on_off == 0)
 			tgt->global_flags |= (1 << right);
-		logger(LOG_INFO, "Player sv rights after  : 0x%x\n", tgt->global_flags);
+		logger(LOG_INFO, "Player sv rights after  : 0x%x", tgt->global_flags);
 		s_notify_player_sv_right_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
@@ -1149,7 +1149,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_attr_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1188,9 +1188,9 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 	send_acknowledge(pl);		/* ACK */
 
 	memcpy(&attributes, data + 24, 2);
-	logger(LOG_INFO, "Player sv rights before : 0x%x\n", pl->player_attributes);
+	logger(LOG_INFO, "Player sv rights before : 0x%x", pl->player_attributes);
 	pl->player_attributes = attributes;
-	logger(LOG_INFO, "Player sv rights after  : 0x%x\n", pl->player_attributes);
+	logger(LOG_INFO, "Player sv rights after  : 0x%x", pl->player_attributes);
 	s_notify_player_attr_changed(pl, attributes);
 	return NULL;
 }
@@ -1214,7 +1214,7 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "send_message_to_all, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "send_message_to_all, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1262,7 +1262,7 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "send_message_to_channel, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "send_message_to_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1307,7 +1307,7 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "send_message_to_player, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "send_message_to_player, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1374,7 +1374,7 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 				send_message_to_player(pl, tgt, color, msg);
 		break;
 	default:
-		logger(LOG_WARN, "Wrong type of message.\n");
+		logger(LOG_WARN, "Wrong type of message.");
 	}
 	free(msg);
 	return NULL;
@@ -1400,7 +1400,7 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	data_size = 24 + 4 + 4 + (strlen(name) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_name_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_chan_name_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1478,7 +1478,7 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	data_size = 24 + 4 + 4 + (strlen(topic) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_topic_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_chan_topic_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1556,7 +1556,7 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	data_size = 24 + 4 + 4 + (strlen(desc) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_desc_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_chan_desc_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1627,7 +1627,7 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
 	data_size = 24 + 4 + 4 + 2 + 2;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_flags_codec_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_channel_flags_codec_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1768,12 +1768,12 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 	ch = get_channel_by_id(s, ch_id);
 	send_acknowledge(pl);
 	if (ch != NULL && player_has_privilege(pl, SP_CHA_CHANGE_PASS, ch) && ch->parent == NULL) {
-		logger(LOG_INFO, "Change channel password : %s->%s\n", ch->name, password);
+		logger(LOG_INFO, "Change channel password : %s->%s", ch->name, password);
 		old_flags = ch_getflags(ch);
 
 		/* We either remove or change the password */
 		if (pass_len == 0) {
-			logger(LOG_ERR, "This should not happened. Password removal is done using the change flags/codec function.\n");
+			logger(LOG_ERR, "This should not happened. Password removal is done using the change flags/codec function.");
 			bzero(ch->password, 30 * sizeof(char));
 			ch->flags &= (~CHANNEL_FLAG_PASSWORD);
 		} else {
@@ -1812,7 +1812,7 @@ static void s_notify_channel_order_changed(struct player *pl, struct channel *ch
 	data_size = 24 + 4 + 2 + 4;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_order_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_channel_order_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1887,7 +1887,7 @@ static void s_notify_channel_max_users_changed(struct player *pl, struct channel
 	data_size = 24 + 4 + 2 + 4;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_max_users_changed, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_channel_max_users_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -1963,7 +1963,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_created, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_notify_channel_created, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -2046,7 +2046,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 				db_register_channel(s->conf, ch);
 			}
 		}
-		logger(LOG_INFO, "New channel created\n");
+		logger(LOG_INFO, "New channel created");
 		print_channel(ch);
 		if (! (ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED))
 			db_register_channel(s->conf, ch);
@@ -2071,7 +2071,7 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	data_size = 164;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_res_player_stats, packet allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_res_player_stats, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -2138,7 +2138,7 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 	if (tgt != NULL) {
 		s_res_player_stats(pl, tgt);
 	} else {
-		logger(LOG_INFO, "TGT = NULL\n");
+		logger(LOG_INFO, "TGT = NULL");
 	}
 
 	return NULL;
@@ -2172,7 +2172,7 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 		pass = strndup(data + 55, pass_len);
 		server_admin = data[84];
 		if (name == NULL || pass == NULL) {
-			logger(LOG_ERR, "c_req_create_registration, strndup failed : %s.\n", strerror(errno));
+			logger(LOG_ERR, "c_req_create_registration, strndup failed : %s.", strerror(errno));
 			if (name != NULL)
 				free(name);
 			if (pass != NULL)

@@ -48,7 +48,7 @@ static void server_accept_connection(struct player *pl)
 
 	data = (char *)calloc(436, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "server_accept_connection : calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "server_accept_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -99,7 +99,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 
 	data = (char *)calloc(436, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "server_refuse_connection : calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "server_refuse_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -162,7 +162,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	/* Check if the IP is banned */
 	if (get_ban_by_ip(s, cli_addr->sin_addr) != NULL) {
 		server_refuse_connection_ban(cli_addr, cli_len, s);
-		logger(LOG_INFO, "PLAYER BANNED TRIED TO CONNECT\n");
+		logger(LOG_INFO, "PLAYER BANNED TRIED TO CONNECT");
 		return;
 	}
 	/* If registered, check if player exists, else check server password */
@@ -182,7 +182,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	} else {
 		r = get_registration(s, login, password);
 		if (r == NULL) {
-			logger(LOG_INFO, "Invalid credentials for a registered player\n");
+			logger(LOG_INFO, "Invalid credentials for a registered player");
 			destroy_player(pl);
 			return;	/* nobody found with those credentials */
 		}
@@ -215,7 +215,7 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 
 	data = (char *)calloc(24, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_keepalive : calloc failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "s_resp_keepalive : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -256,7 +256,7 @@ void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 	pub_id = *(uint32_t *)(data + 8);
 	pl = get_player_by_ids(s, pub_id, priv_id);
 	if (pl == NULL) {
-		logger(LOG_WARN, "pl == NULL. Why????\n");
+		logger(LOG_WARN, "pl == NULL. Why????");
 		return;
 	}
 	/* Get the counter */

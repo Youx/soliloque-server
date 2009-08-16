@@ -60,7 +60,7 @@ int packet_check_crc(char *data, size_t len, unsigned int offset)
 
 	buff = (char *)calloc(len, sizeof(char));
 	if (buff == NULL) {
-		logger(LOG_WARN, "packet_check_crc, buffer allocation failed : %s.\n", strerror(errno));
+		logger(LOG_WARN, "packet_check_crc, buffer allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	memcpy(buff, data, len);
