@@ -67,7 +67,7 @@ void *packet_sender_thread(void *args)
 			send_curr_packet(p);
 			pthread_mutex_unlock(&p->packets->mutex);
 		ar_end_each;
-		usleep(10000);
+		usleep(50000);
 	}
 }
 
