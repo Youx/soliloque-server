@@ -100,10 +100,10 @@ int audio_received(char *in, size_t len, struct server *s)
 		*(uint8_t *)ptr = ch_in->codec;			ptr += 1;		/* codec */
 		/* private ID */				ptr += 4;		/* empty yet */
 		/* public ID */					ptr += 4;		/* empty yet */
-		*(uint16_t *)ptr = *(uint16_t *)(in + 12);	ptr += 2;		/* counter */
-		*(uint16_t *)ptr = *(uint16_t *)(in + 14);	ptr += 2;		/* conversation counter */
-		*(uint32_t *)ptr = pub_id;			ptr += 4;		/* ID of sender */
-								ptr += 2;		/* another counter?? */
+		*(uint16_t *)ptr = 0;				ptr += 2;		/* unknown, maybe server conversation ID? */
+		*(uint16_t *)ptr = *(uint16_t *)(in + 14);	ptr += 2;		/* counter */
+		*(uint32_t *)ptr = sender->public_id;		ptr += 4;		/* ID of sender */
+		*(uint16_t *)ptr = *(uint16_t *)(in + 12);	ptr += 2;		/* conversation counter */
 		memcpy(ptr, in + 16, audio_block_size);		ptr += audio_block_size;
 		
 		ar_each(struct player *, tmp_pl, iter, ch_in->players)
