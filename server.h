@@ -63,8 +63,11 @@ struct server {
 
         struct pollfd socket_poll;
 	pthread_t main_thread;
+
 	struct config *conf;
+
 	sem_t send_packets;
+	pthread_t packet_sender;
 };
 
 

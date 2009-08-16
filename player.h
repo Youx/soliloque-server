@@ -73,6 +73,9 @@ struct player {
 	struct sockaddr_in *cli_addr;
 	unsigned int cli_len;
 
+	/* packet queue */
+	struct queue *packets;
+
 	/* packet counters */
 	unsigned int f0_c_counter;
 	unsigned int f0_s_counter;

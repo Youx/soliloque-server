@@ -95,9 +95,8 @@ static void s_resp_chans(struct player *pl)
 	packet_add_crc_d(data, data_size);
 
 	logger(LOG_INFO, "size of all channels : %i\n", data_size);
-	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
-	free(data);
 }
 
 /**
@@ -137,12 +136,10 @@ void s_notify_new_player(struct player *pl)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0, (struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 		}
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -181,12 +178,9 @@ static void s_notify_player_left(struct player *p)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -243,12 +237,11 @@ static void s_resp_players(struct player *pl)
 		packet_add_crc_d(data, data_size);
 
 		logger(LOG_INFO, "size of all players : %i\n", data_size);
-		send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+		send_to(s, data, data_size, 0, pl);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
 		nb_players -= MIN(10, nb_players);
 	}
-	free(data);
 }
 
 static void s_resp_unknown(struct player *pl)
@@ -278,9 +271,8 @@ static void s_resp_unknown(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
-	free(data);
 }
 
 /**
@@ -370,12 +362,9 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -459,12 +448,9 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -542,12 +528,9 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -627,13 +610,9 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
-
 }
 
 /**
@@ -667,10 +646,8 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
 	packet_add_crc_d(data, data_size);
 
-	send_to(s, data, data_size, 0,
-			(struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
-	free(data);
 }
 
 /**
@@ -751,12 +728,9 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -839,12 +813,9 @@ static void s_resp_bans(struct player *pl)
 	
 	packet_add_crc_d(data, data_size);
 	logger(LOG_INFO, "list of bans : sending %i bytes\n", data_size);
-	send_to(s, data, data_size, 0,
-			(struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, pl);
 
 	pl->f0_s_counter++;
-
-	free(data);
 }
 
 /**
@@ -954,9 +925,8 @@ static void s_resp_server_stats(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	send_to(s, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
-	free(data);
 }
 
 /**
@@ -1014,12 +984,9 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1115,12 +1082,9 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1205,12 +1169,9 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1276,12 +1237,9 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1327,12 +1285,9 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 		*(uint32_t *)(data + 8) = tmp_pl->public_id;
 		*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 		packet_add_crc_d(data, data_size);
-		send_to(s, data, data_size, 0,
-				(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+		send_to(s, data, data_size, 0, tmp_pl);
 		tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1371,11 +1326,8 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	strcpy(ptr, msg);
 
 	packet_add_crc_d(data, data_size);
-	send_to(s, data, data_size, 0,
-			(struct sockaddr *)tgt->cli_addr, tgt->cli_len);
+	send_to(s, data, data_size, 0, tgt);
 	tgt->f0_s_counter++;
-
-	free(data);
 }
 
 /**
@@ -1469,12 +1421,9 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1550,12 +1499,9 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1631,12 +1577,9 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 
 }
 
@@ -1706,12 +1649,9 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -1893,13 +1833,9 @@ static void s_notify_channel_order_changed(struct player *pl, struct channel *ch
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
-
 }
 
 /**
@@ -1972,13 +1908,9 @@ static void s_notify_channel_max_users_changed(struct player *pl, struct channel
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
-
 }
 
 /**
@@ -2052,12 +1984,9 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
 			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0,
-					(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
-
-	free(data);
 }
 
 /**
@@ -2181,10 +2110,9 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	strncpy(ptr, tgt->machine, *(ptr - 1));	ptr += 29;/*platform */
 
 	packet_add_crc_d(data, data_size);
-	send_to(pl->in_chan->in_server, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	send_to(pl->in_chan->in_server, data, data_size, 0, pl);
 	pl->f0_s_counter++;
 
-	free(data);
 	free(ip);
 }
 

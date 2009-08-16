@@ -40,6 +40,7 @@
 #include "database.h"
 #include "config.h"
 #include "log.h"
+#include "queue.h"
 
 #define MAX_MSG 1024
 
@@ -47,29 +48,6 @@
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
 packet_function f0_callbacks[2][255];
 
-#if 0
-static void test_init_server(struct server *s)
-{
-	/* Add channels */
-	add_channel(s, new_predef_channel());
-	add_channel(s, new_predef_channel());
-	add_channel(s, new_predef_channel());
-	destroy_channel_by_id(s, 1);
-	add_channel(s, new_predef_channel());
-	add_channel(s, new_predef_channel());
-	add_channel(s, new_predef_channel());
-	add_channel(s, new_channel("Name", "Topic", "Desc", CHANNEL_FLAG_DEFAULT, CODEC_SPEEX_16_3, 0, 16));
-	add_ban(s, test_ban(0));
-	add_ban(s, test_ban(1));
-	add_ban(s, test_ban(1));
-	/* Add players */
-	/*
-	new_default_player();
-	add_player(s, new_default_player());
-	*/
-	print_server(s);
-}
-#endif
 
 static void init_callbacks(void)
 {
@@ -171,7 +149,34 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 
 static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
+	struct player *pl;
+	uint16_t sent_version, ack_version;
+	uint32_t sent_counter, ack_counter;
+	uint32_t public_id, private_id;
+	char *sent;
+	int valid_ack = 0;
+
 	logger(LOG_INFO, "Packet : ACK.\n");
+	/* parse ACK packet */
+	public_id = *(uint32_t *)(data + 8);
+	private_id = *(uint32_t *)(data + 4);
+	ack_version = *(uint16_t *)(data + 2);
+	ack_counter = *(uint32_t *)(data + 12);
+
+	pl = get_player_by_ids(s, public_id, private_id);
+	if (pl != NULL) {
+		pthread_mutex_lock(&pl->packets->mutex);
+
+		sent = peek_at_queue(pl->packets);
+		if (sent != NULL) {
+			sent_counter = *(uint32_t *)(sent + 12);
+			sent_version = *(uint16_t *)(sent + 16);
+
+			if (sent_counter == ack_counter && ack_version <= sent_version)
+				free(get_from_queue(pl->packets));
+		}
+		pthread_mutex_unlock(&pl->packets->mutex);
+	}
 }
 
 static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
@@ -299,6 +304,7 @@ int main(int argc, char **argv)
 	}
 	for (i = 0 ; ss[i] != NULL ; i++) {
 		pthread_join(ss[i]->main_thread, NULL);
+		pthread_join(ss[i]->packet_sender, NULL);
 	}
 	logger(LOG_INFO, "Servers initialized.\n");
 	/* exit */

@@ -51,7 +51,7 @@ void send_acknowledge(struct player *pl)
 	*(uint32_t *)ptr = pl->public_id;	ptr+=4;
 	*(uint32_t *)ptr = pl->f1_s_counter;	ptr+=4;
 
-	err = send_to(pl->in_chan->in_server, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
+	err = sendto(pl->in_chan->in_server->socket_desc, data, data_size, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	if (err == -1) {
 		logger(LOG_ERR, "send_acknowledge, sending data failed : %s.\n", strerror(errno));
 	}

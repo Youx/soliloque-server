@@ -28,12 +28,13 @@ void destroy_queue(struct queue *q)
  * @param q the queue
  * @param elem the element
  */
-void add_to_queue(struct queue *q, void *elem)
+void add_to_queue(struct queue *q, void *elem, size_t size)
 {
 	struct q_elem *q_e;
 
 	q_e = (struct q_elem *)calloc(sizeof(struct q_elem), 1);
 	q_e->elem = elem;
+	q_e->size = size;
 
 	pthread_mutex_lock(&q->mutex);
 	if(q->first == NULL) {
@@ -61,26 +62,30 @@ void *get_from_queue(struct queue *q)
 	void *elem;
 	struct q_elem *new_first;
 
-	pthread_mutex_lock(&q->mutex);
-	if(q->first == 0) {	/* empty queue */
+	if(q->first == NULL) {	/* empty queue */
 		elem = NULL;
 	} else {
 		new_first = q->first->next; /* NULL or the n-1th element */
-		if(new_first == NULL)	/* only one element */
+		if(new_first == NULL) {
+		/* only one element */
 			q->last = NULL;
-		/* retrieve the data and free the container */
-		elem = q->first->elem;
-		free(q->first);
-		q->first = new_first;
-		new_first->prev = NULL;
+			q->first = NULL;
+		} else {
+			/* retrieve the data and free the container */
+			elem = q->first->elem;
+			free(q->first);
+			q->first = new_first;
+			new_first->prev = NULL;
+		}
 	}
-	pthread_mutex_unlock(&q->mutex);
 
 	return elem;
 }
 
 /**
  * Peek at the first element of the queue.
+ * NB : the queue mutex has to be locked MANUALLY
+ * when using the peek function.
  *
  * @param q the queue
  *
@@ -90,15 +95,24 @@ void *peek_at_queue(struct queue *q)
 {
 	void *elem;
 
-	pthread_mutex_lock(&q->mutex);
 	if(q->first == 0) {	/* empty queue */
 		elem = NULL;
 	} else {
 		elem = q->first->elem; /* retrieve the data */
 	}
-	pthread_mutex_unlock(&q->mutex);
 
 	return elem;
 }
 
+size_t peek_at_size(struct queue *q)
+{
+	size_t size;
 
+	if(q->first == 0) {	/* empty queue */
+		size = 0;
+	} else {
+		size = q->first->size; /* retrieve the data */
+	}
+
+	return size;
+}

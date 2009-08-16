@@ -20,6 +20,7 @@
 #include "server.h"
 #include "server_stat.h"
 #include "log.h"
+#include "compat.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -46,15 +47,13 @@
  * @return the number of characters sent, or -1
  */
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
-		const struct sockaddr *dest_addr, socklen_t addrlen)
+		struct player *pl)
 {
 	ssize_t ret;
 
-	sstat_add_packet(s->stats, len, 1);
-	ret = sendto(s->socket_desc, buf, len, flags, dest_addr, addrlen);
-	if (ret == -1)
-		logger(LOG_WARN, "send_to failed : %s\n", strerror(errno));
-	return ret;
+	logger(LOG_INFO, "Adding to queue packet type 0x%x\n", *(uint32_t *)buf);
+	add_to_queue(pl->packets, buf, len);
+	return len;
 }
 
 /**

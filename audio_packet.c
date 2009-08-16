@@ -110,7 +110,7 @@ int audio_received(char *in, size_t len, struct server *s)
 			if (tmp_pl != sender) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
-				err = send_to(sender->in_chan->in_server, data, data_size, 0,
+				err = sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0,
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 				if (err == -1) {
 					logger(LOG_WARN, "audio_received, could not send packet : %s.\n", strerror(errno));

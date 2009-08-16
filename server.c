@@ -22,6 +22,7 @@
 #include "main_serv.h"
 #include "registration.h"
 #include "log.h"
+#include "packet_sender.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -568,6 +569,7 @@ void server_start(struct server *s)
 
 
 	pthread_create(&s->main_thread, NULL, &server_run, (void *)s);
+	pthread_create(&s->packet_sender, NULL, &packet_sender_thread, (void *)s);
 }
 
 void server_stop(struct server *s)

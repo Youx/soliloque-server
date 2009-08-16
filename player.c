@@ -19,6 +19,7 @@
 #include "player.h"
 #include "player_stat.h"
 #include "log.h"
+#include "queue.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +61,9 @@ struct player *new_player(char *nickname, char *login, char *machine)
 		logger(LOG_WARN, "new_player, calloc failed : %s.\n", strerror(errno));
 		return NULL;
 	}
+	/* create packet queue */
+	p->packets = new_queue();
+
 	p->stats = new_plstat();
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
