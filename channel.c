@@ -265,7 +265,8 @@ int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
 		logger(LOG_WARN, "channel_add_subchannel, channel %i:%s can not have subchannels.", ch->id, ch->name);
 		return 0;
 	}
-	channel_remove_subchannel(subchannel->parent, subchannel);
+	if (subchannel->parent != NULL)
+		channel_remove_subchannel(subchannel->parent, subchannel);
 	subchannel->parent = ch;
 	ar_insert(ch->subchannels, subchannel);
 	return 1;

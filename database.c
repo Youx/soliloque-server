@@ -91,9 +91,6 @@ struct server **db_create_servers(struct config *c)
 	struct server **ss;
 	int i;
 
-	if (connect_db(c) == 0)
-		return NULL;
-
 	res = dbi_conn_query(c->conn, q);
 	nb_serv = dbi_result_get_numrows(res);
 	if (nb_serv == 0) {
@@ -166,8 +163,6 @@ int db_register_channel(struct config *c, struct channel *ch)
 
 	if (ch->db_id != 0) /* already exists in the db */
 		return 0;
-	if (connect_db(c) == 0)
-		return 0;
 
 	/* Secure the input before inserting */
 	dbi_conn_quote_string_copy(c->conn, ch->name, &name_clean);
@@ -228,8 +223,6 @@ int db_unregister_channel(struct config *c, struct channel *ch)
 	size_t iter;
 	struct channel *tmp_ch;
 
-	if (connect_db(c) == 0)
-		return 0;
 	dbi_conn_queryf(c->conn, q, ch->db_id);
 
 	if (ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) {
@@ -261,8 +254,6 @@ int db_update_channel(struct config *c, struct channel *ch)
 	dbi_result res;
 
 	if (ch->db_id == 0) /* does not exist in the db */
-		return 0;
-	if (connect_db(c) == 0)
 		return 0;
 
 	/* Secure the input before inserting */
@@ -308,9 +299,6 @@ int db_create_channels(struct config *c, struct server *s)
 	char *name, *topic, *desc;
 	int flags;
 
-	if (connect_db(c) == 0)
-		return 0;
-
 	res = dbi_conn_queryf(c->conn, q, s->id);
 
 	if (dbi_result_get_numrows(res) == 0) {
@@ -355,9 +343,6 @@ int db_create_subchannels(struct config *c, struct server *s)
 	dbi_result res;
 	char *name, *topic, *desc;
 	int parent_db_id;
-
-	if (connect_db(c) == 0)
-		return 0;
 
 	res = dbi_conn_queryf(c->conn, q, s->id);
 
@@ -415,9 +400,6 @@ int db_create_registrations(struct config *c, struct server *s)
 	char *name, *pass;
 	dbi_result res;
 
-	if (connect_db(c) == 0)
-		return 0;
-
 	res = dbi_conn_queryf(c->conn, q, s->id);
 
 	if (res) {
@@ -452,9 +434,6 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 	char *quoted_name, *quoted_pass;
 	dbi_result res;
 
-	if (connect_db(c) == 0)
-		return 0;
-
 	dbi_conn_quote_string_copy(c->conn, r->name, &quoted_name);
 	dbi_conn_quote_string_copy(c->conn, r->password, &quoted_pass);
 
@@ -482,8 +461,6 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 	struct server_privileges *sp = s->privileges;
 
 	logger(LOG_INFO, "Loading server privileges.");
-	if (connect_db(c) == 0)
-		return 0;
 
 	res = dbi_conn_queryf(c->conn, q, s->id);
 	if (res) {

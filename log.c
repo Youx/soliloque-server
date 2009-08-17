@@ -55,6 +55,8 @@ void logger(int loglevel, char *str, ...)
 	}
 	va_end(args);
 	pthread_mutex_unlock(&mutex);
+
+	free(str2);
 }
 
 void set_config(struct config *cfg)

@@ -75,6 +75,7 @@ static int config_parse_log(config_setting_t *log, struct config *cfg)
 				logger(LOG_WARN, "config_parse_log : could not open file %s (%s)", file, strerror(errno));
 			}
 		}
+		free(file);
 	}
 
 	curr = config_setting_get_member(log, "level");

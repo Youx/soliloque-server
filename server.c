@@ -23,6 +23,7 @@
 #include "registration.h"
 #include "log.h"
 #include "packet_sender.h"
+#include "queue.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -140,7 +141,7 @@ int add_channel(struct server *serv, struct channel *chan)
 	ar_end_each;
 
 	new_id = 0;
-	while(used_ids[new_id] == 1)
+	while(new_id < serv->chans->total_slots && used_ids[new_id] == 1)
 		new_id++;
 	new_id += 1;	/* ID start at 1 */
 	
@@ -148,9 +149,6 @@ int add_channel(struct server *serv, struct channel *chan)
 	chan->id = new_id;
 	ar_insert(serv->chans, chan);
 	chan->in_server = serv;
-	/* NETWORK CALLBACK */
-	
-	/* END OF NETWORK CALLBACK */
 	
 	free(used_ids);
 	
@@ -339,10 +337,17 @@ struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
  */
 void remove_player(struct server *s, struct player *p)
 {
+	void *data = NULL;
+
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
 	/* remove from the channel */
 	ar_remove(p->in_chan->players, (void *)p);
+	/* empty the player's packet queue */
+	pthread_mutex_lock(&p->packets->mutex);
+	while ((data = get_from_queue(p->packets)) != NULL)
+		free(data);
+	pthread_mutex_unlock(&p->packets->mutex);
 	/* free the memory */
 	destroy_player(p);
 }

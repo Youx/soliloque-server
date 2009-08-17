@@ -17,6 +17,7 @@
  */
 
 #include "queue.h"
+#include "log.h"
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -36,7 +37,10 @@ struct queue *new_queue()
 
 void destroy_queue(struct queue *q)
 {
-	
+	if (q->first != NULL)
+		logger(LOG_ERR, "destroy_queue : destroyed a queue that was NOT empty! That should not happen!");
+	pthread_mutex_destroy(&q->mutex);
+	free(q);
 }
 
 /**
@@ -79,22 +83,25 @@ void *get_from_queue(struct queue *q)
 {
 	void *elem;
 	struct q_elem *new_first;
+	struct q_elem *old_first;
 
-	if(q->first == NULL) {	/* empty queue */
+	old_first = q->first;
+
+	if(old_first == NULL) {	/* empty queue */
 		elem = NULL;
 	} else {
-		new_first = q->first->next; /* NULL or the n-1th element */
+		new_first = old_first->next; /* NULL or the n-1th element */
 		if(new_first == NULL) {
 		/* only one element */
 			q->last = NULL;
 			q->first = NULL;
 		} else {
 			/* retrieve the data and free the container */
-			elem = q->first->elem;
-			free(q->first);
 			q->first = new_first;
 			new_first->prev = NULL;
 		}
+		elem = old_first->elem;
+		free(old_first);
 	}
 
 	return elem;

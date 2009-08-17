@@ -97,6 +97,7 @@ static void s_resp_chans(struct player *pl)
 	logger(LOG_INFO, "size of all channels : %i", data_size);
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -140,6 +141,7 @@ void s_notify_new_player(struct player *pl)
 			tmp_pl->f0_s_counter++;
 		}
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -181,6 +183,7 @@ static void s_notify_player_left(struct player *p)
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -241,6 +244,7 @@ static void s_resp_players(struct player *pl)
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
 		nb_players -= MIN(10, nb_players);
+		free(data);
 	}
 }
 
@@ -273,6 +277,7 @@ static void s_resp_unknown(struct player *pl)
 
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -365,6 +370,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -451,6 +457,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -531,6 +538,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -613,6 +621,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -648,6 +657,7 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -731,6 +741,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 			send_to(s, data, data_size, 0, pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -816,6 +827,7 @@ static void s_resp_bans(struct player *pl)
 	send_to(s, data, data_size, 0, pl);
 
 	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -927,6 +939,7 @@ static void s_resp_server_stats(struct player *pl)
 
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -987,6 +1000,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1085,6 +1099,7 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1172,6 +1187,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1240,6 +1256,7 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1288,6 +1305,7 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 		send_to(s, data, data_size, 0, tmp_pl);
 		tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1328,6 +1346,7 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	packet_add_crc_d(data, data_size);
 	send_to(s, data, data_size, 0, tgt);
 	tgt->f0_s_counter++;
+	free(data);
 }
 
 /**
@@ -1424,6 +1443,7 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1502,6 +1522,7 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1581,6 +1602,7 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
 
+	free(data);
 }
 
 /**
@@ -1652,6 +1674,7 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1836,6 +1859,7 @@ static void s_notify_channel_order_changed(struct player *pl, struct channel *ch
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1911,6 +1935,7 @@ static void s_notify_channel_max_users_changed(struct player *pl, struct channel
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -1987,6 +2012,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
+	free(data);
 }
 
 /**
@@ -2113,6 +2139,7 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	send_to(pl->in_chan->in_server, data, data_size, 0, pl);
 	pl->f0_s_counter++;
 
+	free(data);
 	free(ip);
 }
 

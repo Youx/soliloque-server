@@ -40,6 +40,8 @@ void destroy_player(struct player *p)
 		free(p->cli_addr);
 	if (p->stats)
 		free(p->stats);
+	if (p->packets)
+		destroy_queue(p->packets);
 	free(p);
 }
 

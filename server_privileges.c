@@ -161,4 +161,5 @@ void sp_print(struct server_privileges *sp)
 		logger(LOG_INFO, dst);
 		bzero(dst, 100);
 	}
+	free(dst);
 }
