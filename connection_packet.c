@@ -82,7 +82,7 @@ static void server_accept_connection(struct player *pl)
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
 	/*send_to(pl->in_chan->in_server, data, 436, 0, pl);*/
-	sendto(pl->in_chan->in_server->socket_desc, data, 436, 0, pl->cli_addr, pl->cli_len);
+	sendto(pl->in_chan->in_server->socket_desc, data, 436, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }
@@ -229,7 +229,7 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 	/* Add CRC */
 	packet_add_crc(data, 24, 16);
 
-	sendto(pl->in_chan->in_server->socket_desc, data, 24, 0, pl->cli_addr, pl->cli_len);
+	sendto(pl->in_chan->in_server->socket_desc, data, 24, 0, (struct sockaddr *)pl->cli_addr, pl->cli_len);
 	pl->f4_s_counter++;
 	free(data);
 }
