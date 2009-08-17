@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 
+import os
+import sys
+import Configure
 
-VERSION='0.1'
+VERSION='undefined'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
@@ -12,37 +15,52 @@ flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-ali
 
 def set_options(opt):
   opt.add_option('--with-openssl', type='string', help='Define the location of openssl libraries.', dest='openssl')
-  pass
 
-def git_version():
+def get_git_version():
   S = __import__('subprocess')
-  def git_tag():
-    return S.Popen(['git', 'tag'], stdout=S.PIPE).communicate()[0].rstrip('\n')
+  """ try grab the current version number from git"""
+  version = None
+  if os.path.exists(".git"):
+    try:
+      version = S.Popen(['git', 'describe'], stdout=S.PIPE).communicate()[0].strip()
+    except Exception, e:
+      print e
+  return version
 
-  def git_commit():
-    git = S.Popen(['git', 'show', '--abbrev-commit', 'HEAD'], stdout=S.PIPE)
-    grep = S.Popen(['grep', 'commit'], stdin = git.stdout, stdout=S.PIPE)
-    head = S.Popen(['head', '-n', '1'], stdin = grep.stdout, stdout=S.PIPE)
-    cut = S.Popen(['cut', '-d ', '-f2'], stdin = head.stdout, stdout=S.PIPE)
-    return cut.communicate()[0].rstrip('\n')
+def read_git_version():
+  """Read version from git repo, or from GIT_VERSION"""
+  version = get_git_version()
+  if not version and os.path.exists("GIT_VERSION"):
+    f = open("GIT_VERSION", "r")
+    version = f.read().strip()
+    f.close()
+  if version:
+    global VERSION
+    VERSION = version
 
-  def git_head():
-    git = S.Popen(['git', 'symbolic-ref', 'HEAD'], stdout=S.PIPE)
-    cut = S.Popen(['cut', '-d/', '-f3'], stdin = git.stdout, stdout = S.PIPE)
-    return cut.communicate()[0].rstrip('\n')
-
-  tag=git_tag()
-  com=git_commit()
-  hd =git_head()
-
-  if(tag):
-    return("{0} (git-{1})".format(tag, com))
-  else:
-    return("git-{0}".format(com))
-
+def dist():
+  """Make the dist tarball and print its sha1sum"""
+  def write_git_version():
+    """write the revision to a file called GIT_VERSION, to grab
+    the current version number from git when generating the dist
+    tarball."""
+    version = get_git_version()
+    if not version:
+      return False
+    version_file = open("GIT_VERSION", "w")
+    version_file.write(version + "\n")
+    version_file.close()
+    return True
+  import Scripting
+  read_git_version()
+  write_git_version()
+  #Scripting.g_gz = "gz"
+  filename = Scripting.dist(APPNAME, VERSION)
+  os.spawnlp(os.P_WAIT, "sha1sum", "sha1sum", filename)
 
 def configure(conf):
   import Options
+  read_git_version()
   conf.check_tool('gcc')
   # default environment
   conf.setenv('default')
@@ -59,7 +77,7 @@ def configure(conf):
   conf.check(define_name='HAVE_SHA256', uselib='OPENSSL', function_name='SHA256', header_name='openssl/sha.h', mandatory=True)
   # Check for strndup (not present on OSX)
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
-  conf.define('VERSION', git_version())
+  conf.define('VERSION', VERSION)
   conf.write_config_header('config.h')
 
 def build(bld):
