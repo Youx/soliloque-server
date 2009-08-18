@@ -10,8 +10,11 @@ srcdir = '.'
 blddir = 'output'
 SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c control_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c log.c queue.c packet_sender.c'
 flags_dbg1= ['-Wall', '-Werror']
-flags_dbg2= ['-W', '-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith'].append(flags_dbg1)
-flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-align'].append(flags_dbg2)
+flags_dbg2= ['-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith']
+flags_dbg2.extend(flags_dbg1)
+flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-align']
+flags_dbg3.extend(flags_dbg2)
+
 
 def set_options(opt):
   opt.add_option('--with-openssl', type='string', help='Define the location of openssl libraries.', dest='openssl')
@@ -54,7 +57,6 @@ def dist():
   import Scripting
   read_git_version()
   write_git_version()
-  #Scripting.g_gz = "gz"
   filename = Scripting.dist(APPNAME, VERSION)
   os.spawnlp(os.P_WAIT, "sha1sum", "sha1sum", filename)
 
@@ -62,6 +64,10 @@ def configure(conf):
   import Options
   read_git_version()
   conf.check_tool('gcc')
+  # Compile flags
+  cflags = ['-O0', '-g', '-ggdb']
+  cflags.extend(flags_dbg1)
+  conf.env.append_unique('CCFLAGS', cflags)
   # default environment
   conf.setenv('default')
   conf.check_cfg(atleast_pkgconfig_version='0.0.0')
@@ -89,4 +95,3 @@ def build(bld):
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
-  sol_serv.ccflags = ['-O2', '-ggdb', '-ansi'].append(flags_dbg2)

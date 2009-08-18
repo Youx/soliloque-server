@@ -21,15 +21,18 @@
 #include "queue.h"
 #include "player.h"
 #include "log.h"
+#include "server_stat.h"
+#include "packet_tools.h"
 
 #include <pthread.h>
 #include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 static void send_curr_packet(struct player *p, struct server *s)
 {
 	char *packet;
 	size_t p_size;
-	uint16_t packet_version;
 	int ret;
 
 	packet = peek_at_queue(p->packets);
@@ -53,7 +56,6 @@ static void send_curr_packet(struct player *p, struct server *s)
 void *packet_sender_thread(void *args)
 {
 	struct server *s;
-	int socket_desc;
 	struct player *p;
 	size_t iter;
 

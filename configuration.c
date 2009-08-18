@@ -175,7 +175,6 @@ struct config *config_parse(char *cfg_file)
 	config_t cfg;
 	config_setting_t *db;
 	config_setting_t *log;
-	config_setting_t *curr;
 	struct config *cfg_s;
 
 	config_init(&cfg);

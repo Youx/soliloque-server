@@ -21,6 +21,7 @@
 #include "server_stat.h"
 #include "log.h"
 #include "compat.h"
+#include "queue.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -49,10 +50,9 @@
 ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 		struct player *pl)
 {
-	ssize_t ret;
+	char *buf_copy = (char *)calloc(len, sizeof(char));
 
 	logger(LOG_INFO, "Adding to queue packet type 0x%x", *(uint32_t *)buf);
-	char *buf_copy = (char *)calloc(len, sizeof(char));
 	memcpy(buf_copy, buf, len);
 	add_to_queue(pl->packets, buf_copy, len);
 	return len;

@@ -154,7 +154,6 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	uint32_t sent_counter, ack_counter;
 	uint32_t public_id, private_id;
 	char *sent;
-	int valid_ack = 0;
 
 	logger(LOG_INFO, "Packet : ACK.");
 	/* parse ACK packet */

@@ -353,8 +353,6 @@ struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
  */
 void remove_player(struct server *s, struct player *p)
 {
-	void *data = NULL;
-
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
 	/* add to a temporary "leaving" list */
@@ -564,6 +562,7 @@ static void *server_run(void *args)
 			}
 		}
 	}
+	return NULL;
 }
 
 void server_start(struct server *s)
