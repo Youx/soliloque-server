@@ -90,6 +90,8 @@ struct server *new_server()
 	serv->players = ar_new(8);
 	serv->bans = ar_new(4);
 	serv->regs = ar_new(8);
+	serv->leaving_players = ar_new(8);
+
 	serv->stats = new_sstat();
 	serv->privileges = new_sp();
 	get_machine_name(serv);
@@ -307,6 +309,20 @@ struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t pri
 	return NULL;
 }
 
+struct player *get_leaving_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id)
+{
+	struct player *pl;
+	size_t iter;
+
+	ar_each(struct player *, pl, iter, s->leaving_players)
+		if (pl->public_id == pub_id && pl->private_id == priv_id) {
+			return pl;
+		}
+	ar_end_each;
+
+	return NULL;
+}
+
 /**
  * Retrieve a player with its public id.
  *
@@ -341,15 +357,13 @@ void remove_player(struct server *s, struct player *p)
 
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
+	/* add to a temporary "leaving" list */
+	ar_insert(s->leaving_players, (void *)p);
 	/* remove from the channel */
 	ar_remove(p->in_chan->players, (void *)p);
-	/* empty the player's packet queue */
-	pthread_mutex_lock(&p->packets->mutex);
-	while ((data = get_from_queue(p->packets)) != NULL)
-		free(data);
-	pthread_mutex_unlock(&p->packets->mutex);
-	/* free the memory */
-	destroy_player(p);
+	p->in_chan = NULL;
+
+	/* memory will be fred when their packet queue is empty */
 }
 
 /**

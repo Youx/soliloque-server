@@ -25,11 +25,10 @@
 #include <pthread.h>
 #include <errno.h>
 
-static void send_curr_packet(struct player *p)
+static void send_curr_packet(struct player *p, struct server *s)
 {
 	char *packet;
 	size_t p_size;
-	struct server *s = p->in_chan->in_server;
 	uint16_t packet_version;
 	int ret;
 
@@ -61,12 +60,26 @@ void *packet_sender_thread(void *args)
 	s = (struct server *)args;
 	while(1) {
 		/* Can we */
-		/*sem_wait(&s->send_packets);*/
+		/* sending their packet to active players */
 		ar_each(struct player *, p, iter, s->players)
 			pthread_mutex_lock(&p->packets->mutex);
-			send_curr_packet(p);
+			send_curr_packet(p, s);
 			pthread_mutex_unlock(&p->packets->mutex);
 		ar_end_each;
+
+		/* sending their last packets to leaving players */
+		ar_each(struct player *, p, iter, s->leaving_players)
+			pthread_mutex_lock(&p->packets->mutex);
+			send_curr_packet(p, s);
+			pthread_mutex_unlock(&p->packets->mutex);
+			/* if there is no more packets in the queue,
+			 * we can safely destroy this player */
+			if (p->packets->first == NULL) {
+				ar_remove(s->leaving_players, p);
+				destroy_player(p);
+			}
+		ar_end_each;
+
 		usleep(50000);
 	}
 }

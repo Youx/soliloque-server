@@ -256,7 +256,7 @@ void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 	pub_id = *(uint32_t *)(data + 8);
 	pl = get_player_by_ids(s, pub_id, priv_id);
 	if (pl == NULL) {
-		logger(LOG_WARN, "pl == NULL. Why????");
+		logger(LOG_WARN, "handle_player_keepalive : pl == NULL. Why????");
 		return;
 	}
 	/* Get the counter */

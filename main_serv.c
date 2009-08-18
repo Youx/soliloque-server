@@ -164,6 +164,8 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	ack_counter = *(uint32_t *)(data + 12);
 
 	pl = get_player_by_ids(s, public_id, private_id);
+	if (pl == NULL)
+		pl = get_leaving_player_by_ids(s, public_id, private_id);
 	if (pl != NULL) {
 		pthread_mutex_lock(&pl->packets->mutex);
 

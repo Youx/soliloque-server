@@ -45,6 +45,7 @@ struct server {
 
 	struct array *chans;
 	struct array *players;
+	struct array *leaving_players;
 	struct array *bans;
 	struct array *regs;
 	struct server_stat *stats;
@@ -61,7 +62,7 @@ struct server {
 
 	struct server_privileges *privileges;
 
-        struct pollfd socket_poll;
+	struct pollfd socket_poll;
 	pthread_t main_thread;
 
 	struct config *conf;
@@ -82,6 +83,7 @@ struct channel *get_default_channel(struct server *serv);
 
 /* Server - player functions */
 struct player *get_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id);
+struct player *get_leaving_player_by_ids(struct server *s, uint32_t pub_id, uint32_t priv_id);
 struct player *get_player_by_public_id(struct server *s, uint32_t pub_id);
 int add_player(struct server *serv, struct player *pl);
 void remove_player(struct server *s, struct player *p);
