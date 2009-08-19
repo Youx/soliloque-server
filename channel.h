@@ -81,5 +81,6 @@ int ch_getflags(struct channel *ch);
 char *ch_getpass(struct channel *ch);
 char ch_isfull(struct channel *ch);
 struct player_channel_privilege *get_player_channel_privilege(struct player *pl, struct channel *ch);
+void add_player_channel_privilege(struct channel *ch, struct player_channel_privilege *priv);
 
 #endif

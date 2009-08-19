@@ -299,6 +299,7 @@ int main(int argc, char **argv)
 		db_create_registrations(c, ss[i]);
 		db_create_sv_privileges(c, ss[i]);
 		sp_print(ss[i]->privileges);
+		db_create_pl_ch_privileges(c, ss[i]);
 		/* test_init_server(ss[i]); */
 		logger(LOG_INFO, "Launching server %i", i);
 		server_start(ss[i]);

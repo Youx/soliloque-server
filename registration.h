@@ -26,6 +26,7 @@ struct registration
 	char global_flags;	/* only serveradmin 0/1 */
 	char name[30];
 	char password[SHA256_DIGEST_LENGTH * 2 + 1];
+	int db_id;
 };
 
 struct registration *new_registration(void);

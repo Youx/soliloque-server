@@ -21,6 +21,7 @@
 
 #include "server.h"
 #include "configuration.h"
+#include "player_channel_privilege.h"
 
 int init_db(struct config *c);
 int connect_db(struct config *c);
@@ -35,5 +36,7 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 int db_unregister_channel(struct config *c, struct channel *ch);
 int db_register_channel(struct config *c, struct channel *ch);
 int db_update_channel(struct config *c, struct channel *ch);
+void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *tmp_priv);
+void db_create_pl_ch_privileges(struct config *c, struct server *s);
 
 #endif

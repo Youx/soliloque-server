@@ -17,11 +17,11 @@ struct player_channel_privilege {
 		struct registration *reg;
 	} pl_or_reg;
 	struct channel *ch;
-	
 
 	int flags;
 };
 
+struct player_channel_privilege *new_player_channel_privilege();
 void player_clr_channel_privilege(struct player *pl, struct channel *ch, uint16_t bit);
 void player_set_channel_privilege(struct player *pl, struct channel *ch, uint16_t bit);
 

@@ -367,3 +367,8 @@ struct player_channel_privilege *get_player_channel_privilege(struct player *pl,
 
 	return NULL;
 }
+
+void add_player_channel_privilege(struct channel *ch, struct player_channel_privilege *priv)
+{
+	ar_insert(ch->pl_privileges, priv);
+}
