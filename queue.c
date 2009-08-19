@@ -21,6 +21,7 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 /**
  * Create a new queue
@@ -57,6 +58,7 @@ void add_to_queue(struct queue *q, void *elem, size_t size)
 	q_e = (struct q_elem *)calloc(sizeof(struct q_elem), 1);
 	q_e->elem = elem;
 	q_e->size = size;
+	timerclear(&q_e->last_sent);
 
 	pthread_mutex_lock(&q->mutex);
 	if(q->first == NULL) {
@@ -69,6 +71,18 @@ void add_to_queue(struct queue *q, void *elem, size_t size)
 	pthread_mutex_unlock(&q->mutex);
 }
 
+void queue_update_time(struct queue *q)
+{
+	if (q->first != NULL)
+		gettimeofday(&q->first->last_sent, NULL);
+}
+
+struct timeval * queue_get_time(struct queue *q)
+{
+	if (q->first != NULL)
+		return &q->first->last_sent;
+	return NULL;
+}
 
 /**
  * Get an element from the beginning of the

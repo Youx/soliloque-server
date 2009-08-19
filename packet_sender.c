@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 static void send_curr_packet(struct player *p, struct server *s)
 {
@@ -57,22 +58,39 @@ void *packet_sender_thread(void *args)
 {
 	struct server *s;
 	struct player *p;
+	struct timeval now, diff, *last_sent;
 	size_t iter;
 
 	s = (struct server *)args;
 	while(1) {
+		gettimeofday(&now, NULL);
 		/* Can we */
 		/* sending their packet to active players */
 		ar_each(struct player *, p, iter, s->players)
 			pthread_mutex_lock(&p->packets->mutex);
-			send_curr_packet(p, s);
+			last_sent = queue_get_time(p->packets);
+			if (last_sent != NULL) {
+				timersub(&now, last_sent, &diff);
+				/* resend a packet every 0.5s */
+				if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
+					queue_update_time(p->packets);
+					send_curr_packet(p, s);
+				}
+			}
 			pthread_mutex_unlock(&p->packets->mutex);
 		ar_end_each;
 
 		/* sending their last packets to leaving players */
 		ar_each(struct player *, p, iter, s->leaving_players)
 			pthread_mutex_lock(&p->packets->mutex);
-			send_curr_packet(p, s);
+			last_sent = queue_get_time(p->packets);
+			if (last_sent != NULL) {
+				timersub(&now, last_sent, &diff);
+				if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
+					queue_update_time(p->packets);
+					send_curr_packet(p, s);
+				}
+			}
 			pthread_mutex_unlock(&p->packets->mutex);
 			/* if there is no more packets in the queue,
 			 * we can safely destroy this player */

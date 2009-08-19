@@ -20,11 +20,15 @@
 #define __QUEUE_H__
 
 #include <pthread.h>
+#include <sys/time.h>
 
 struct q_elem
 {
 	size_t size;
+	struct timeval last_sent;
+
 	void *elem;
+
 	struct q_elem *prev;
 	struct q_elem *next;
 };
@@ -38,6 +42,8 @@ struct queue
 	pthread_mutex_t mutex;
 };
 
+void queue_update_time(struct queue *q);
+struct timeval *queue_get_time(struct queue *q);
 struct queue *new_queue();
 void destroy_queue(struct queue *q);
 void add_to_queue(struct queue *q, void *elem, size_t size);
