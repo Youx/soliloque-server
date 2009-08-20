@@ -26,7 +26,6 @@
 #include "player_channel_privilege.h"
 
 
-#define CHANNEL_FLAG_REGISTERED   0
 #define CHANNEL_FLAG_UNREGISTERED 1
 #define CHANNEL_FLAG_MODERATED    2
 #define CHANNEL_FLAG_PASSWORD   4

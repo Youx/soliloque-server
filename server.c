@@ -127,7 +127,7 @@ int add_channel(struct server *serv, struct channel *chan)
 
 	/* If there is no channel, make this channel the default one */
 	if (serv->chans->used_slots == 0)
-		chan->flags |= (CHANNEL_FLAG_DEFAULT | CHANNEL_FLAG_REGISTERED);
+		chan->flags |= (CHANNEL_FLAG_DEFAULT & ~CHANNEL_FLAG_UNREGISTERED);
 		
 	/* If this channel is the default one, remove the flag from the channel that previously has it.
 	 *  = Only one channel can have the default flag */
@@ -224,7 +224,7 @@ struct channel *get_default_channel(struct server *serv)
 
 	/* If no default channel exists, we create one ! */
 	new_chan =  new_channel("Default", "Default channel", "This is the default channel", 
-		CHANNEL_FLAG_DEFAULT | CHANNEL_FLAG_REGISTERED, CODEC_SPEEX_16_3, 0, 16);
+		CHANNEL_FLAG_DEFAULT | (0 & ~CHANNEL_FLAG_UNREGISTERED), CODEC_SPEEX_16_3, 0, 16);
 	add_channel(serv, new_chan);
 	return new_chan;
 }

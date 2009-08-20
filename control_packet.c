@@ -511,6 +511,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	struct player *tmp_pl;
 	int data_size = 38;
 	struct server *s = pl->in_chan->in_server;
+	struct player_channel_privilege *new_priv;
 	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
@@ -518,6 +519,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 		logger(LOG_WARN, "s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
+	new_priv = get_player_channel_privilege(pl, to);
 	ptr = data;
 
 	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
@@ -528,9 +530,9 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	/* packet version */			ptr += 4;	/* not done yet */
 	/* empty checksum */			ptr += 4;	/* filled later */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player who switched */
-	*(uint32_t *)ptr = from->id;			ptr += 4;	/* ID of previous channel */
+	*(uint32_t *)ptr = from->id;		ptr += 4;	/* ID of previous channel */
 	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
-	*(uint16_t *)ptr = 1;			ptr += 2;	/* 1 = no pass, 0 = pass */
+	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -2070,7 +2072,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 			parent = get_channel_by_id(s, ch->parent_id);
 			channel_add_subchannel(parent, ch);
 			/* if the parent is registered, register this one */
-			if (ch_getflags(parent) & CHANNEL_FLAG_REGISTERED) {
+			if (!(ch_getflags(parent) & CHANNEL_FLAG_UNREGISTERED)) {
 				db_register_channel(s->conf, ch);
 			}
 		}

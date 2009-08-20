@@ -38,5 +38,7 @@ int db_register_channel(struct config *c, struct channel *ch);
 int db_update_channel(struct config *c, struct channel *ch);
 void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *tmp_priv);
 void db_create_pl_ch_privileges(struct config *c, struct server *s);
+void db_del_pl_chan_priv(struct config *c, struct player_channel_privilege *priv);
+void db_add_pl_chan_priv(struct config *c, struct player_channel_privilege *priv);
 
 #endif

@@ -19,6 +19,7 @@
 #include "channel.h"
 #include "array.h"
 #include "log.h"
+#include "database.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
  */
 struct channel *new_predef_channel()
 {
-	uint16_t flags = CHANNEL_FLAG_REGISTERED;
+	uint16_t flags = (0 & ~CHANNEL_FLAG_UNREGISTERED);
 	return new_channel("Channel name", "Channel topic", "Channel description", flags, CODEC_SPEEX_19_6, 0, 16);
 }
 
@@ -363,9 +364,23 @@ struct player_channel_privilege *get_player_channel_privilege(struct player *pl,
 			return tmp_priv;
 	ar_end_each;
 
-	logger(LOG_INFO, "Could not find privileges for this channel-player couple.");
+	logger(LOG_INFO, "Could not find privileges for this channel-player couple... Creating a new one");
+	/* if there is no existing privileges, we create them */
+	tmp_priv = new_player_channel_privilege();
+	tmp_priv->ch = tmp_ch;
+	if (pl->global_flags & GLOBAL_FLAG_REGISTERED) {
+		tmp_priv->reg = PL_CH_PRIV_REGISTERED;
+		tmp_priv->pl_or_reg.reg = pl->reg;
+		/* register the privilege in the DB */
+		if (!(tmp_ch->flags & CHANNEL_FLAG_UNREGISTERED))
+			db_add_pl_chan_priv(tmp_ch->in_server->conf, tmp_priv);
+	} else {
+		tmp_priv->reg = PL_CH_PRIV_UNREGISTERED;
+		tmp_priv->pl_or_reg.pl = pl;
+	}
+	add_player_channel_privilege(tmp_ch, tmp_priv);
 
-	return NULL;
+	return tmp_priv;
 }
 
 void add_player_channel_privilege(struct channel *ch, struct player_channel_privilege *priv)

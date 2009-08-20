@@ -160,6 +160,7 @@ int db_register_channel(struct config *c, struct channel *ch)
 	int insert_id, parent_id;
 	size_t iter;
 	struct channel *tmp_ch;
+	struct player_channel_privilege *priv;
 	dbi_result res;
 
 	if (ch->db_id != 0) /* already exists in the db */
@@ -204,6 +205,13 @@ int db_register_channel(struct config *c, struct channel *ch)
 			db_register_channel(c, tmp_ch);
 		ar_end_each;	
 	}
+
+	/* add all the player privileges for this channel */
+	ar_each(struct player_channel_privilege *, priv, iter, ch->pl_privileges)
+		if (priv->reg == PL_CH_PRIV_REGISTERED)
+			db_add_pl_chan_priv(c, priv);
+	ar_end_each;
+
 	/* free allocated data */
 	free(name_clean); free(topic_clean); free(desc_clean); free(pass_clean);
 
@@ -223,15 +231,23 @@ int db_unregister_channel(struct config *c, struct channel *ch)
 	char *q = "DELETE FROM channels WHERE id = %i;";
 	size_t iter;
 	struct channel *tmp_ch;
+	struct player_channel_privilege *priv;
 
 	dbi_conn_queryf(c->conn, q, ch->db_id);
+	/* remove all the player privileges for this channel */
+	ar_each(struct player_channel_privilege *, priv, iter, ch->pl_privileges)
+		if (priv->reg == PL_CH_PRIV_REGISTERED)
+			db_del_pl_chan_priv(c, priv);
+	ar_end_each;
 
+	/* unregister all the subchannels */
 	if (ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) {
 		ar_each(struct channel *, tmp_ch, iter, ch->subchannels)
-			db_register_channel(c, tmp_ch);
+			db_unregister_channel(c, tmp_ch);
 		ar_end_each;	
 	}
-	
+	ch->db_id = 0;
+
 	return 1;
 }
 
@@ -314,7 +330,7 @@ int db_create_channels(struct config *c, struct server *s)
 			topic = dbi_result_get_string_copy(res, "topic");
 			desc = dbi_result_get_string_copy(res, "description");
 			logger(LOG_INFO, "flag_hierarchical = %i", dbi_result_get_uint(res, "flag_hierarchical"));
-			flags = CHANNEL_FLAG_REGISTERED;
+			flags = (0 & ~CHANNEL_FLAG_UNREGISTERED);
 			if (dbi_result_get_uint(res, "flag_moderated"))
 				flags |= CHANNEL_FLAG_MODERATED;
 			if (dbi_result_get_uint(res, "flag_hierarchical"))
@@ -585,11 +601,16 @@ void db_create_pl_ch_privileges(struct config *c, struct server *s)
 					tmp_priv = new_player_channel_privilege();
 					tmp_priv->ch = ch;
 					flags = 0;
-					flags |= dbi_result_get_uint(res, "channel_admin") << CHANNEL_PRIV_CHANADMIN;
-					flags |= dbi_result_get_uint(res, "operator") << CHANNEL_PRIV_OP;
-					flags |= dbi_result_get_uint(res, "voice") << CHANNEL_PRIV_VOICE;
-					flags |= dbi_result_get_uint(res, "auto_operator") << CHANNEL_PRIV_AUTOOP;
-					flags |= dbi_result_get_uint(res, "auto_voice") << CHANNEL_PRIV_AUTOVOICE;
+					if (dbi_result_get_uint(res, "channel_admin"))
+						flags |= CHANNEL_PRIV_CHANADMIN;
+					if (dbi_result_get_uint(res, "operator"))
+						flags |= CHANNEL_PRIV_OP;
+					if (dbi_result_get_uint(res, "voice"))
+						flags |= CHANNEL_PRIV_VOICE;
+					if (dbi_result_get_uint(res, "auto_operator"))
+						flags |= CHANNEL_PRIV_AUTOOP;
+					if (dbi_result_get_uint(res, "auto_voice"))
+						flags |= CHANNEL_PRIV_AUTOVOICE;
 					tmp_priv->flags = flags;
 					tmp_priv->reg = PL_CH_PRIV_REGISTERED;
 					reg_id = dbi_result_get_uint(res, "player_id");
@@ -617,6 +638,7 @@ void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *t
 			SET channel_admin = %i, operator = %i, voice = %i, auto_operator = %i, auto_voice = %i \
 			WHERE player_id = %i AND channel_id = %i;" ;
 
+	logger(LOG_INFO, "db_update_pl_chan_priv");
 	if (tmp_priv->reg != PL_CH_PRIV_REGISTERED) {
 		logger(LOG_WARN, "db_update_pl_chan_priv : trying to update a pl_ch_priv that is marked as unregistered. This should not happen!");
 		return;
@@ -635,12 +657,18 @@ void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *t
 			tmp_priv->flags & CHANNEL_PRIV_VOICE,
 			tmp_priv->flags & CHANNEL_PRIV_AUTOOP,
 			tmp_priv->flags & CHANNEL_PRIV_AUTOVOICE,
-			tmp_priv->ch->db_id,
-			tmp_priv->pl_or_reg.reg->db_id);
-	if (res == NULL)
+			tmp_priv->pl_or_reg.reg->db_id,
+			tmp_priv->ch->db_id);
+			
+	if (res == NULL) {
 		logger(LOG_WARN, "db_update_pl_chan_priv : SQL query failed.");
-	else
+		logger(LOG_WARN, q, tmp_priv->flags & CHANNEL_PRIV_CHANADMIN, tmp_priv->flags & CHANNEL_PRIV_OP,
+			tmp_priv->flags & CHANNEL_PRIV_VOICE, tmp_priv->flags & CHANNEL_PRIV_AUTOOP,
+			tmp_priv->flags & CHANNEL_PRIV_AUTOVOICE,
+			tmp_priv->pl_or_reg.reg->db_id, tmp_priv->ch->db_id);
+	} else {
 		dbi_result_free(res);
+	}
 }
 
 void db_add_pl_chan_priv(struct config *c, struct player_channel_privilege *priv)
@@ -649,6 +677,20 @@ void db_add_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 	char *q = "INSERT INTO player_channel_privileges \
 		   (player_id, channel_id, channel_admin, operator, voice, auto_operator, auto_voice) \
 		   VALUES (%i, %i, %i, %i, %i, %i, %i)";
+
+	if (priv->reg != PL_CH_PRIV_REGISTERED) {
+		logger(LOG_WARN, "db_add_pl_chan_priv : trying to add a pl_ch_priv that is marked as unregistered. This should not happen!");
+		return;
+	}
+	if (priv->pl_or_reg.reg == NULL) {
+		logger(LOG_WARN, "db_add_pl_chan_priv : registration is NULL. This should not happen!");
+		return;
+	}
+	if (priv->ch == NULL) {
+		logger(LOG_WARN, "db_add_pl_chan_priv : channel is NULL. This should not happen!");
+		return;
+	}
+	logger(LOG_INFO, "registering a new player channel privilege.");
 
 	res = dbi_conn_queryf(c->conn, q, priv->pl_or_reg.reg->db_id, priv->ch->db_id,
 			priv->flags & CHANNEL_PRIV_CHANADMIN, priv->flags & CHANNEL_PRIV_OP, priv->flags & CHANNEL_PRIV_VOICE,
@@ -664,6 +706,21 @@ void db_del_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 	dbi_result res;
 	char *q = "DELETE FROM player_channel_privileges \
 			WHERE player_id = %i AND channel_id = %i;";
+
+	if (priv->reg != PL_CH_PRIV_REGISTERED) {
+		logger(LOG_WARN, "db_del_pl_chan_priv : trying to delete a pl_ch_priv that is marked as unregistered. This should not happen!");
+		return;
+	}
+	if (priv->pl_or_reg.reg == NULL) {
+		logger(LOG_WARN, "db_del_pl_chan_priv : registration is NULL. This should not happen!");
+		return;
+	}
+	if (priv->ch == NULL) {
+		logger(LOG_WARN, "db_del_pl_chan_priv : channel is NULL. This should not happen!");
+		return;
+	}
+	logger(LOG_INFO, "unregistering a player channel privilege");
+
 	res = dbi_conn_queryf(c->conn, q, priv->pl_or_reg.reg->db_id, priv->ch->db_id);
 	if (res == NULL)
 		logger(LOG_WARN, "db_del_pl_chan_priv : SQL query failed.");
