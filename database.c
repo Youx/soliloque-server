@@ -229,16 +229,13 @@ int db_register_channel(struct config *c, struct channel *ch)
 int db_unregister_channel(struct config *c, struct channel *ch)
 {
 	char *q = "DELETE FROM channels WHERE id = %i;";
+	char *q2 = "DELETE FROM player_channel_privileges WHERE channel_id = %i;";
 	size_t iter;
 	struct channel *tmp_ch;
-	struct player_channel_privilege *priv;
 
 	dbi_conn_queryf(c->conn, q, ch->db_id);
 	/* remove all the player privileges for this channel */
-	ar_each(struct player_channel_privilege *, priv, iter, ch->pl_privileges)
-		if (priv->reg == PL_CH_PRIV_REGISTERED)
-			db_del_pl_chan_priv(c, priv);
-	ar_end_each;
+	dbi_conn_queryf(c->conn, q2, ch->db_id);
 
 	/* unregister all the subchannels */
 	if (ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) {
