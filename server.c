@@ -353,6 +353,10 @@ struct player *get_player_by_public_id(struct server *s, uint32_t pub_id)
  */
 void remove_player(struct server *s, struct player *p)
 {
+	size_t iter, iter2;
+	struct player_channel_privilege *priv;
+	struct channel *ch;
+
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
 	/* add to a temporary "leaving" list */
@@ -360,7 +364,18 @@ void remove_player(struct server *s, struct player *p)
 	/* remove from the channel */
 	ar_remove(p->in_chan->players, (void *)p);
 	p->in_chan = NULL;
-
+	/* remove the channel privileges */
+	ar_each(struct channel *, ch, iter, s->chans)
+		if (ch->flags & CHANNEL_FLAG_UNREGISTERED
+				|| !(p->global_flags & GLOBAL_FLAG_REGISTERED)) {
+			ar_each(struct player_channel_privilege *, priv, iter2, ch->pl_privileges)
+				if (priv->reg == PL_CH_PRIV_UNREGISTERED && priv->ch == ch && priv->pl_or_reg.pl == p) {
+					ar_remove(ch->pl_privileges, priv);
+					free(priv);
+				}
+			ar_end_each;
+		}
+	ar_end_each;
 	/* memory will be fred when their packet queue is empty */
 }
 

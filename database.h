@@ -32,6 +32,7 @@ int db_create_subchannels(struct config *c, struct server *s);
 int db_create_registrations(struct config *c, struct server *s);
 int db_create_sv_privileges(struct config *c, struct server *s);
 int db_add_registration(struct config *c, struct server *s, struct registration *r);
+int db_del_registration(struct config *c, struct server *s, struct registration *r);
 
 int db_unregister_channel(struct config *c, struct channel *ch);
 int db_register_channel(struct config *c, struct channel *ch);

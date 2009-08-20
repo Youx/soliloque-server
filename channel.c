@@ -372,8 +372,10 @@ struct player_channel_privilege *get_player_channel_privilege(struct player *pl,
 		tmp_priv->reg = PL_CH_PRIV_REGISTERED;
 		tmp_priv->pl_or_reg.reg = pl->reg;
 		/* register the privilege in the DB */
-		if (!(tmp_ch->flags & CHANNEL_FLAG_UNREGISTERED))
+		if (!(tmp_ch->flags & CHANNEL_FLAG_UNREGISTERED)) {
+			logger(LOG_INFO, "get_player_channel_privilege : adding a new priv to the DB");
 			db_add_pl_chan_priv(tmp_ch->in_server->conf, tmp_priv);
+		}
 	} else {
 		tmp_priv->reg = PL_CH_PRIV_UNREGISTERED;
 		tmp_priv->pl_or_reg.pl = pl;

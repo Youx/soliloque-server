@@ -75,5 +75,6 @@ void *c_req_change_chan_max_users(char *data, unsigned int len, struct player *p
 void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
+void *c_req_register_player(char *data, unsigned int len, struct player *pl);
 
 #endif

@@ -451,15 +451,51 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 	char *req = "INSERT INTO registrations (server_id, serveradmin, name, password) VALUES (%i, %i, %s, %s);";
 	char *quoted_name, *quoted_pass;
 	dbi_result res;
+	struct channel *ch;
+	struct player_channel_privilege *priv;
+	size_t iter, iter2;
 
 	dbi_conn_quote_string_copy(c->conn, r->name, &quoted_name);
 	dbi_conn_quote_string_copy(c->conn, r->password, &quoted_pass);
 
 	res = dbi_conn_queryf(c->conn, req, s->id, r->global_flags, quoted_name, quoted_pass);
-	dbi_result_free(res);
+	if (res == NULL) {
+		logger(LOG_WARN, "db_add_registration : SQL query failed");
+	} else {
+		r->db_id = dbi_conn_sequence_last(c->conn, NULL);
+		dbi_result_free(res);
+	}
 	free(quoted_pass);
 	free(quoted_name);
 
+	ar_each(struct channel *, ch, iter, s->chans)
+		ar_each(struct player_channel_privilege *, priv, iter2, ch->pl_privileges)
+			if (priv->reg == PL_CH_PRIV_REGISTERED && priv->pl_or_reg.reg == r) {
+				logger(LOG_INFO, "db_add_registration : adding a new pl_chan_priv");
+				db_add_pl_chan_priv(c, priv);
+			}
+		ar_end_each;
+	ar_end_each;
+	return 1;
+}
+
+int db_del_registration(struct config *c, struct server *s, struct registration *r)
+{
+	char *q = "DELETE FROM registrations WHERE id = %i;";
+	char *q2 = "DELETE FROM player_channel_privileges WHERE player_id = %i;";
+	dbi_result res;
+
+	res = dbi_conn_queryf(c->conn, q, r->db_id);
+	if (res == NULL)
+		logger(LOG_WARN, "db_del_registration : SQL query failed");
+	else
+		dbi_result_free(res);
+
+	res = dbi_conn_queryf(c->conn, q2, r->db_id);
+	if (res == NULL)
+		logger(LOG_WARN, "db_del_registration : SQL query failed (2)");
+	else
+		dbi_result_free(res);
 	return 1;
 }
 

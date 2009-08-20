@@ -1065,15 +1065,15 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
  *
  * @param pl the player who granted/revoked the privilege
  * @param tgt the player whose privileges are going to change
- * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
- * @param on_off switch this right on or off
+ * @param right the offset of the right (1 << right == GLOBAL_FLAG_XXX)
+ * @param on_off switch this right on or off (0 = add, 2 = remove)
  */
 static void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
 	int data_size = 34;
-	struct server *s = pl->in_chan->in_server;
+	struct server *s = tgt->in_chan->in_server;
 	size_t iter;
 
 	data = (char *)calloc(data_size, sizeof(char));
@@ -1093,7 +1093,11 @@ static void s_notify_player_sv_right_changed(struct player *pl, struct player *t
 	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* ID of player whose global flags changed */
 	*(uint8_t *)ptr = on_off;		ptr += 1;/* set or unset the flag */
 	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the flag (1 << right) */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of player who changed the flag */
+	if (pl != NULL) {
+		*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of player who changed the flag */
+	} else {
+		*(uint32_t *)ptr = 0;			ptr += 4;
+	}
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -1119,6 +1123,9 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 	uint32_t tgt_id;
 	char on_off, right;
 	int priv_required;
+	struct channel *ch;
+	struct player_channel_privilege *priv;
+	size_t iter, iter2;
 
 	send_acknowledge(pl);		/* ACK */
 
@@ -1134,15 +1141,37 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 	case GLOBAL_FLAG_ALLOWREG:
 		priv_required = (on_off == 0) ? SP_PL_GRANT_ALLOWREG : SP_PL_REVOKE_ALLOWREG;
 		break;
+	case GLOBAL_FLAG_REGISTERED:
+		priv_required = (on_off == 0) ? SP_PL_ALLOW_SELF_REG : SP_PL_DEL_REGISTRATION;
+		break;
 	default:
+		logger(LOG_WARN, "c_req_change_player_sv_right : not implemented for privilege : %i", 1<<right);
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
 		logger(LOG_INFO, "Player sv rights before : 0x%x", tgt->global_flags);
-		if (on_off == 2)
+		if (on_off == 2) {
 			tgt->global_flags &= (0xFF ^ (1 << right));
-		else if(on_off == 0)
+			/* special case : removing a registration */
+			if (1 << right == GLOBAL_FLAG_REGISTERED) {
+				db_del_registration(tgt->in_chan->in_server->conf, tgt->in_chan->in_server, tgt->reg);
+				/* associate the player privileges to the player instead of the registration */
+				ar_each(struct channel *, ch, iter, tgt->in_chan->in_server->chans)
+					ar_each(struct player_channel_privilege *, priv, iter2, ch->pl_privileges)
+						if (priv->reg == PL_CH_PRIV_REGISTERED && priv->pl_or_reg.reg == tgt->reg) {
+							priv->reg = PL_CH_PRIV_UNREGISTERED;
+							priv->pl_or_reg.pl = tgt;
+						}
+					ar_end_each;
+				ar_end_each;
+				free(tgt->reg);
+				tgt->reg = NULL;
+			}
+		} else if(on_off == 0) {
 			tgt->global_flags |= (1 << right);
+		}
+
+		/* special case : registration */
 		logger(LOG_INFO, "Player sv rights after  : 0x%x", tgt->global_flags);
 		s_notify_player_sv_right_changed(pl, tgt, right, on_off);
 	}
@@ -2222,6 +2251,78 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 		add_registration(s, reg);
 		/* database callback to insert a new registration */
 		db_add_registration(s->conf, s, reg);
+
+		free(name);
+		free(pass);
+	}
+
+	return NULL;
+}
+
+/**
+ * Handle a packet to create a new registration with a name, password
+ * and server admin flag and associate it to the player.
+ *
+ * @param data the packet
+ * @param len the length of the packet
+ * @param pl the player who issued the request
+ */
+void *c_req_register_player(char *data, unsigned int len, struct player *pl)
+{
+	char *name, *pass;
+	char name_len, pass_len;
+	struct registration *reg;
+	struct server *s;
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	char *digest_readable;
+	struct channel *ch;
+	struct player_channel_privilege *priv;
+	size_t iter, iter2;
+
+	s = pl->in_chan->in_server;
+
+	logger(LOG_INFO, "c_req_register_player : registering player");
+	send_acknowledge(pl);
+	if (player_has_privilege(pl, SP_PL_ALLOW_SELF_REG, NULL)
+			|| (pl->global_flags & GLOBAL_FLAG_ALLOWREG)) {
+		logger(LOG_INFO, "c_req_register_player : privileges OK");
+		name_len = MIN(29, data[24]);
+		name = strndup(data + 25, name_len);
+		pass_len = MIN(29, data[54]);
+		pass = strndup(data + 55, pass_len);
+
+		if (name == NULL || pass == NULL) {
+			logger(LOG_ERR, "c_req_register_player, strndup failed : %s.", strerror(errno));
+			if (name != NULL)
+				free(name);
+			if (pass != NULL)
+				free(pass);
+			return NULL;
+		}
+		reg = new_registration();
+		strcpy(reg->name, name);
+		/* hash the password */
+		SHA256((unsigned char *)pass, strlen(pass), digest);
+		digest_readable = ustrtohex(digest, SHA256_DIGEST_LENGTH);
+		strcpy(reg->password, digest_readable);
+		free(digest_readable);
+
+		add_registration(s, reg);
+		/* associate the player with this new registration */
+		pl->reg = reg;
+		ar_each(struct channel *, ch, iter, s->chans)
+			if (!(ch->flags & CHANNEL_FLAG_UNREGISTERED)) {
+				ar_each(struct player_channel_privilege *, priv, iter2, ch->pl_privileges)
+					if (priv->reg == PL_CH_PRIV_UNREGISTERED && priv->pl_or_reg.pl == pl) {
+						priv->reg = PL_CH_PRIV_REGISTERED;
+						priv->pl_or_reg.reg = reg;
+					}
+				ar_end_each;
+			}
+		ar_end_each;
+		/* database callback to insert a new registration */
+		db_add_registration(s->conf, s, reg);
+		s_notify_player_sv_right_changed(NULL, pl, 2, 0);
 
 		free(name);
 		free(pass);

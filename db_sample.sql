@@ -18,6 +18,8 @@ INSERT INTO registrations (id, server_id, serveradmin, name, password, created_a
 (3, 1, 0, 'admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', '', '');
 INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES
 (1, 1, 1, 'Youx', 'azeaze', '', '');
+INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES
+(4, 1, 0, 'azeaze', 'f6998904481a9cb65f9803093f7fbe88aea964e82afac6a37c9b958afc7c77e8', '', '');
 
 /* Create some privileges */
 INSERT INTO server_privileges (id, server_id, user_group, adm_del_server, adm_add_server, adm_list_servers, adm_set_permissions, adm_change_user_pass, adm_change_own_pass, adm_list_registrations, adm_register_player, adm_change_server_codecs, adm_change_server_type, adm_change_server_pass, adm_change_server_welcome, adm_change_server_maxusers, adm_change_server_name, adm_change_webpost_url, adm_change_server_port, adm_start_server, adm_stop_server, adm_move_player, adm_ban_ip, cha_delete, cha_create_moderated, cha_create_subchanneled, cha_create_default, cha_create_unregistered, cha_create_registered, cha_join_registered, cha_join_wo_pass, cha_change_codec, cha_change_maxusers, cha_change_order, cha_change_desc, cha_change_topic, cha_change_pass, cha_change_name, pl_grant_allowreg, pl_grant_voice, pl_grant_autovoice, pl_grant_op, pl_grant_autoop, pl_grant_ca, pl_grant_sa, pl_register_player, pl_revoke_allowreg, pl_revoke_voice, pl_revoke_autovoice, pl_revoke_op, pl_revoke_autoop, pl_revoke_ca, pl_revoke_sa, pl_allow_self_reg, pl_del_registration, other_ch_commander, other_ch_kick, other_sv_kick, other_text_pl, other_text_all_ch, other_text_in_ch, other_text_all) VALUES
