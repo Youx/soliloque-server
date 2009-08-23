@@ -68,6 +68,8 @@ struct player {
 	struct channel *in_chan;
 	struct registration *reg;
 
+	struct timeval last_ping;
+
 	/* communication */
 	struct sockaddr_in *cli_addr;
 	unsigned int cli_len;

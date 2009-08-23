@@ -59,7 +59,7 @@ void *packet_sender_thread(void *args)
 {
 	struct server *s;
 	struct player *p;
-	struct timeval now, diff, *last_sent;
+	struct timeval now, diff, *last_sent, diff2;
 	size_t iter;
 	char *packet, *packet2;
 
@@ -73,8 +73,9 @@ void *packet_sender_thread(void *args)
 			last_sent = queue_get_time(p->packets);
 			if (last_sent != NULL) {
 				timersub(&now, last_sent, &diff);
+				timersub(&now, &p->last_ping, &diff2);
 				packet = peek_at_queue(p->packets);
-				if (packet != NULL && *(uint16_t *)(packet+16) > 50) {
+				if (diff2.tv_sec > 10 || (packet != NULL && *(uint16_t *)(packet+16) > 50)) {
 					/* player seems to have timedout */
 					logger(LOG_INFO, "Player 0x%x seems to have timed out, removing him", p);
 					/* do whateverittakes to notify that the player has left */
@@ -100,8 +101,9 @@ void *packet_sender_thread(void *args)
 			last_sent = queue_get_time(p->packets);
 			if (last_sent != NULL) {
 				timersub(&now, last_sent, &diff);
+				timersub(&now, &p->last_ping, &diff2);
 				packet = peek_at_queue(p->packets);
-				if (packet != NULL && *(uint16_t *)(packet+16) > 50) {
+				if (diff2.tv_sec > 10 || (packet != NULL && *(uint16_t *)(packet+16) > 50)) {
 					/* player seems to have timedout and is
 					 * marked as leaving - we empty his queue
 					 * so he will be removed */

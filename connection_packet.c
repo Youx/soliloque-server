@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #include "packet_tools.h"
 #include "server.h"
@@ -263,4 +264,6 @@ void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 	ka_id = *(uint32_t *)(data + 12);
 	/* Send the keepalive response */
 	s_resp_keepalive(pl, ka_id);
+	/* Update the last_ping field */
+	gettimeofday(&pl->last_ping, NULL);
 }
