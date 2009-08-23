@@ -8,7 +8,7 @@ VERSION='undefined'
 APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
-SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c database.c registration.c server_privileges.c player_stat.c log.c queue.c packet_sender.c player_channel_privilege.c'
+SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c registration.c server_privileges.c player_stat.c log.c queue.c packet_sender.c player_channel_privilege.c'
 flags_dbg1= ['-Wall', '-Werror']
 flags_dbg2= ['-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith']
 flags_dbg2.extend(flags_dbg1)
@@ -88,7 +88,7 @@ def configure(conf):
 
 def build(bld):
   sol_serv = bld.new_task_gen()
-  bld.add_subdirs('control_packets')
+  bld.add_subdirs('control_packets database')
   sol_serv.features = "cc cprogram"
   sol_serv.source = SOURCES
   sol_serv.target = APPNAME
@@ -96,4 +96,4 @@ def build(bld):
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
-  sol_serv.uselib_local = 'control_packets'
+  sol_serv.uselib_local = 'control_packets database'
