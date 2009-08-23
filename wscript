@@ -95,5 +95,5 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
-  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL control_packets'
+  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
   sol_serv.uselib_local = 'control_packets'
