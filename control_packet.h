@@ -77,4 +77,7 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
 void *c_req_register_player(char *data, unsigned int len, struct player *pl);
 
+void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off);
+
+
 #endif
