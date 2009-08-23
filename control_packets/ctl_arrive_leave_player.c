@@ -76,7 +76,7 @@ void s_notify_new_player(struct player *pl)
  *
  * @param p the player who left
  */
-static void s_notify_player_left(struct player *p)
+void s_notify_player_left(struct player *p)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;

@@ -179,14 +179,19 @@ static void ar_remove_index(struct array *a, size_t idx)
 void ar_remove(struct array *a, void *el) 
 {
 	size_t i;
+	char found = 0;
+
 	pthread_mutex_lock(&a->lock);
 
 	for (i=0 ; i < a->total_slots ; i++) {
 		if (a->array[i] == el) {
 			ar_remove_index(a, i);
+			found = 1;
 		}
 	}
 	pthread_mutex_unlock(&a->lock);
+	if (found == 0)
+		logger(LOG_ERR, "ar_remove : pointer 0x%x was not found in our array.\n", el);
 }	
 
 /**

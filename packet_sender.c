@@ -23,6 +23,7 @@
 #include "log.h"
 #include "server_stat.h"
 #include "packet_tools.h"
+#include "control_packet.h"
 
 #include <pthread.h>
 #include <errno.h>
@@ -60,6 +61,7 @@ void *packet_sender_thread(void *args)
 	struct player *p;
 	struct timeval now, diff, *last_sent;
 	size_t iter;
+	char *packet, *packet2;
 
 	s = (struct server *)args;
 	while(1) {
@@ -71,10 +73,22 @@ void *packet_sender_thread(void *args)
 			last_sent = queue_get_time(p->packets);
 			if (last_sent != NULL) {
 				timersub(&now, last_sent, &diff);
-				/* resend a packet every 0.5s */
-				if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
-					queue_update_time(p->packets);
-					send_curr_packet(p, s);
+				packet = peek_at_queue(p->packets);
+				if (packet != NULL && *(uint16_t *)(packet+16) > 50) {
+					/* player seems to have timedout */
+					logger(LOG_INFO, "Player 0x%x seems to have timed out, removing him", p);
+					/* do whateverittakes to notify that the player has left */
+					pthread_mutex_unlock(&p->packets->mutex);
+					s_notify_player_left(p);
+					pthread_mutex_lock(&p->packets->mutex);
+					/* then remove him */
+					remove_player(s, p);
+				} else {
+					/* resend a packet every 0.5s */
+					if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
+						queue_update_time(p->packets);
+						send_curr_packet(p, s);
+					}
 				}
 			}
 			pthread_mutex_unlock(&p->packets->mutex);
@@ -86,9 +100,21 @@ void *packet_sender_thread(void *args)
 			last_sent = queue_get_time(p->packets);
 			if (last_sent != NULL) {
 				timersub(&now, last_sent, &diff);
-				if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
-					queue_update_time(p->packets);
-					send_curr_packet(p, s);
+				packet = peek_at_queue(p->packets);
+				if (packet != NULL && *(uint16_t *)(packet+16) > 50) {
+					/* player seems to have timedout and is
+					 * marked as leaving - we empty his queue
+					 * so he will be removed */
+					logger(LOG_INFO, "Emptying the player 0x%x 's packet queue.", p);
+					while ((packet2 = get_from_queue(p->packets))) {
+						free(packet2);
+					}
+					logger(LOG_INFO, "Queue empty.", p);
+				} else {
+					if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
+						queue_update_time(p->packets);
+						send_curr_packet(p, s);
+					}
 				}
 			}
 			pthread_mutex_unlock(&p->packets->mutex);
