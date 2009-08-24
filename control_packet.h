@@ -35,6 +35,7 @@
 #define CTL_CHANGE_PL_STATUS	0x0068	/* player status changed */
 #define CTL_CHANGE_PL_CHPRIV	0x006a	/* player channel priv changed */
 #define CTL_CHANGE_PL_SVPRIV	0x006b	/* player servr priv changed */
+#define CTL_PLAYER_MOVED	0x006d	/* move a player from a channel to another */
 #define CTL_CREATE_CH		0x006e	/* new channel */
 #define CTL_CHANGE_CH_NAME	0x006f	/* channel name changed */
 #define CTL_CHANGE_CH_TOPIC	0x0070	/* channel topic changed */
@@ -76,6 +77,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl);
 void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
 void *c_req_register_player(char *data, unsigned int len, struct player *pl);
+void *c_req_move_player(char *data, unsigned int len, struct player *pl);
 
 void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off);
 void s_notify_player_left(struct player *p);

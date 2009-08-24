@@ -399,3 +399,72 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 	s_notify_player_attr_changed(pl, attributes);
 	return NULL;
 }
+
+static void s_notify_player_moved(struct player *tgt, struct player *pl, struct channel *from, struct channel *to)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 42;
+	struct server *s = pl->in_chan->in_server;
+	struct player_channel_privilege *new_priv;
+	size_t iter;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		logger(LOG_WARN, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		return;
+	}
+	new_priv = get_player_channel_privilege(tgt, to);
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYER_MOVED;	ptr += 2;	/* */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;	/* ID of player who switched */
+	*(uint32_t *)ptr = from->id;		ptr += 4;	/* ID of previous channel */
+	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;
+	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
+
+	ar_each(struct player *, tmp_pl, iter, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0, tmp_pl);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+	free(data);
+}
+
+void *c_req_move_player(char *data, unsigned int len, struct player *pl)
+{
+	struct channel *to, *from;
+	uint32_t to_id;
+	uint32_t tgt_id;
+	struct player *tgt;
+	struct server *s = pl->in_chan->in_server;
+
+	memcpy(&tgt_id, data + 24, 4);
+	tgt = get_player_by_public_id(s, tgt_id);
+	memcpy(&to_id, data + 28, 4);
+	to = get_channel_by_id(s, to_id);
+
+	if (to != NULL && pl != NULL) {
+		send_acknowledge(pl);		/* ACK */
+		/* check privilege */
+		if (player_has_privilege(pl, SP_ADM_MOVE_PLAYER, to)) {
+			logger(LOG_INFO, "Player moving another one to channel %s.", to->name);
+			from = tgt->in_chan;
+			if (move_player(tgt, to)) {
+				s_notify_player_moved(tgt, pl, from, to);
+				logger(LOG_INFO, "Player moved, notify sent.");
+			}
+		}
+	}
+	return NULL;
+}

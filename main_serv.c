@@ -77,6 +77,7 @@ static void init_callbacks(void)
 	f0_callbacks[1][0x44] = &c_req_ip_ban;		/* client wants to ban an IP */
 	f0_callbacks[1][0x45] = &c_req_ban;		/* client wants to ban someone */
 	f0_callbacks[1][0x46] = &c_req_remove_ban;		/* client wants to unban someone */
+	f0_callbacks[1][0x4a] = &c_req_move_player;	/* move a player from a chan to another */
 	f0_callbacks[1][0x90] = &c_req_player_stats;	/* client wants connection stats for a player */
 	f0_callbacks[1][0x95] = &c_req_server_stats;	/* client wants connection stats from the server */
 	f0_callbacks[1][0x9a] = &c_req_list_bans;		/* client wants the list of bans */
