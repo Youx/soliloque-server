@@ -44,6 +44,7 @@ for(iter=0 ; iter < a->total_slots ; iter++) {\
 struct array *ar_new(size_t size);
 int ar_insert(struct array *a, void *elem);
 void ar_remove(struct array *a, void *el);
+int ar_has(struct array *a, void *el);
 int ar_get_n_elems_start_at(struct array *a, int max_elem, size_t start_at, void **res);
 int ar_free(struct array *a);
 

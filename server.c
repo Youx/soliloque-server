@@ -356,6 +356,7 @@ void remove_player(struct server *s, struct player *p)
 	size_t iter, iter2;
 	struct player_channel_privilege *priv;
 	struct channel *ch;
+	struct player *tmp_pl;
 
 	/* remove from the server */
 	ar_remove(s->players, (void *)p);
@@ -376,6 +377,18 @@ void remove_player(struct server *s, struct player *p)
 			ar_end_each;
 		}
 	ar_end_each;
+
+	/* remove from all the people who muted him */
+	ar_each(struct player *, tmp_pl, iter, s->players)
+		if (ar_has(tmp_pl->muted, p))
+			ar_remove(tmp_pl->muted, p);
+	ar_end_each;
+
+	/* remove from him all the people he muted */
+	ar_each(struct player *, tmp_pl, iter, p->muted)
+		ar_remove(p->muted, tmp_pl);
+	ar_end_each;
+
 	/* memory will be fred when their packet queue is empty */
 }
 

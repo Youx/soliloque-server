@@ -74,6 +74,7 @@ static void init_callbacks(void)
 	f0_callbacks[1][0x33] = &c_req_change_player_sv_right;	/* change global flags */
 	f0_callbacks[1][0x34] = &c_req_register_player;	/* create a new registration and associate the player to it */
 	f0_callbacks[1][0x36] = &c_req_create_registration;	/* create a new registration */
+	f0_callbacks[1][0x40] = &c_req_mute_player;	/* mute or unmute player */
 	f0_callbacks[1][0x44] = &c_req_ip_ban;		/* client wants to ban an IP */
 	f0_callbacks[1][0x45] = &c_req_ban;		/* client wants to ban someone */
 	f0_callbacks[1][0x46] = &c_req_remove_ban;		/* client wants to unban someone */

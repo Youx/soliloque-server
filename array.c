@@ -252,3 +252,15 @@ int ar_free(struct array *a)
 	free(a);
 	return AR_OK;
 }
+
+int ar_has(struct array *a, void *el)
+{
+	size_t iter;
+	void *tmp_el;
+
+	ar_each(void *, tmp_el, iter, a)
+		if (tmp_el == el)
+			return 1;
+	ar_end_each;
+	return 0;
+}

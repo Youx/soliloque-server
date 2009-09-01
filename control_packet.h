@@ -45,6 +45,7 @@
 #define CTL_CHANGE_CH_MAX_USERS	0x0074	/* channel max users changed */
 #define CTL_CHANGE_CH_ORDER	0x0075	/* channel order changed */
 #define CTL_MESSAGE		0x0082	/* message (all/channel/private) */
+#define CTL_PLAYER_MUTED_UNMUTED 0x0141	/* mute or unmute player */
 #define CTL_CHANDELETE_ERROR	0xff93	/* error deleting channel */
 #define CTL_PLAYERSTATS		0x0194	/* player stats */
 #define CTL_SERVSTATS		0x0196	/* server stats */
@@ -78,6 +79,7 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl);
 void *c_req_register_player(char *data, unsigned int len, struct player *pl);
 void *c_req_move_player(char *data, unsigned int len, struct player *pl);
+void *c_req_mute_player(char *data, unsigned int len, struct player *pl);
 
 void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, char right, char on_off);
 void s_notify_player_left(struct player *p);

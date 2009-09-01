@@ -107,7 +107,7 @@ int audio_received(char *in, size_t len, struct server *s)
 		memcpy(ptr, in + 16, audio_block_size);		ptr += audio_block_size;
 		
 		ar_each(struct player *, tmp_pl, iter, ch_in->players)
-			if (tmp_pl != sender) {
+			if (tmp_pl != sender && !ar_has(tmp_pl->muted, sender)) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;
 				*(uint32_t *)(data + 8) = tmp_pl->public_id;
 				err = sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0,

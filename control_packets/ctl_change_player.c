@@ -468,3 +468,68 @@ void *c_req_move_player(char *data, unsigned int len, struct player *pl)
 	}
 	return NULL;
 }
+
+static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t on_off)
+{
+	char *data, *ptr;
+	size_t data_size = 29;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		logger(LOG_WARN, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		return;
+	}
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_PLAYER_MUTED_UNMUTED;	ptr += 2;	/* */
+	*(uint32_t *)ptr = by->private_id;	ptr += 4;	/* private ID */
+	*(uint32_t *)ptr = by->public_id;	ptr += 4;	/* public ID */
+	*(uint32_t *)ptr = by->f0_s_counter;	ptr += 4;	/* packet counter */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;	/* ID of player who was muted */
+	*(uint16_t *)ptr = on_off;		ptr += 1;
+
+	packet_add_crc_d(data, data_size);
+
+	send_to(by->in_chan->in_server, data, data_size, 0, by);
+	by->f0_s_counter++;
+
+	free(data);
+}
+
+void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
+{
+	uint32_t tgt_id;
+	uint8_t on_off;	/* 1 = MUTE, 0 = UNMUTE */
+	struct player *tgt;
+	struct server *s = pl->in_chan->in_server;
+
+	memcpy(&tgt_id, data + 24, 4);
+	tgt = get_player_by_public_id(s, tgt_id);
+	on_off = data[28];
+
+	send_acknowledge(pl);
+	if (on_off == 1) {
+		/* MUTE */
+		if (!ar_has(pl->muted, tgt)) {
+			ar_insert(pl->muted, tgt);
+			s_resp_player_muted(pl, tgt, on_off);
+		} else {
+			logger(LOG_WARN, "player tried to mute a player he already muted!");
+		}
+	} else if (on_off == 0) {
+		/* UNMUTE */
+		if (ar_has(pl->muted, tgt)) {
+			ar_remove(pl->muted, tgt);
+			s_resp_player_muted(pl, tgt, on_off);
+		} else {
+			logger(LOG_WARN, "player tried to unmute a player he did not mute!");
+		}
+	} else {
+		logger(LOG_WARN, "c_req_mute_player : on_off != 0/1");
+	}
+
+	return NULL;
+}

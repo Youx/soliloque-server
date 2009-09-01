@@ -68,7 +68,7 @@ struct player {
 	/* the channel the player is in */
 	struct channel *in_chan;
 	struct registration *reg;
-
+	struct array *muted;
 	struct timeval last_ping;
 
 	/* communication */

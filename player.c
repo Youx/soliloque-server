@@ -43,6 +43,8 @@ void destroy_player(struct player *p)
 		free(p->stats);
 	if (p->packets)
 		destroy_queue(p->packets);
+	if (p->muted)
+		ar_free(p->muted);
 	free(p);
 }
 
@@ -66,7 +68,7 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	}
 	/* create packet queue */
 	p->packets = new_queue();
-
+	p->muted = ar_new(2);
 	p->stats = new_plstat();
 	strcpy(p->name, nickname);
 	strcpy(p->machine, machine);
