@@ -511,6 +511,15 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 	on_off = data[28];
 
 	send_acknowledge(pl);
+	if (pl == tgt) {
+		logger(LOG_WARN, "player tried to mute himself, that should not happen!");
+		return NULL;
+	}
+	if (tgt == NULL) {
+		logger(LOG_WARN, "player tried to unmute a player that does not exist, that should not happen!");
+		return NULL;
+	}
+
 	if (on_off == 1) {
 		/* MUTE */
 		if (!ar_has(pl->muted, tgt)) {
