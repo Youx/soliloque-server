@@ -45,9 +45,10 @@
 static void server_accept_connection(struct player *pl)
 {
 	char *data, *ptr;
+	int data_size = 436;
 	struct server *s = pl->in_chan->in_server;
 
-	data = (char *)calloc(436, sizeof(char));
+	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
 		logger(LOG_WARN, "server_accept_connection : calloc failed : %s.", strerror(errno));
 		return;
@@ -79,6 +80,9 @@ static void server_accept_connection(struct player *pl)
 	*ptr = MIN(255, strlen(s->welcome_msg));	ptr += 1;	/* Length of welcome message */
 	strncpy(ptr, s->welcome_msg, *(ptr - 1));	ptr += 255;	/* Welcome message */
 
+	/* check we filled the whole packet */
+	assert((ptr - data) == data_size);
+
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
 	/* Send packet */
@@ -97,8 +101,9 @@ static void server_accept_connection(struct player *pl)
 static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_len, struct server *s)
 {
 	char *data, *ptr;
+	int data_size = 436;
 
-	data = (char *)calloc(436, sizeof(char));
+	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
 		logger(LOG_WARN, "server_refuse_connection : calloc failed : %s.", strerror(errno));
 		return;
@@ -126,6 +131,9 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
 	/* *ptr = 26;*/					ptr += 1;	/* Length of welcome message */
 	/* memcpy(ptr, "Bienvenue sur mon serveur.", 26);*/	ptr += 255;	/* Welcome message */
+
+	/* check we filled the whole packet */
+	assert((ptr - data) == data_size);
 
 	/* Add CRC */
 	packet_add_crc(data, 436, 16);
@@ -213,8 +221,9 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 {
 	char *data, *ptr;
+	int data_size = 24;
 
-	data = (char *)calloc(24, sizeof(char));
+	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
 		logger(LOG_WARN, "s_resp_keepalive : calloc failed : %s.", strerror(errno));
 		return;
@@ -227,6 +236,10 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
 	/* Checksum initialize at the end */		ptr += 4;
 	*(uint32_t *)ptr = ka_id;			ptr += 4;	/* ID of the keepalive to confirm */
+
+	/* check we filled the whole packet */
+	assert((ptr - data) == data_size);
+
 	/* Add CRC */
 	packet_add_crc(data, 24, 16);
 

@@ -50,7 +50,6 @@ struct server **db_create_servers(struct config *c)
 	}
 
 	if (res) {
-		i = 0;
 		for (i = 0 ; dbi_result_next_row(res) ; i++) {
 			ss[i] = new_server();
 			ss[i]->conf = c;

@@ -120,5 +120,5 @@ int ban_to_data(struct ban *b, char *dest)
 	*(uint16_t *)ptr = b->duration;	ptr += 2;			/* duration in minutes */
 	strcpy(ptr, b->reason);		ptr += strlen(b->reason) + 1;	/* reason */
 
-	return ban_to_data_size(b);
+	return ptr - dest;
 }

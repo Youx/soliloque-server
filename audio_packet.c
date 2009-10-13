@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <errno.h>
+#include <assert.h>
 
 /** The size of the raw audio block (in bytes) */
 size_t codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};
@@ -105,7 +106,9 @@ int audio_received(char *in, size_t len, struct server *s)
 		*(uint32_t *)ptr = sender->public_id;		ptr += 4;		/* ID of sender */
 		*(uint16_t *)ptr = *(uint16_t *)(in + 12);	ptr += 2;		/* conversation counter */
 		memcpy(ptr, in + 16, audio_block_size);		ptr += audio_block_size;
-		
+		/* assert we filled the whole packet */
+		assert((ptr - data) == data_size);
+
 		ar_each(struct player *, tmp_pl, iter, ch_in->players)
 			if (tmp_pl != sender && !ar_has(tmp_pl->muted, sender)) {
 				*(uint32_t *)(data + 4) = tmp_pl->private_id;

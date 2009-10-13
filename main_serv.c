@@ -263,6 +263,7 @@ int main(int argc, char **argv)
 				print_help(argv[0]);
 				terminate = 1;
 				helpshown = 1;
+				break;
 			case 'v':
 				print_version();
 				terminate = 1;

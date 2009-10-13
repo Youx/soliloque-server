@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <assert.h>
 
 
 /**
@@ -141,6 +142,9 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	password = strndup(ptr, tmp_size);		ptr += 29;	/* password */
 	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of nickname */
 	nickname = strndup(ptr, tmp_size);		ptr += 29;	/* nickname */
+
+	/* check we filled the whole data */
+	assert(ptr - data == len);
 	
 	/* Initialize player */
 	pl = new_player(nickname, login, machine);
