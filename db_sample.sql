@@ -15,7 +15,7 @@ INSERT INTO channels (id, server_id, parent_id, flag_moderated, flag_hierarchica
 
 /* Create a few registrations */
 INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES
-(3, 1, 0, 'admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', '', '');
+(3, 1, 1, 'admin', '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', '', '');
 INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES
 (1, 1, 1, 'Youx', 'azeaze', '', '');
 INSERT INTO registrations (id, server_id, serveradmin, name, password, created_at, lastonline) VALUES
