@@ -190,6 +190,8 @@ int player_to_data(struct player *pl, char *data)
 	*ptr = MIN(29, strlen(pl->name));		ptr += 1;	/* player name size */
 	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;	/* player name */
 
+	assert((ptr - data) == size);
+
 	return size;
 }
 

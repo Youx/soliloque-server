@@ -81,6 +81,10 @@ def configure(conf):
   else:
     conf.check_cc(lib='crypto', uselib_store='OPENSSL', mandatory=True)
   conf.check(define_name='HAVE_SHA256', uselib='OPENSSL', function_name='SHA256', header_name='openssl/sha.h', mandatory=True)
+
+  conf.check_cfg(package='libbsd', args='--cflags --libs', uselib_store='LIBBSD')
+  conf.check(define_name='HAVE_ARC4RANDOM', function_name='arc4random', header_name='bsd/bsd.h', uselib='LIBBSD', errmsg='will use insecure random()')
+
   # Check for strndup (not present on OSX)
   conf.check(cflags='-D_GNU_SOURCE', define_name='HAVE_STRNDUP', function_name='strndup', header_name='string.h', errmsg='internal')
   conf.define('VERSION', VERSION)
@@ -95,5 +99,5 @@ def build(bld):
   sol_serv.includes = '.'
   sol_serv.install_path = '${PREFIX}/bin'
   sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
-  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
+  sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL LIBBSD'
   sol_serv.uselib_local = 'control_packets database'

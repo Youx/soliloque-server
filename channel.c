@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 /**
  * Destroys a channel and all its fields
@@ -185,6 +186,8 @@ int channel_to_data(struct channel *ch, char *data)
 	strcpy(ptr, ch->name);			ptr += (strlen(ch->name) +1);
 	strcpy(ptr, ch->topic);			ptr += (strlen(ch->topic) +1);
 	strcpy(ptr, ch->desc);			ptr += (strlen(ch->desc) +1);
+
+	assert((ptr - data) == size);
 
 	return size;
 }

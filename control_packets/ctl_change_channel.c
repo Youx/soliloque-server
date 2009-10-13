@@ -297,6 +297,9 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
 	*(uint16_t *)ptr = ch->codec;		ptr += 2;/* new codec */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -482,6 +485,9 @@ static void s_notify_channel_order_changed(struct player *pl, struct channel *ch
 	*(uint16_t *)ptr = ch->sort_order;	ptr += 2;/* new sort order */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -557,6 +563,9 @@ static void s_notify_channel_max_users_changed(struct player *pl, struct channel
 	*(uint32_t *)ptr = ch->id;		ptr += 4;/* channel changed */
 	*(uint16_t *)ptr = ch->players->max_slots;	ptr += 2;/* new channel flags */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* player who changed */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;

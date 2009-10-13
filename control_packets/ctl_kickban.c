@@ -62,6 +62,9 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	*(uint8_t *)ptr = MIN(29, strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -149,6 +152,9 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));		ptr += 29;	/* reason message */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -231,6 +237,9 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* banner ID */
 	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
 	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;

@@ -102,6 +102,9 @@ void s_notify_player_left(struct player *p)
 	*(uint32_t *)ptr = 1;			ptr += 4;	/* visible notification */
 	/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;

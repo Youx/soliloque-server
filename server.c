@@ -36,8 +36,11 @@
 #include <sys/utsname.h>
 #include <stdio.h>
 #include <semaphore.h>
-
 #include <openssl/sha.h>
+
+#ifdef HAVE_LIBBSD
+#include <bsd/bsd.h>
+#endif
 
 #define MAX_MSG 1024
 
@@ -276,7 +279,11 @@ int add_player(struct server *serv, struct player *pl)
 	pl->public_id = new_id + 1;	/* ID start at 1 */
 
 	/* Find the next available private ID */
+#ifdef HAVE_ARC4RANDOM
+	pl->private_id = arc4random();
+#else
 	pl->private_id = random();
+#endif
 	/* Find next slot in the array */
 	ar_insert(serv->players, pl);
 

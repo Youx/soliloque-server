@@ -69,6 +69,9 @@ static void s_resp_server_stats(struct player *pl)
 	*(uint32_t *)ptr = stats[3]/60;			ptr += 4;/* bytes sent/sec (last minute) */
 	*(uint64_t *)ptr = s->stats->total_logins;	ptr += 8;/* total logins */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	packet_add_crc_d(data, data_size);
 
 	send_to(s, data, data_size, 0, pl);
@@ -142,6 +145,9 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	*(uint16_t *)ptr = tgt->global_flags;	ptr += 2;/* global flags */
 	*ptr = MIN(strlen(tgt->machine), 29);	ptr += 1;/* size of platform */
 	strncpy(ptr, tgt->machine, *(ptr - 1));	ptr += 29;/*platform */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	packet_add_crc_d(data, data_size);
 	send_to(pl->in_chan->in_server, data, data_size, 0, pl);

@@ -57,6 +57,9 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	*(uint32_t *)ptr = 1;			ptr += 4;	/* ????? the previous 
 								   ptr += 2 is not an error*/
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -97,6 +100,10 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	/* empty checksum */			ptr += 4;	/* filled later */
 	*(uint16_t *)ptr = 0x00d1;		ptr += 2;	/* ID of player who switched */
 	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	packet_add_crc_d(data, data_size);
 
 	send_to(s, data, data_size, 0, pl);

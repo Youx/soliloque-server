@@ -64,6 +64,9 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
 	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -151,6 +154,9 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	*(uint8_t *)ptr = on_off;		ptr += 1;/* switch the priv ON/OFF */
 	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the privilege (1<<right) */
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of the player who changed the priv */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -254,6 +260,9 @@ void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, cha
 	} else {
 		*(uint32_t *)ptr = 0;			ptr += 4;
 	}
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
@@ -368,6 +377,9 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
 	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -430,6 +442,9 @@ static void s_notify_player_moved(struct player *tgt, struct player *pl, struct 
 	*(uint32_t *)ptr = pl->public_id;	ptr += 4;
 	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	ar_each(struct player *, tmp_pl, iter, s->players)
 			*(uint32_t *)(data + 4) = tmp_pl->private_id;
 			*(uint32_t *)(data + 8) = tmp_pl->public_id;
@@ -490,6 +505,9 @@ static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t o
 	/* empty checksum */			ptr += 4;	/* filled later */
 	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;	/* ID of player who was muted */
 	*(uint16_t *)ptr = on_off;		ptr += 1;
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
 
 	packet_add_crc_d(data, data_size);
 

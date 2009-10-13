@@ -168,6 +168,9 @@ static void s_resp_unknown(struct player *pl)
 	*ptr = 0x61;					ptr += 1;
 							ptr += 1;
 
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
 	packet_add_crc_d(data, data_size);
 
 	send_to(s, data, data_size, 0, pl);
