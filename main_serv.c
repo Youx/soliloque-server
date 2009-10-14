@@ -251,7 +251,7 @@ void sigint()
 	struct server *s;
 	struct config *cfg;
 
-	printf("SIGINT received\n");
+	logger(LOG_INFO, "SIGINT received");
 	ar_each(struct server *, s, iter, ss)
 		cfg = s->conf;
 		ar_remove(ss, s);
@@ -260,9 +260,7 @@ void sigint()
 
 	/* cleanup database */
 	dbi_conn_close(cfg->conn);
-	printf("dbi_shutdown...\n");
 	dbi_shutdown();
-	printf("DONE!\n");
 
 	/* destroy config */
 	destroy_config(cfg);
@@ -339,15 +337,16 @@ int main(int argc, char **argv)
 		server_start(s);
 		i++;
 	ar_end_each;
+	logger(LOG_INFO, "Servers initialized.");
 
 	ar_each(struct server *, s, iter, ss)
 		pthread_join(s->main_thread, NULL);
 		pthread_join(s->packet_sender, NULL);
 		free(s);
 	ar_end_each;
+	logger(LOG_INFO, "All server threads ended. Exiting.");
 
 	ar_free(ss);
-	logger(LOG_INFO, "Servers initialized.");
 	/* exit */
 	return 0;
 }
