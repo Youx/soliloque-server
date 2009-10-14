@@ -32,7 +32,7 @@
  * @param color the hexadecimal color of the message
  * @param msg the message
  */
-static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
+void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -58,8 +58,13 @@ static void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	/* empty checksum */			ptr += 4;/* filled later */
 	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
 	*(uint8_t *)ptr = 0;			ptr += 1;/* type of msg (0 = all) */
-	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
+	if (pl == NULL) {
+		*(uint8_t *)ptr = 6;	ptr += 1;/* length of the sender's name */
+		strncpy(ptr, "SERVER", *(ptr - 1));		ptr += 29;/* sender's name */
+	} else {
+		*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
+		strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
+	}
 	strcpy(ptr, msg);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)

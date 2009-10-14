@@ -30,5 +30,6 @@ struct registration
 };
 
 struct registration *new_registration(void);
+void destroy_registration(struct registration *r);
 
 #endif

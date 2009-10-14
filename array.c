@@ -233,22 +233,25 @@ int ar_get_n_elems_start_at(struct array *a, int max_elem, size_t start_at, void
 int ar_free(struct array *a)
 {
 	size_t i;
-
 	pthread_mutex_lock(&a->lock);
+	/* if the array is not allocated, we cannot free it */
 	if (a == NULL || a->array == NULL) {
 		logger(LOG_ERR, "ar_free : Trying to free an unallocated array.");
 		pthread_mutex_unlock(&a->lock);
 		return 0;
 	}
 
+	/* if the array is not empty, we cannot free it */
 	for (i = 0 ; i < a->total_slots ; i++) {
 		if (a->array[i] != NULL) {
+			logger(LOG_ERR, "ar_free : Trying to free an array that is not empty.");
 			pthread_mutex_unlock(&a->lock);
 			return 0;
 		}
 	}
 	free(a->array);
 	pthread_mutex_unlock(&a->lock);
+	pthread_mutex_destroy(&a->lock);
 	free(a);
 	return AR_OK;
 }

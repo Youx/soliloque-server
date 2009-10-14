@@ -36,11 +36,25 @@
  */
 int destroy_channel(struct channel *chan)
 {
-	/* TODO : relocate players to another channel maybe? */
+	size_t iter;
+	void *el;
+
 	free(chan->name);
 	free(chan->topic);
 	free(chan->desc);
 	ar_free(chan->players);
+
+	/* destroy privileges */
+	ar_each(void *, el, iter, chan->pl_privileges)
+		ar_remove(chan->pl_privileges, el);
+		destroy_player_channel_privilege(el);
+	ar_end_each;
+	ar_free(chan->pl_privileges);
+	/* destroy subchannels */
+	ar_each(void *, el, iter, chan->subchannels)
+		ar_remove(chan->subchannels, el);
+	ar_end_each;
+	ar_free(chan->subchannels);
 
 	free(chan);
 	return 1;

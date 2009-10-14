@@ -18,6 +18,7 @@
 
 #include "database.h"
 #include "log.h"
+#include "array.h"
 
 #include <errno.h>
 #include <string.h>
@@ -30,53 +31,49 @@
  *
  * @return the servers followed by a NULL pointer
  */
-struct server **db_create_servers(struct config *c)
+void db_create_servers(struct config *c, struct array *ss)
 {
 	dbi_result res;
 	char *q = "SELECT * FROM servers WHERE active = 1;";
 	int nb_serv;
-	struct server **ss;
-	int i;
+	struct server *s;
 
 	res = dbi_conn_query(c->conn, q);
 	nb_serv = dbi_result_get_numrows(res);
 	if (nb_serv == 0) {
-		return NULL;
+		return;
 	}
-	ss = (struct server **)calloc(nb_serv + 1, sizeof(struct server *));
 	if (ss == NULL) {
 		logger(LOG_WARN, "db_create_server : calloc failed : %s.", strerror(errno));
-		return NULL;
+		return;
 	}
 
-	if (res) {
-		for (i = 0 ; dbi_result_next_row(res) ; i++) {
-			ss[i] = new_server();
-			ss[i]->conf = c;
+	while (dbi_result_next_row(res)) {
+		s = new_server();
+		s->conf = c;
 
-			ss[i]->id = dbi_result_get_uint(res, "id");
-			strcpy(ss[i]->password, dbi_result_get_string(res, "password"));
-			strcpy(ss[i]->server_name, dbi_result_get_string(res, "name"));
-			strcpy(ss[i]->welcome_msg, dbi_result_get_string(res, "welcome_msg"));
-			ss[i]->port = dbi_result_get_uint(res, "port");
-			/* codecs is a bitfield */
-			ss[i]->codecs =
-				(dbi_result_get_uint(res, "codec_celp51") << CODEC_CELP_5_1) |
-				(dbi_result_get_uint(res, "codec_celp63") << CODEC_CELP_6_3) |
-				(dbi_result_get_uint(res, "codec_gsm148") << CODEC_GSM_14_8) |
-				(dbi_result_get_uint(res, "codec_gsm164") << CODEC_GSM_16_4) |
-				(dbi_result_get_uint(res, "codec_celp52") << CODEC_CELPWin_5_2) |
-				(dbi_result_get_uint(res, "codec_speex2150") << CODEC_SPEEX_3_4) |
-				(dbi_result_get_uint(res, "codec_speex3950") << CODEC_SPEEX_5_2) |
-				(dbi_result_get_uint(res, "codec_speex5950") << CODEC_SPEEX_7_2) |
-				(dbi_result_get_uint(res, "codec_speex8000") << CODEC_SPEEX_9_3) |
-				(dbi_result_get_uint(res, "codec_speex11000") << CODEC_SPEEX_12_3) |
-				(dbi_result_get_uint(res, "codec_speex15000") << CODEC_SPEEX_16_3) |
-				(dbi_result_get_uint(res, "codec_speex18200") << CODEC_SPEEX_19_6) |
-				(dbi_result_get_uint(res, "codec_speex24600") << CODEC_SPEEX_25_9);
-		}
-		dbi_result_free(res);
+		s->id = dbi_result_get_uint(res, "id");
+		strcpy(s->password, dbi_result_get_string(res, "password"));
+		strcpy(s->server_name, dbi_result_get_string(res, "name"));
+		strcpy(s->welcome_msg, dbi_result_get_string(res, "welcome_msg"));
+		s->port = dbi_result_get_uint(res, "port");
+		/* codecs is a bitfield */
+		s->codecs =
+			(dbi_result_get_uint(res, "codec_celp51") << CODEC_CELP_5_1) |
+			(dbi_result_get_uint(res, "codec_celp63") << CODEC_CELP_6_3) |
+			(dbi_result_get_uint(res, "codec_gsm148") << CODEC_GSM_14_8) |
+			(dbi_result_get_uint(res, "codec_gsm164") << CODEC_GSM_16_4) |
+			(dbi_result_get_uint(res, "codec_celp52") << CODEC_CELPWin_5_2) |
+			(dbi_result_get_uint(res, "codec_speex2150") << CODEC_SPEEX_3_4) |
+			(dbi_result_get_uint(res, "codec_speex3950") << CODEC_SPEEX_5_2) |
+			(dbi_result_get_uint(res, "codec_speex5950") << CODEC_SPEEX_7_2) |
+			(dbi_result_get_uint(res, "codec_speex8000") << CODEC_SPEEX_9_3) |
+			(dbi_result_get_uint(res, "codec_speex11000") << CODEC_SPEEX_12_3) |
+			(dbi_result_get_uint(res, "codec_speex15000") << CODEC_SPEEX_16_3) |
+			(dbi_result_get_uint(res, "codec_speex18200") << CODEC_SPEEX_19_6) |
+			(dbi_result_get_uint(res, "codec_speex24600") << CODEC_SPEEX_25_9);
+		ar_insert(ss, s);
 	}
-	return ss;
+	dbi_result_free(res);
 }
 

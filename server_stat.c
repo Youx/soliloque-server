@@ -58,6 +58,14 @@ ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 	return len;
 }
 
+void destroy_sstat(struct server_stat *st)
+{
+	free(st->pkt_sizes);
+	free(st->pkt_timestamps);
+	free(st->pkt_io);
+	free(st);
+}
+
 /**
  * Allocate and initializes a server statistics structure.
  *

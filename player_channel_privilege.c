@@ -6,6 +6,11 @@
 
 #include <stdlib.h>
 
+void destroy_player_channel_privilege(struct player_channel_privilege *priv)
+{
+	free(priv);
+}
+
 struct player_channel_privilege *new_player_channel_privilege()
 {
 	struct player_channel_privilege *p;

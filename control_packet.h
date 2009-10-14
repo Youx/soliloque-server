@@ -53,8 +53,10 @@
 #define CTL_SERVSTATS		0x0196	/* server stats */
 #define CTL_BANLIST		0x019b	/* server list of bans */
 
+void send_message_to_all(struct player *pl, uint32_t color, char *msg);
 void *c_req_chans(char *data, unsigned int len, struct player *pl);
 void s_notify_new_player(struct player *pl);
+void s_notify_server_stopping(struct server *s);
 void *c_req_leave(char *data, unsigned int len, struct player *pl);
 void *c_req_kick_server(char *data, unsigned int len, struct player *pl);
 void *c_req_kick_channel(char *data, unsigned int len, struct player *pl);

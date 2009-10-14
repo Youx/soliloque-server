@@ -27,23 +27,29 @@
 
 static struct config *c = NULL;
 static char *log_header[5] = {"", "(EE)", "(WW)", "(II)", "(DBG)"};
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void logger(int loglevel, char *str, ...)
 {
 	va_list args;
-	static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	FILE *dst = stderr;
-	int lvl = LOG_INFO;
+	FILE *dst;
+	int lvl;
 	time_t t;
 	char time_fmt[26];
 	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 40);
 
+	pthread_mutex_lock(&mutex);
 	if (c != NULL) {
 		lvl = c->log.level;
 		dst = c->log.output;
+	} else {
+		lvl = LOG_INFO;
+		dst = stderr;
 	}
 
-	pthread_mutex_lock(&mutex);
+	if (loglevel > 4)
+		loglevel = 4;
+
 	va_start(args, str);
 	if (loglevel <= lvl) {
 		time(&t);
@@ -54,12 +60,14 @@ void logger(int loglevel, char *str, ...)
 		fflush(dst);
 	}
 	va_end(args);
-	pthread_mutex_unlock(&mutex);
 
 	free(str2);
+	pthread_mutex_unlock(&mutex);
 }
 
 void set_config(struct config *cfg)
 {
+	pthread_mutex_lock(&mutex);
 	c = cfg;
+	pthread_mutex_unlock(&mutex);
 }

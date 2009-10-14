@@ -42,3 +42,8 @@ struct registration *new_registration()
 
 	return r;
 }
+
+void destroy_registration(struct registration *r)
+{
+	free(r);
+}

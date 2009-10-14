@@ -32,6 +32,7 @@ struct ban
 
 struct ban *new_ban(uint16_t duration, struct in_addr ip, char *reason);
 struct ban *test_ban(int x);
+void destroy_ban(struct ban *b);
 
 int ban_to_data_size(struct ban *b);
 int ban_to_data(struct ban *b, char *dest);

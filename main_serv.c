@@ -26,6 +26,7 @@
 #include <inttypes.h>
 #include <openssl/sha.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "main_serv.h"
 #include "server.h"
@@ -43,6 +44,9 @@
 #include "queue.h"
 
 #define MAX_MSG 1024
+
+int nb_serv;
+struct array *ss;
 
 /* functions */
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
@@ -241,12 +245,37 @@ static void print_version()
 	printf("Soliloque Server version %s\n", VERSION);
 }
 
+void sigint()
+{
+	size_t iter;
+	struct server *s;
+	struct config *cfg;
+
+	printf("SIGINT received\n");
+	ar_each(struct server *, s, iter, ss)
+		cfg = s->conf;
+		ar_remove(ss, s);
+		server_stop(s);
+	ar_end_each;
+
+	/* cleanup database */
+	dbi_conn_close(cfg->conn);
+	printf("dbi_shutdown...\n");
+	dbi_shutdown();
+	printf("DONE!\n");
+
+	/* destroy config */
+	destroy_config(cfg);
+
+	signal(SIGINT, sigint);
+}
 
 int main(int argc, char **argv)
 {
-	struct server **ss;
 	struct config *c;
-	int i;
+	size_t iter;
+	struct server *s;
+	int i = 0;
 	int val;
 	int terminate = 0, wrongopt = 0, helpshown = 0;
 	char *configfile = NULL;
@@ -295,23 +324,29 @@ int main(int argc, char **argv)
 		logger(LOG_ERR, "Unable to connect to the database. Exiting.");
 		exit(0);
 	}
-	ss = db_create_servers(c);
+	ss = ar_new(2);
+	db_create_servers(c, ss);
 
-	for (i = 0 ; ss[i] != NULL ; i++) {
-		db_create_channels(c, ss[i]);
-		db_create_subchannels(c, ss[i]);
-		db_create_registrations(c, ss[i]);
-		db_create_sv_privileges(c, ss[i]);
-		sp_print(ss[i]->privileges);
-		db_create_pl_ch_privileges(c, ss[i]);
-		/* test_init_server(ss[i]); */
+	signal(SIGINT, sigint);
+	ar_each(struct server *, s, iter, ss)
+		db_create_channels(c, s);
+		db_create_subchannels(c, s);
+		db_create_registrations(c, s);
+		db_create_sv_privileges(c, s);
+		sp_print(s->privileges);
+		db_create_pl_ch_privileges(c, s);
 		logger(LOG_INFO, "Launching server %i", i);
-		server_start(ss[i]);
-	}
-	for (i = 0 ; ss[i] != NULL ; i++) {
-		pthread_join(ss[i]->main_thread, NULL);
-		pthread_join(ss[i]->packet_sender, NULL);
-	}
+		server_start(s);
+		i++;
+	ar_end_each;
+
+	ar_each(struct server *, s, iter, ss)
+		pthread_join(s->main_thread, NULL);
+		pthread_join(s->packet_sender, NULL);
+		free(s);
+	ar_end_each;
+
+	ar_free(ss);
 	logger(LOG_INFO, "Servers initialized.");
 	/* exit */
 	return 0;

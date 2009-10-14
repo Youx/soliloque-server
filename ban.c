@@ -27,6 +27,13 @@
 #include <errno.h>
 #include <stdio.h>
 
+void destroy_ban(struct ban *b)
+{
+	free(b->ip);
+	free(b->reason);
+	free(b);
+}
+
 /**
  * Create and initialize a new ban.
  * The ID is assigned only when the ban is added to the server.

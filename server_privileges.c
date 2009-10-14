@@ -50,6 +50,11 @@ int sp_to_bitfield(struct server_privileges *sp, char *data)
 	return 6 * 9;
 }
 
+void destroy_sp(struct server_privileges *sp)
+{
+	free(sp);
+}
+
 /**
  * Create an empty server_privileges structure
  *

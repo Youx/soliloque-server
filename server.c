@@ -24,6 +24,7 @@
 #include "log.h"
 #include "packet_sender.h"
 #include "queue.h"
+#include "control_packet.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +38,8 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <openssl/sha.h>
+#include <unistd.h>
+#include <dbi/dbi.h>
 
 #ifdef HAVE_LIBBSD
 #include <bsd/bsd.h>
@@ -627,5 +630,56 @@ void server_start(struct server *s)
 
 void server_stop(struct server *s)
 {
+	size_t iter;
+	struct player *tmp_pl;
+	void *el;
 
+	/* send exit requests to players */
+	//send_message_to_all(NULL, 0x00FF0000, "Server is stopping.");
+	ar_each(struct player *, tmp_pl, iter, s->players)
+		s_notify_server_stopping(s);
+		remove_player(s, tmp_pl);
+	ar_end_each;
+	/* wait for all players to have been destroyed */
+	while(s->leaving_players->used_slots != 0);
+
+	/* cancel the main thread */
+	pthread_cancel(s->main_thread);
+	/* cancel the packet sender thread */
+	pthread_cancel(s->packet_sender);
+
+	set_config(NULL);
+
+	/* destroy channels and channel list */
+	ar_each(void *, el, iter, s->chans)
+		ar_remove(s->chans, el);
+		destroy_channel(el);
+	ar_end_each;
+	ar_free(s->chans);
+
+	/* destroy player list */
+	ar_free(s->players);
+	/* destroy leaving player list */
+	ar_free(s->leaving_players);
+	/* destroy bans and ban list */
+	ar_each(void *, el, iter, s->bans)
+		ar_remove(s->bans, el);
+		destroy_ban(el);
+	ar_end_each;
+	ar_free(s->bans);
+
+	/* destroy registrations and registration list */
+	ar_each(void *, el, iter, s->regs)
+		ar_remove(s->regs, el);
+		destroy_registration(el);
+	ar_end_each;
+	ar_free(s->regs);
+
+	/* destroy server stats */
+	destroy_sstat(s->stats);
+	/* destroy server privileges */
+	destroy_sp(s->privileges);
+
+	/* close the socket */
+	close(s->socket_desc);
 }

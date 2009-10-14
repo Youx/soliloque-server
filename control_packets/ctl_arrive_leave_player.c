@@ -71,6 +71,42 @@ void s_notify_new_player(struct player *pl)
 	free(data);
 }
 
+void s_notify_server_stopping(struct server *s)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 64;
+	size_t iter;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		logger(LOG_WARN, "s_notify_player_left, packet allocation failed : %s.", strerror(errno));
+		return;
+	}
+	ar_each(struct player *, tmp_pl, iter, s->players)
+		ptr = data;
+
+		*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+		*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
+		*(uint32_t *)ptr = tmp_pl->private_id;	ptr += 4;/* private ID */
+		*(uint32_t *)ptr = tmp_pl->public_id;	ptr += 4;	/* public ID */
+		*(uint32_t *)ptr = tmp_pl->f0_s_counter;ptr += 4;	/* packet counter */
+		/* packet version */			ptr += 4;	/* not done yet */
+		/* empty checksum */			ptr += 4;	/* filled later */
+		*(uint32_t *)ptr = tmp_pl->public_id;	ptr += 4;	/* ID of player who left */
+		*(uint32_t *)ptr = 4;			ptr += 4;	/* 4 = server stopping */
+		/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
+
+		/* check we filled all the packet */
+		assert((ptr - data) == data_size);
+
+		packet_add_crc_d(data, data_size);
+		send_to(s, data, data_size, 0, tmp_pl);
+		tmp_pl->f0_s_counter++;
+	ar_end_each;
+	free(data);
+}
+
 /**
  * Send a "player disconnected" message to all players.
  *
