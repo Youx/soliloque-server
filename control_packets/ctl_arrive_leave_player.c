@@ -49,8 +49,8 @@ void s_notify_new_player(struct player *pl)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CREATE_PL;	ptr += 2;	/* */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_CREATE_PL, &ptr);
 	/* public and private ID */		ptr += 8;	/* done later */
 	/* counter */				ptr += 4;	/* done later */
 	/* packet version */			ptr += 4;	/* empty for now */

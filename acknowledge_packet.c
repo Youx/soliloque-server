@@ -45,11 +45,11 @@ void send_acknowledge(struct player *pl)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_ACK;	ptr+=2;
-	*(uint16_t *)ptr = 0x0000;		ptr+=2;
-	*(uint32_t *)ptr = pl->private_id;	ptr+=4;
-	*(uint32_t *)ptr = pl->public_id;	ptr+=4;
-	*(uint32_t *)ptr = pl->f1_s_counter;	ptr+=4;
+	wu16(PKT_TYPE_ACK, &ptr);
+	wu16(0x0000, &ptr);
+	wu32(pl->private_id, &ptr);
+	wu32(pl->public_id, &ptr);
+	wu32(pl->f1_s_counter, &ptr);
 
 	/* check we filled the whole packet */
 	assert((ptr - data) == data_size);

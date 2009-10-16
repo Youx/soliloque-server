@@ -106,8 +106,16 @@ uint16_t ru16(char **ptr)
 	return GUINT16_FROM_LE(*(uint16_t *)(*ptr - 2));
 }
 
-uint16_t ru8(char **ptr)
+uint8_t ru8(char **ptr)
 {
 	*ptr += 1;
 	return *(uint8_t *)(*ptr - 1);
+}
+
+char *rstaticstring(int maxlen, char **ptr)
+{
+	int len = MIN(maxlen, **ptr);
+	char *res = strndup((*ptr) + 1, len);
+	*ptr += (1 + maxlen);
+	return res;
 }

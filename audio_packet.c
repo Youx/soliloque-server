@@ -62,12 +62,14 @@ int audio_received(char *in, size_t len, struct server *s)
 	size_t data_size, audio_block_size, expected_size;
 	ssize_t err;
 	size_t iter;
-	char *data, *ptr;
+	char *data, *ptr, *ptrin;
 	
-	data_codec = (uint8_t)in[3];
+	ptrin = in;
+	ptrin += 3;
+	data_codec = ru8(&ptrin);
+	priv_id = ru32(&ptrin);
+	pub_id = ru32(&ptrin);
 	
-	memcpy(&priv_id, in + 4, 4);
-	memcpy(&pub_id, in + 8, 4);
 	sender = get_player_by_ids(s, pub_id, priv_id);
 
 	if (sender != NULL) {
@@ -95,24 +97,27 @@ int audio_received(char *in, size_t len, struct server *s)
 			return -1;
 		}
 		ptr = data;
-
-		*(uint16_t *)ptr = 0xbef3;			ptr += 2;		/* function code */
+		wu16(0xbef3, &ptr); 			/* function code */
 		/* 1 byte empty */				ptr += 1;		/* NULL */
-		*(uint8_t *)ptr = ch_in->codec;			ptr += 1;		/* codec */
+		wu8(ch_in->codec, &ptr);		/* codec */
 		/* private ID */				ptr += 4;		/* empty yet */
 		/* public ID */					ptr += 4;		/* empty yet */
-		*(uint16_t *)ptr = 0;				ptr += 2;		/* unknown, maybe server conversation ID? */
-		*(uint16_t *)ptr = *(uint16_t *)(in + 14);	ptr += 2;		/* counter */
-		*(uint32_t *)ptr = sender->public_id;		ptr += 4;		/* ID of sender */
-		*(uint16_t *)ptr = *(uint16_t *)(in + 12);	ptr += 2;		/* conversation counter */
-		memcpy(ptr, in + 16, audio_block_size);		ptr += audio_block_size;
+		wu16(0, &ptr);				/* unknown, maybe server conversation ID? */
+		wu16(*(uint16_t *)(in + 14), &ptr);	/* counter */
+		wu32(sender->public_id, &ptr);		/* ID of sender */
+		wu16(*(uint16_t *)(in + 12), &ptr);	/* conversation counter */
+		/* audio data */
+		memcpy(ptr, in + 16, audio_block_size);
+		ptr += audio_block_size;
+
 		/* assert we filled the whole packet */
 		assert((ptr - data) == data_size);
 
 		ar_each(struct player *, tmp_pl, iter, ch_in->players)
 			if (tmp_pl != sender && !ar_has(tmp_pl->muted, sender)) {
-				*(uint32_t *)(data + 4) = tmp_pl->private_id;
-				*(uint32_t *)(data + 8) = tmp_pl->public_id;
+				ptr = data + 4;
+				wu32(tmp_pl->private_id, &ptr);
+				wu32(tmp_pl->public_id, &ptr);
 				err = sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0,
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 				if (err == -1) {

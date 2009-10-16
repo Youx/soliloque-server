@@ -113,7 +113,6 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	char *nickname;
 	char *login;
 	char *password;
-	size_t tmp_size;
 	char *ptr = data;
 	uint16_t version[4];
 
@@ -124,26 +123,20 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	}
 	
 	/* Copy fields */
-	/* Bypass header */				ptr += 16;
-	/* Bypass checksum */				ptr += 4;
-	/* Copy the strings to a null terminated format */
-	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of client */
-	client = strndup(ptr, tmp_size);		ptr += 29;	/* client */
-	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of machine */
-	machine = strndup(ptr, tmp_size);		ptr += 29;	/* machine */
-	version[0] = *(uint16_t *)ptr;			ptr += 2;
-	version[1] = *(uint16_t *)ptr;			ptr += 2;
-	version[2] = *(uint16_t *)ptr;			ptr += 2;
-	version[3] = *(uint16_t *)ptr;			ptr += 2;
-	/* not used yet */				ptr += 2;
-	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of login */
-	login = strndup(ptr, tmp_size);			ptr += 29;	/* login */
-	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of password */
-	password = strndup(ptr, tmp_size);		ptr += 29;	/* password */
-	tmp_size = MIN(29, *ptr);			ptr += 1;	/* size of nickname */
-	nickname = strndup(ptr, tmp_size);		ptr += 29;	/* nickname */
+	ptr += 16;				/* Bypass header */
+	ptr += 4;				/* Bypass checksum */
+	client = rstaticstring(29, &ptr);	/* client */
+	machine = rstaticstring(29, &ptr);	/* machine */
+	version[0] = ru16(&ptr);		/* version */
+	version[1] = ru16(&ptr);
+	version[2] = ru16(&ptr);
+	version[3] = ru16(&ptr);
+	ptr += 2;				/* not used yet */
+	login = rstaticstring(29, &ptr);	/* login */
+	password = rstaticstring(29, &ptr);	/* password */
+	nickname = rstaticstring(29, &ptr);	/* nickname */
 
-	/* check we filled the whole data */
+	/* check we read the whole data */
 	assert(ptr - data == len);
 	
 	/* Initialize player */
@@ -182,13 +175,12 @@ int player_to_data(struct player *pl, char *data)
 	int size = player_to_data_size(pl);
 	char *ptr = data;
 
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* public ID */
-	*(uint32_t *)ptr = pl->in_chan->id;		ptr += 4;	/* channel ID */
-	*(uint16_t *)ptr = player_get_channel_privileges(pl, pl->in_chan);	ptr += 2;	/* player chan privileges */
-	*(uint16_t *)ptr = pl->global_flags;		ptr += 2;	/* player global flags */
-	*(uint16_t *)ptr = pl->player_attributes;	ptr += 2;	/* player attributes */
-	*ptr = MIN(29, strlen(pl->name));		ptr += 1;	/* player name size */
-	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;	/* player name */
+	wu32(pl->public_id, &ptr);	/* public ID */
+	wu32(pl->in_chan->id, &ptr);	/* channel ID */
+	wu16(player_get_channel_privileges(pl, pl->in_chan), &ptr);	/* player chan privileges */
+	wu16(pl->global_flags, &ptr);	/* player global flags */
+	wu16(pl->player_attributes, &ptr);	/* player attributes */
+	wstaticstring(pl->name, 29, &ptr);	/* player name */
 
 	assert((ptr - data) == size);
 

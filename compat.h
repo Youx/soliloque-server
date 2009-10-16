@@ -64,9 +64,12 @@ char *strndup(char const *s, size_t n);
 char *ustrtohex (unsigned char *data, size_t len);
 void wu32(uint32_t val, char **ptr);
 void wu16(uint16_t val, char **ptr);
+void wu8(uint8_t val, char **ptr);
 void wstaticstring(char *str, int maxlen, char **ptr);
 uint32_t ru32(char **ptr);
 uint16_t ru16(char **ptr);
+uint8_t ru8(char **ptr);
+char *rstaticstring(int maxlen, char **ptr);
 
 #ifdef __APPLE__
 #include <machine/endian.h>
