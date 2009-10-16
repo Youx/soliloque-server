@@ -205,8 +205,8 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 	/* add some stats */
 	sstat_add_packet(s->stats, len, 0);
 	/* add some stats for the player if he exists */
-	priv = *(uint32_t *)(data + 4);
-	pub = *(uint32_t *)(data + 8);
+	priv = GUINT32_FROM_LE(*(uint32_t *)(data + 4));
+	pub = GUINT32_FROM_LE(*(uint32_t *)(data + 8));
 	pl = get_player_by_ids(s, pub, priv);
 	if (pl != NULL) {
 		pl->stats->pkt_sent++;
@@ -214,7 +214,7 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 	}
 
 	/* first a few tests */
-	switch (((uint16_t *)data)[0]) {
+	switch (GUINT16_FROM_LE(((uint16_t *)data)[0])) {
 	case 0xbef0:		/* commands */
 		handle_control_type_packet(data, len, cli_addr, cli_len, s);
 		break;

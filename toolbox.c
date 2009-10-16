@@ -65,3 +65,49 @@ char *ustrtohex (unsigned char *data, size_t len)
 
 	return dst;
 }
+
+void wu32(uint32_t val, char **ptr)
+{
+	*(uint32_t *)(*ptr) = GUINT32_TO_LE(val);
+	*ptr += 4;
+}
+
+void wu16(uint16_t val, char **ptr)
+{
+	*(uint16_t *)(*ptr) = GUINT16_TO_LE(val);
+	*ptr += 2;
+}
+
+void wu8(uint8_t val, char **ptr)
+{
+	*(uint8_t *)(*ptr) = val;
+	*ptr += 1;
+}
+
+void wstaticstring(char *str, int maxlen, char **ptr)
+{
+	char len;
+	len = MIN(maxlen, strlen(str));
+	**ptr = len;
+	(*ptr) += 1;
+	strncpy(*ptr, str, len);
+	(*ptr) += maxlen;
+}
+
+uint32_t ru32(char **ptr)
+{
+	*ptr += 4;
+	return GUINT32_FROM_LE(*(uint32_t *)(*ptr - 4));
+}
+
+uint16_t ru16(char **ptr)
+{
+	*ptr += 2;
+	return GUINT16_FROM_LE(*(uint16_t *)(*ptr - 2));
+}
+
+uint16_t ru8(char **ptr)
+{
+	*ptr += 1;
+	return *(uint8_t *)(*ptr - 1);
+}

@@ -55,32 +55,35 @@ static void server_accept_connection(struct player *pl)
 	}
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
-	/* Checksum initialize at the end */		ptr += 4;
-	*ptr = MIN(29, strlen(s->server_name));		ptr += 1;	/* Length of server name */
-	strncpy(ptr, s->server_name, *(ptr - 1));	ptr += 29;	/* Server name */
-	*ptr = MIN(29, strlen(s->machine));			ptr += 1;	/* Length of server machine */
-	strncpy(ptr, s->machine, *(ptr - 1));		ptr += 29;	/* Server machine */
+	wu32(0x0004bef4, &ptr);		/* Function field */
+	wu32(pl->private_id, &ptr);	/* Private ID */
+	wu32(pl->public_id, &ptr);	/* Public ID */
+	wu32(pl->f4_s_counter, &ptr);	/* Packet counter */
+	ptr += 4;			/* Checksum initialize at the end */	
+	
+	wstaticstring(s->server_name, 29, &ptr);/* Server name */
+	wstaticstring(s->machine, 29, &ptr);	/* Server machine */
+
 	/* Server version */
-	*(uint16_t *)ptr = 2;				ptr += 2;	/* Server version (major 1) */
-	*(uint16_t *)ptr = 0;				ptr += 2;	/* Server version (major 2) */
-	*(uint16_t *)ptr = 20;				ptr += 2;	/* Server version (minor 1) */
-	*(uint16_t *)ptr = 1;				ptr += 2;	/* Server version (minor 2) */
-	*(uint32_t *)ptr = 1;				ptr += 4;	/* Error code (1 = OK, 2 = Server Offline */
-	*(uint16_t *)ptr = 0x1FEF;			ptr += 2;	/* supported codecs (1<<codec | 1<<codec2 ...) */
-							ptr += 7;
+	wu16(2, &ptr);			/* Server version (major 1) */
+	wu16(0, &ptr);			/* Server version (major 2) */
+	wu16(20, &ptr);			/* Server version (minor 1) */
+	wu16(1, &ptr);			/* Server version (minor 2) */
+	wu32(1, &ptr);			/* Error code (1 = OK, 2 = Server Offline */
+	wu16(0x1FEF, &ptr);		/* supported codecs (1<<codec | 1<<codec2 ...) */
+
+	ptr += 7;
 	/* 0 = SA, 1 = CA, 2 = Op, 3 = Voice, 4 = Reg, 5 = Anonymous */
 	sp_to_bitfield(s->privileges, ptr);
-	/* garbage data */				ptr += 71;
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*ptr = MIN(255, strlen(s->welcome_msg));	ptr += 1;	/* Length of welcome message */
-	strncpy(ptr, s->welcome_msg, *(ptr - 1));	ptr += 255;	/* Welcome message */
+	/* garbage data */
+	ptr += 71;
+	wu32(pl->private_id, &ptr);	/* Private ID */
+	wu32(pl->public_id, &ptr);	/* Public ID */
+
+	wstaticstring(s->welcome_msg, 255, &ptr);	/* Welcome message */
 
 	/* check we filled the whole packet */
+	printf("%li != %i\n", ptr - data, data_size);
 	assert((ptr - data) == data_size);
 
 	/* Add CRC */
@@ -110,10 +113,10 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 	}
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0004bef4;			ptr += 4;	/* Function field */
+	wu32(0x0004bef4, &ptr);		/* Function field */
 	/* *(uint32_t *)ptr = pl->private_id;*/		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
-	*(uint32_t *)ptr = 2;				ptr += 4;	/* Packet counter */
+	wu32(5, &ptr);			/* Public ID */
+	wu32(2, &ptr);			/* Packet counter */
 	/* Checksum initialize at the end */		ptr += 4;
 	/* *ptr = 14;*/					ptr += 1;	/* Length of server name */
 	/* memcpy(ptr, "Nom du serveur", 14);*/		ptr += 29;	/* Server name */
@@ -124,11 +127,11 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 	/* *(uint16_t *)ptr = 0;*/			ptr += 2;	/* Server version (major 2) */
 	/* *(uint16_t *)ptr = 20;*/			ptr += 2;	/* Server version (minor 1) */
 	/* *(uint16_t *)ptr = 1;*/			ptr += 2;	/* Server version (minor 2) */
-	*(uint32_t *)ptr = 0xFFFFFFFA;			ptr += 4;	/* Error code (1 = OK, 2 = Server Offline, 0xFFFFFFFA = Banned */
+	wu32(0xFFFFFFFA, &ptr);	/* Error code (1 = OK, 2 = Server Offline, 0xFFFFFFFA = Banned */
 	/* rights */					ptr += 80;
 
-	*(uint32_t *)ptr = 0x00584430;			ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = 5;				ptr += 4;	/* Public ID */
+	wu32(0x00584430, &ptr);	/* Private ID */
+	wu32(5, &ptr);		/* Public ID */
 	/* *ptr = 26;*/					ptr += 1;	/* Length of welcome message */
 	/* memcpy(ptr, "Bienvenue sur mon serveur.", 26);*/	ptr += 255;	/* Welcome message */
 
@@ -230,12 +233,12 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 	}
 	ptr = data;
 
-	*(uint32_t *)ptr = 0x0002bef4;			ptr += 4;	/* Function field */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* Private ID */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* Public ID */
-	*(uint32_t *)ptr = pl->f4_s_counter;		ptr += 4;	/* Packet counter */
+	wu32(0x0002bef4, &ptr);		/* Function field */
+	wu32(pl->private_id, &ptr);	/* Private ID */
+	wu32(pl->public_id, &ptr);	/* Public ID */
+	wu32(pl->f4_s_counter, &ptr);	/* Packet counter */
 	/* Checksum initialize at the end */		ptr += 4;
-	*(uint32_t *)ptr = ka_id;			ptr += 4;	/* ID of the keepalive to confirm */
+	wu32(ka_id, &ptr);		/* ID of the keepalive to confirm */
 
 	/* check we filled the whole packet */
 	assert((ptr - data) == data_size);
@@ -261,20 +264,21 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 {
 	struct player *pl;
+	char *ptr = data;
 	uint32_t pub_id, priv_id, ka_id;
 	/* Check crc */
 	if(!packet_check_crc(data, len, 16))
 		return;
 	/* Retrieve the player */
-	priv_id = *(uint32_t *)(data + 4);
-	pub_id = *(uint32_t *)(data + 8);
+	ptr += 4;
+	priv_id = ru32(&ptr);
+	pub_id = ru32(&ptr);
+	ka_id = ru32(&ptr); 	/* Get the counter */
 	pl = get_player_by_ids(s, pub_id, priv_id);
 	if (pl == NULL) {
 		logger(LOG_WARN, "handle_player_keepalive : pl == NULL. Why????");
 		return;
 	}
-	/* Get the counter */
-	ka_id = *(uint32_t *)(data + 12);
 	/* Send the keepalive response */
 	s_resp_keepalive(pl, ka_id);
 	/* Update the last_ping field */
