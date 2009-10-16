@@ -606,11 +606,14 @@ static void *server_run(void *args)
 void server_start(struct server *s)
 {
 	struct sockaddr_in serv_addr;
-	int rc;
+	int rc, on;
 
 	/* socket creation */
 	s->socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
 	ERROR_IF(s->socket_desc < 0);
+	/* make the socket reusable */
+	on = 1;
+	setsockopt(s->socket_desc, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	/* bind local server port */
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
