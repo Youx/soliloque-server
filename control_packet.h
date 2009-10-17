@@ -35,6 +35,7 @@
 #define CTL_CHKICK_PL		0x0066	/* kick from channel */
 #define CTL_SWITCHCHAN		0x0067	/* player switched channels */
 #define CTL_CHANGE_PL_STATUS	0x0068	/* player status changed */
+#define CTL_VOICE_REQUESTED	0x0069  /* player requested voice */
 #define CTL_CHANGE_PL_CHPRIV	0x006a	/* player channel priv changed */
 #define CTL_CHANGE_PL_SVPRIV	0x006b	/* player servr priv changed */
 #define CTL_PLAYER_MOVED	0x006d	/* move a player from a channel to another */
@@ -68,6 +69,7 @@ void *c_req_remove_ban(char *data, unsigned int len, struct player *pl);
 void *c_req_ip_ban(char *data, unsigned int len, struct player *pl);
 void *c_req_server_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *pl);
+void *c_req_request_voice(char *data, unsigned int len, struct player *pl);
 void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *pl);
 void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl);
 void *c_req_send_message(char *data, unsigned int len, struct player *pl);

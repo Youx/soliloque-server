@@ -74,6 +74,7 @@ static void init_callbacks(void)
 	f0_callbacks[1][0x2e] = &c_req_kick_channel;	/* client wants to kick someone from the channel */
 	f0_callbacks[1][0x2f] = &c_req_switch_channel;	/* client wants to switch channels */
 	f0_callbacks[1][0x30] = &c_req_change_player_attr; /* change player attributes */
+	f0_callbacks[1][0x31] = &c_req_request_voice;	/* player requests voice */
 	f0_callbacks[1][0x32] = &c_req_change_player_ch_priv;	/* change player channel privileges */
 	f0_callbacks[1][0x33] = &c_req_change_player_sv_right;	/* change global flags */
 	f0_callbacks[1][0x34] = &c_req_register_player;	/* create a new registration and associate the player to it */

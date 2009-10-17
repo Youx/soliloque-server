@@ -42,7 +42,8 @@
 #define GLOBAL_FLAG_REGISTERED  4
 
 /* Player attributes */
-/* TODO: what are 1 and 2 ??? */
+#define PL_ATTR_CHAN_COMMANDER	1
+#define PL_ATTR_REQUEST_VOICE	2
 #define PL_ATTR_BLOCK_WHISPER	4
 #define PL_ATTR_AWAY		8
 #define PL_ATTR_MUTE_MIC	16
@@ -57,6 +58,7 @@ struct player {
 	char machine[30];
 	char name[30];
 	char login[30];
+	char voice_request[30];
 
 	uint16_t version[4];
 	

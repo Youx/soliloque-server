@@ -22,6 +22,8 @@
 #include "packet_tools.h"
 #include "acknowledge_packet.h"
 #include "server_stat.h"
+#include "channel.h"
+#include "player.h"
 
 #include <errno.h>
 #include <string.h>
@@ -120,6 +122,54 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 }
 
 /**
+ * Notify all players of a player's status change
+ * has been granted/revoked.
+ *
+ * @param pl the player who granted/revoked the privilege
+ * @param tgt the player whose privileges are going to change
+ * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
+ * @param on_off switch this right on or off
+ */
+static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 30;
+	struct server *s = pl->in_chan->in_server;
+	size_t iter;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		logger(LOG_WARN, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
+		return;
+	}
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_CHANGE_PL_STATUS;ptr += 2;	/* */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
+	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
+
+	/* check we filled all the packet */
+	assert((ptr - data) == data_size);
+
+	ar_each(struct player *, tmp_pl, iter, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0, tmp_pl);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+	free(data);
+}
+
+/**
  * Notify all players that a player's channel privilege
  * has been granted/revoked.
  *
@@ -213,8 +263,14 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 		logger(LOG_INFO, "Player priv before : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		if (on_off == 2)
 			player_clr_channel_privilege(tgt, tgt->in_chan, (1 << right));
-		else if(on_off == 0)
+		else if(on_off == 0) {
 			player_set_channel_privilege(tgt, tgt->in_chan, (1 << right));
+			/* if the player was requesting a voice and we granted him, remove the voice request */
+			if (priv_required == SP_PL_GRANT_VOICE && tgt->player_attributes & PL_ATTR_REQUEST_VOICE) {
+				tgt->player_attributes &= ~PL_ATTR_REQUEST_VOICE;
+				s_notify_player_attr_changed(tgt, tgt->player_attributes);
+			}
+		}
 		logger(LOG_INFO, "Player priv after  : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		s_notify_player_ch_priv_changed(pl, tgt, right, on_off);
 	}
@@ -341,54 +397,6 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 		s_notify_player_sv_right_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
-}
-
-/**
- * Notify all players of a player's status change
- * has been granted/revoked.
- *
- * @param pl the player who granted/revoked the privilege
- * @param tgt the player whose privileges are going to change
- * @param right the offset of the right (1 << right == CHANNEL_PRIV_XXX)
- * @param on_off switch this right on or off
- */
-static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
-{
-	char *data, *ptr;
-	struct player *tmp_pl;
-	int data_size = 30;
-	struct server *s = pl->in_chan->in_server;
-	size_t iter;
-
-	data = (char *)calloc(data_size, sizeof(char));
-	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
-		return;
-	}
-	ptr = data;
-
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANGE_PL_STATUS;ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
-	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
-
-	/* check we filled all the packet */
-	assert((ptr - data) == data_size);
-
-	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
-			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0, tmp_pl);
-			tmp_pl->f0_s_counter++;
-	ar_end_each;
-	free(data);
 }
 
 /**
@@ -558,5 +566,63 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 		logger(LOG_WARN, "c_req_mute_player : on_off != 0/1");
 	}
 
+	return NULL;
+}
+
+static void s_notify_player_requested_voice(struct player *pl)
+{
+	char *data, *ptr;
+	struct player *tmp_pl;
+	int data_size = 58;
+	struct server *s = pl->in_chan->in_server;
+	size_t iter;
+
+	data = (char *)calloc(data_size, sizeof(char));
+	if (data == NULL) {
+		logger(LOG_WARN, "s_notify_player_requested_voice, packet allocation failed : %s.", strerror(errno));
+		return;
+	}
+	ptr = data;
+
+	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
+	*(uint16_t *)ptr = CTL_VOICE_REQUESTED;	ptr += 2;	/* */
+	/* private ID */			ptr += 4;	/* filled later */
+	/* public ID */				ptr += 4;	/* filled later */
+	/* packet counter */			ptr += 4;	/* filled later */
+	/* packet version */			ptr += 4;	/* not done yet */
+	/* empty checksum */			ptr += 4;	/* filled later */
+	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* player who requested voice */
+	*ptr = (char)strlen(pl->voice_request);	ptr += 1;	/* length of reason */
+	strncpy(ptr, pl->voice_request, *(ptr - 1));	ptr += 29;	/*reason */
+
+	assert(ptr - data == data_size);
+	
+	ar_each(struct player *, tmp_pl, iter, s->players)
+			*(uint32_t *)(data + 4) = tmp_pl->private_id;
+			*(uint32_t *)(data + 8) = tmp_pl->public_id;
+			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			packet_add_crc_d(data, data_size);
+			send_to(s, data, data_size, 0, tmp_pl);
+			tmp_pl->f0_s_counter++;
+	ar_end_each;
+	free(data);
+}
+
+void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
+{
+	/*if (len != 54) {
+		TODO
+	}*/
+	send_acknowledge(pl);		/* ACK */
+	/* if the channel is not moderated or the player already has voice, refuse! */
+	if (!(player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
+		!(pl->in_chan->flags & CHANNEL_FLAG_MODERATED)) {
+		return NULL;
+	}
+	bzero(pl->voice_request, 30);
+	strncpy(pl->voice_request, data + 25, MIN(29, data[24]));
+	pl->player_attributes |= PL_ATTR_REQUEST_VOICE;
+
+	s_notify_player_requested_voice(pl);
 	return NULL;
 }
