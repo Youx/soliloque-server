@@ -60,9 +60,10 @@ void s_notify_new_player(struct player *pl)
 	/* customize and send for each player on the server */
 	ar_each(struct player *, tmp_pl, iter, s->players)
 		if (tmp_pl != pl) {
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -86,16 +87,16 @@ void s_notify_server_stopping(struct server *s)
 	ar_each(struct player *, tmp_pl, iter, s->players)
 		ptr = data;
 
-		*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-		*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
-		*(uint32_t *)ptr = tmp_pl->private_id;	ptr += 4;/* private ID */
-		*(uint32_t *)ptr = tmp_pl->public_id;	ptr += 4;	/* public ID */
-		*(uint32_t *)ptr = tmp_pl->f0_s_counter;ptr += 4;	/* packet counter */
-		/* packet version */			ptr += 4;	/* not done yet */
-		/* empty checksum */			ptr += 4;	/* filled later */
-		*(uint32_t *)ptr = tmp_pl->public_id;	ptr += 4;	/* ID of player who left */
-		*(uint32_t *)ptr = 4;			ptr += 4;	/* 4 = server stopping */
-		/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
+		wu16(PKT_TYPE_CTL, &ptr);
+		wu16(CTL_PLAYERLEFT, &ptr);
+		wu32(tmp_pl->private_id, &ptr);		/* private ID */
+		wu32(tmp_pl->public_id, &ptr);		/* public ID */
+		wu32(tmp_pl->f0_s_counter, &ptr);	/* packet counter */
+		ptr += 4;				/* packet version */
+		ptr += 4;				/* empty checksum */
+		wu32(tmp_pl->public_id, &ptr);		/* ID of player who left */
+		wu32(4, &ptr);				/* 4 = server stopping */
+		ptr += 32;				/* 32 bytes of garbage?? */
 
 		/* check we filled all the packet */
 		assert((ptr - data) == data_size);
@@ -127,24 +128,25 @@ void s_notify_player_left(struct player *p)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = p->f0_s_counter;	ptr += 4;	/* packet counter */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = p->public_id;	ptr += 4;	/* ID of player who left */
-	*(uint32_t *)ptr = 1;			ptr += 4;	/* visible notification */
-	/* 32 bytes of garbage?? */		ptr += 32;	/* maybe some message ? */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_PLAYERLEFT, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4; 				/* public ID */
+	wu32(p->f0_s_counter, &ptr);		/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(p->public_id, &ptr); 		/* ID of player who left */
+	wu32(1, &ptr);				/* visible notification */
+	ptr += 32;				/* 32 bytes of garbage?? */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
