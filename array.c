@@ -156,7 +156,6 @@ static void ar_remove_index(struct array *a, size_t idx)
 {
 	if (a == NULL || a->array == NULL) {
 		logger(LOG_WARN, "ar_remove_index, passed array is unallocated.");
-		pthread_mutex_unlock(&a->lock);
 		return;
 	}
 	if (a->array[idx] != NULL) {
