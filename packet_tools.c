@@ -77,7 +77,7 @@ int packet_check_crc(char *data, size_t len, unsigned int offset)
 
 /**
  * Add a crc to a packet at the default offset
- * Most packets have the checksum at start+24 bytes, 
+ * Most packets have the checksum at start+20 bytes,
  * but some have it at start+16 bytes.
  *
  * @param data the packet
@@ -90,7 +90,7 @@ void packet_add_crc_d(char *data, size_t len)
 
 /**
  * Check the crc of a packet at the default offset
- * Most packets have the checksum at start+24 bytes,
+ * Most packets have the checksum at start+20 bytes,
  * but some have it at start+16 bytes.
  *
  * @param data the packet

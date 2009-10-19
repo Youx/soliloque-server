@@ -137,10 +137,10 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 			return;
 		}
 		/* Check CRC */
-		/*if (packet_check_crc_d(data, len)) {
-			logger(LOG_WARN, "Control packet has invalid CRC");
+		if (!packet_check_crc_d(data, len)) {
+			logger(LOG_WARN, "Control packet (0x%x) has invalid CRC", *(uint32_t *)data);
 			return;
-		}*/
+		}
 		/* Check if player exists */
 		memcpy(&private_id, data + 4, 4);
 		memcpy(&public_id, data + 8, 4);
