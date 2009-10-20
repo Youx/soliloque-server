@@ -54,25 +54,26 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 	new_priv = get_player_channel_privilege(pl, to);
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_SWITCHCHAN;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player who switched */
-	*(uint32_t *)ptr = from->id;		ptr += 4;	/* ID of previous channel */
-	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
-	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_SWITCHCHAN, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(pl->public_id, &ptr);		/* ID of player who switched */
+	wu32(from->id, &ptr);			/* ID of previous channel */
+	wu32(to->id, &ptr);			/* channel the player switched to */
+	wu16(new_priv->flags, &ptr);
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -92,13 +93,13 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 {
 	struct channel *to, *from;
 	uint32_t to_id;
-	char pass[30];
+	char *pass, *ptr;
 	struct server *s = pl->in_chan->in_server;
 
-	memcpy(&to_id, data + 24, 4);
+	ptr = data + 24;
+	to_id = ru32(&ptr);
 	to = get_channel_by_id(s, to_id);
-	bzero(pass, 30);
-	strncpy(pass, data + 29, MIN(29, data[28]));
+	pass = rstaticstring(29, &ptr);
 
 	if (to != NULL) {
 		send_acknowledge(pl);		/* ACK */
@@ -118,6 +119,7 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 			}
 		}
 	}
+	free(pass);
 	return NULL;
 }
 
@@ -145,23 +147,24 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANGE_PL_STATUS;ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* ID of player whose attr changed */
-	*(uint16_t *)ptr = new_attr;		ptr += 2;	/* new attributes */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_CHANGE_PL_STATUS, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(pl->public_id, &ptr);		/* ID of player whose attr changed */
+	wu16(new_attr, &ptr);			/* new attributes */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -193,25 +196,26 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANGE_PL_CHPRIV;ptr += 2;	/* */
-	/* private ID */			ptr += 4;/* filled later */
-	/* public ID */				ptr += 4;/* filled later */
-	/* packet counter */			ptr += 4;/* filled later */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* ID of player whose channel priv changed */
-	*(uint8_t *)ptr = on_off;		ptr += 1;/* switch the priv ON/OFF */
-	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the privilege (1<<right) */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of the player who changed the priv */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_CHANGE_PL_CHPRIV, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(tgt->public_id, &ptr);		/* ID of player whose channel priv changed */
+	wu8(on_off, &ptr);			/* switch the priv ON/OFF */
+	wu8(right, &ptr);			/* offset of the privilege (1<<right) */
+	wu32(pl->public_id, &ptr);		/* ID of the player who changed the priv */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -230,14 +234,15 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 {
 	struct player *tgt;
 	uint32_t tgt_id;
-	char on_off, right;
+	char on_off, right, *ptr;
 	int priv_required;
 
 	send_acknowledge(pl);		/* ACK */
 
-	memcpy(&tgt_id, data + 24, 4);
-	on_off = data[28];
-	right = data[29];
+	ptr = data + 24;
+	tgt_id = ru32(&ptr);
+	on_off = ru8(&ptr);
+	right = ru8(&ptr);
 	tgt = get_player_by_public_id(pl->in_chan->in_server, tgt_id);
 
 	switch (1 << right) {
@@ -301,29 +306,30 @@ void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, cha
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANGE_PL_SVPRIV;ptr += 2;	/* */
-	/* private ID */			ptr += 4;/* filled later */
-	/* public ID */				ptr += 4;/* filled later */
-	/* packet counter */			ptr += 4;/* filled later */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* ID of player whose global flags changed */
-	*(uint8_t *)ptr = on_off;		ptr += 1;/* set or unset the flag */
-	*(uint8_t *)ptr = right;		ptr += 1;/* offset of the flag (1 << right) */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_CHANGE_PL_SVPRIV, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(tgt->public_id, &ptr);		/* ID of player whose global flags changed */
+	wu8(on_off, &ptr);			/* set or unset the flag */
+	wu8(right, &ptr);			/* offset of the flag (1 << right) */
 	if (pl != NULL) {
-		*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* ID of player who changed the flag */
+		wu32(pl->public_id, &ptr);/* ID of player who changed the flag */
 	} else {
-		*(uint32_t *)ptr = 0;			ptr += 4;
+		wu32(0, &ptr);
 	}
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -347,12 +353,14 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 	struct channel *ch;
 	struct player_channel_privilege *priv;
 	size_t iter, iter2;
+	char *ptr;
 
 	send_acknowledge(pl);		/* ACK */
 
-	memcpy(&tgt_id, data + 24, 4);
-	on_off = data[28];
-	right = data[29];
+	ptr = data + 24;
+	tgt_id = ru32(&ptr);
+	on_off = ru8(&ptr);
+	right = ru8(&ptr);;
 	tgt = get_player_by_public_id(pl->in_chan->in_server, tgt_id);
 
 	switch (1 << right) {
@@ -409,10 +417,13 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 {
 	uint16_t attributes;
+	char *ptr;
 
 	send_acknowledge(pl);		/* ACK */
 
-	memcpy(&attributes, data + 24, 2);
+	ptr = data + 24;
+
+	attributes = ru16(&ptr);
 	logger(LOG_INFO, "Player sv rights before : 0x%x", pl->player_attributes);
 	pl->player_attributes = attributes;
 	logger(LOG_INFO, "Player sv rights after  : 0x%x", pl->player_attributes);
@@ -437,26 +448,27 @@ static void s_notify_player_moved(struct player *tgt, struct player *pl, struct 
 	new_priv = get_player_channel_privilege(tgt, to);
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYER_MOVED;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;	/* ID of player who switched */
-	*(uint32_t *)ptr = from->id;		ptr += 4;	/* ID of previous channel */
-	*(uint32_t *)ptr = to->id;		ptr += 4;	/* channel the player switched to */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;
-	*(uint16_t *)ptr = new_priv->flags;	ptr += 2;
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_PLAYER_MOVED, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(tgt->public_id, &ptr);		/* ID of player who switched */
+	wu32(from->id, &ptr);			/* ID of previous channel */
+	wu32(to->id, &ptr);			/* channel the player switched to */
+	wu32(pl->public_id, &ptr);
+	wu16(new_priv->flags, &ptr);
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -471,10 +483,12 @@ void *c_req_move_player(char *data, unsigned int len, struct player *pl)
 	uint32_t tgt_id;
 	struct player *tgt;
 	struct server *s = pl->in_chan->in_server;
+	char *ptr;
 
-	memcpy(&tgt_id, data + 24, 4);
+	ptr = data + 24;
+	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);
-	memcpy(&to_id, data + 28, 4);
+	to_id = ru32(&ptr);
 	to = get_channel_by_id(s, to_id);
 
 	if (to != NULL && pl != NULL) {
@@ -504,15 +518,15 @@ static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t o
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYER_MUTED_UNMUTED;	ptr += 2;	/* */
-	*(uint32_t *)ptr = by->private_id;	ptr += 4;	/* private ID */
-	*(uint32_t *)ptr = by->public_id;	ptr += 4;	/* public ID */
-	*(uint32_t *)ptr = by->f0_s_counter;	ptr += 4;	/* packet counter */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;	/* ID of player who was muted */
-	*(uint16_t *)ptr = on_off;		ptr += 1;
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_PLAYER_MUTED_UNMUTED, &ptr);
+	wu32(by->private_id, &ptr);		/* private ID */
+	wu32(by->public_id, &ptr);		/* public ID */
+	wu32(by->f0_s_counter, &ptr);		/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(tgt->public_id, &ptr);		/* ID of player who was muted */
+	wu8(on_off, &ptr);			ptr += 1;
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
@@ -531,10 +545,11 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 	uint8_t on_off;	/* 1 = MUTE, 0 = UNMUTE */
 	struct player *tgt;
 	struct server *s = pl->in_chan->in_server;
+	char *ptr = data + 24;
 
-	memcpy(&tgt_id, data + 24, 4);
+	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);
-	on_off = data[28];
+	on_off = ru8(&ptr);
 
 	send_acknowledge(pl);
 	if (pl == tgt) {
@@ -584,23 +599,23 @@ static void s_notify_player_requested_voice(struct player *pl)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_VOICE_REQUESTED;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* player who requested voice */
-	*ptr = (char)strlen(pl->voice_request);	ptr += 1;	/* length of reason */
-	strncpy(ptr, pl->voice_request, *(ptr - 1));	ptr += 29;	/*reason */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_VOICE_REQUESTED, &ptr);
+	ptr += 4;				/* private ID */
+	ptr += 4;				/* public ID */
+	ptr += 4;				/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	wu32(pl->public_id, &ptr);		/* player who requested voice */
+	wstaticstring(pl->voice_request, 29, &ptr);	/* length of reason */
 
 	assert(ptr - data == data_size);
 	
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -610,6 +625,7 @@ static void s_notify_player_requested_voice(struct player *pl)
 
 void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 {
+	char *vr, *ptr;
 	/*if (len != 54) {
 		TODO
 	}*/
@@ -620,7 +636,9 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 		return NULL;
 	}
 	bzero(pl->voice_request, 30);
-	strncpy(pl->voice_request, data + 25, MIN(29, data[24]));
+	ptr = data + 24;
+	vr = rstaticstring(29, &ptr);
+	strcpy(pl->voice_request, vr);
 	pl->player_attributes |= PL_ATTR_REQUEST_VOICE;
 
 	s_notify_player_requested_voice(pl);
