@@ -134,21 +134,21 @@ char *rstaticstring(int maxlen, char **ptr);
 
 #define GUINT64_SWAP_LE_BE_CONSTANT(val)	((uint64_t) ( \
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x00000000000000ffU)) << 56) |	\
+	(uint64_t) 0x00000000000000ffULL) << 56) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x000000000000ff00U)) << 40) |	\
+	(uint64_t) 0x000000000000ff00ULL) << 40) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x0000000000ff0000U)) << 24) |	\
+	(uint64_t) 0x0000000000ff0000ULL) << 24) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x00000000ff000000U)) <<  8) |	\
+	(uint64_t) 0x00000000ff000000ULL) <<  8) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x000000ff00000000U)) >>  8) |	\
+	(uint64_t) 0x000000ff00000000ULL) >>  8) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x0000ff0000000000U)) >> 24) |	\
+	(uint64_t) 0x0000ff0000000000ULL) >> 24) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0x00ff000000000000U)) >> 40) |	\
+	(uint64_t) 0x00ff000000000000ULL) >> 40) |	\
       (((uint64_t) (val) &						\
-	(uint64_t) G_GINT64_CONSTANT (0xff00000000000000U)) >> 56)))
+	(uint64_t) 0xff00000000000000ULL) >> 56)))
 
 /* Arch specific stuff for speed
  */
