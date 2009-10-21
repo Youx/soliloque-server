@@ -633,6 +633,7 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 	/* if the channel is not moderated or the player already has voice, refuse! */
 	if (!(player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
 		!(pl->in_chan->flags & CHANNEL_FLAG_MODERATED)) {
+		logger(LOG_WARN, "c_req_request_voice : player is already V or channel is not M.");
 		return NULL;
 	}
 	bzero(pl->voice_request, 30);
@@ -642,5 +643,6 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 	pl->player_attributes |= PL_ATTR_REQUEST_VOICE;
 
 	s_notify_player_requested_voice(pl);
+	free(vr);
 	return NULL;
 }
