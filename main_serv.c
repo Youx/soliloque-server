@@ -93,8 +93,11 @@ static void init_callbacks(void)
 
 static void handle_connection_type_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
+	char *ptr = data + 2;
+	uint16_t code = ru16(&ptr);
+
 	logger(LOG_INFO, "Packet : Connection.");
-	switch (((uint16_t *)data)[1]) {
+	switch (code) {
 	/* Client requesting a connection */
 	case 3:
 		handle_player_connect(data, len, cli_addr, cli_len, s);
