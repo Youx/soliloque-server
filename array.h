@@ -25,7 +25,7 @@ struct array {
 	void **array;
 	size_t used_slots;
 	size_t total_slots;
-	size_t  max_slots;
+	size_t max_slots;
 
 	pthread_mutex_t lock;
 };

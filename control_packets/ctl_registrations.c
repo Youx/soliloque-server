@@ -39,22 +39,20 @@
 void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 {
 	char *name, *pass;
-	char name_len, pass_len;
 	char server_admin;
 	struct registration *reg;
 	struct server *s;
 	unsigned char digest[SHA256_DIGEST_LENGTH];
-	char *digest_readable;
+	char *digest_readable, *ptr;
 
 	s = pl->in_chan->in_server;
 
 	send_acknowledge(pl);
 	if (player_has_privilege(pl, SP_PL_REGISTER_PLAYER, NULL)) {
-		name_len = MIN(29, data[24]);
-		name = strndup(data + 25, name_len);
-		pass_len = MIN(29, data[54]);
-		pass = strndup(data + 55, pass_len);
-		server_admin = data[84];
+		ptr = data + 24;
+		name = rstaticstring(29, &ptr);
+		pass = rstaticstring(29, &ptr);
+		server_admin = ru8(&ptr);
 		if (name == NULL || pass == NULL) {
 			logger(LOG_ERR, "c_req_create_registration, strndup failed : %s.", strerror(errno));
 			if (name != NULL)
@@ -94,11 +92,10 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 void *c_req_register_player(char *data, unsigned int len, struct player *pl)
 {
 	char *name, *pass;
-	char name_len, pass_len;
 	struct registration *reg;
 	struct server *s;
 	unsigned char digest[SHA256_DIGEST_LENGTH];
-	char *digest_readable;
+	char *digest_readable, *ptr;
 	struct channel *ch;
 	struct player_channel_privilege *priv;
 	size_t iter, iter2;
@@ -110,10 +107,9 @@ void *c_req_register_player(char *data, unsigned int len, struct player *pl)
 	if (player_has_privilege(pl, SP_PL_ALLOW_SELF_REG, NULL)
 			|| (pl->global_flags & GLOBAL_FLAG_ALLOWREG)) {
 		logger(LOG_INFO, "c_req_register_player : privileges OK");
-		name_len = MIN(29, data[24]);
-		name = strndup(data + 25, name_len);
-		pass_len = MIN(29, data[54]);
-		pass = strndup(data + 55, pass_len);
+		ptr = data + 24;
+		name = rstaticstring(29, &ptr);
+		pass = rstaticstring(29, &ptr);
 
 		if (name == NULL || pass == NULL) {
 			logger(LOG_ERR, "c_req_register_player, strndup failed : %s.", strerror(errno));

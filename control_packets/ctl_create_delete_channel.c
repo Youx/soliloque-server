@@ -46,24 +46,25 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANDELETE;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = del_id;		ptr += 2;	/* ID of deleted channel */
-	*(uint32_t *)ptr = 1;			ptr += 4;	/* ????? the previous 
-								   ptr += 2 is not an error*/
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_CHANDELETE, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(del_id, &ptr);		/* ID of deleted channel */
+	wu16(1, &ptr);			/* ????? the previous 
+					   ptr += 2 is not an error*/
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -91,15 +92,15 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHANDELETE_ERROR;ptr += 2;	/* */
-	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
-	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint16_t *)ptr = 0x00d1;		ptr += 2;	/* ID of player who switched */
-	*(uint32_t *)ptr = pkt_cnt;		ptr += 4;	/* ??? */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_CHANDELETE_ERROR, &ptr);	/* */
+	wu32(pl->private_id, &ptr);	/* private ID */
+	wu32(pl->public_id, &ptr);	/* public ID */
+	wu32(pl->f0_s_counter, &ptr);	/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu16(0x00d1, &ptr);	/* ID of player who switched */
+	wu32(pkt_cnt, &ptr);	/* ??? */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
@@ -125,10 +126,11 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 	struct channel *del;
 	uint32_t pkt_cnt, del_id;
 	struct server *s = pl->in_chan->in_server;
+	char *ptr = data + 12;
 
-	memcpy(&pkt_cnt, data + 12, 4);
-
-	memcpy(&del_id, data + 24, 4);
+	pkt_cnt = ru32(&ptr);
+	ptr = data + 24;
+	del_id = ru32(&ptr);
 	del = get_channel_by_id(s, del_id);
 
 	send_acknowledge(pl);
@@ -172,20 +174,21 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 	ptr = data;
 
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CREATE_CH;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;/* filled later */
-	/* public ID */				ptr += 4;/* filled later */
-	/* packet counter */			ptr += 4;/* filled later */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = creator->public_id;	ptr += 4;/* id of creator */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_CREATE_CH, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(creator->public_id, &ptr);	/* id of creator */
 	channel_to_data(ch, ptr);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -204,7 +207,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 {
 	struct channel *ch;
 	size_t bytes_read;
-	char *ptr;
+	char *ptr, *pass;
 	struct server *s;
 	struct channel *parent;
 	int priv_nok = 0;
@@ -216,7 +219,9 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	ptr = data + 24;
 	bytes_read = channel_from_data(ptr, len - (ptr - data), &ch);
 	ptr += bytes_read;
-	strncpy(ch->password, ptr, MIN(29, len - (ptr - data) - 1));
+	pass = rstaticstring(29, &ptr);
+	strcpy(ch->password, pass);
+	free(pass);
 
 	flags = ch_getflags(ch);
 	/* Check the privileges */

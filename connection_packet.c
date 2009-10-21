@@ -83,7 +83,6 @@ static void server_accept_connection(struct player *pl)
 	wstaticstring(s->welcome_msg, 255, &ptr);	/* Welcome message */
 
 	/* check we filled the whole packet */
-	printf("%li != %i\n", ptr - data, data_size);
 	assert((ptr - data) == data_size);
 
 	/* Add CRC */

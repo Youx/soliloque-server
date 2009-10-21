@@ -49,28 +49,27 @@ void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
-	/* private ID */			ptr += 4;/* filled later */
-	/* public ID */				ptr += 4;/* filled later */
-	/* packet counter */			ptr += 4;/* filled later */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
-	*(uint8_t *)ptr = 0;			ptr += 1;/* type of msg (0 = all) */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_MESSAGE, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(color, &ptr);		/* color of the message */
+	wu8(0, &ptr);			/* type of msg (0 = all) */
 	if (pl == NULL) {
-		*(uint8_t *)ptr = 6;	ptr += 1;/* length of the sender's name */
-		strncpy(ptr, "SERVER", *(ptr - 1));		ptr += 29;/* sender's name */
+		wstaticstring("SERVER", 29, &ptr); /* sender's name */
 	} else {
-		*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-		strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
+		wstaticstring(pl->name, 29, &ptr); /* sender's name */
 	}
 	strcpy(ptr, msg);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -103,23 +102,23 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
-	/* private ID */			ptr += 4;/* filled later */
-	/* public ID */				ptr += 4;/* filled later */
-	/* packet counter */			ptr += 4;/* filled later */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
-	*(uint8_t *)ptr = 1;			ptr += 1;/* type of msg (1 = channel) */
-	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_MESSAGE, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(color, &ptr);		/* color of the message */
+	wu8(1, &ptr);			/* type of msg (1 = channel) */
+	wstaticstring(pl->name, 29, &ptr);
 	strcpy(ptr, msg);
 
 	ar_each(struct player *, tmp_pl, iter, ch->players)
-		*(uint32_t *)(data + 4) = tmp_pl->private_id;
-		*(uint32_t *)(data + 8) = tmp_pl->public_id;
-		*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+		ptr = data + 4;
+		wu32(tmp_pl->private_id, &ptr);
+		wu32(tmp_pl->public_id, &ptr);
+		wu32(tmp_pl->f0_s_counter, &ptr);
 		packet_add_crc_d(data, data_size);
 		send_to(s, data, data_size, 0, tmp_pl);
 		tmp_pl->f0_s_counter++;
@@ -149,17 +148,16 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_MESSAGE;		ptr += 2;	/* */
-	*(uint32_t *)ptr = tgt->private_id;	ptr += 4;/* private ID */
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* public ID */
-	*(uint32_t *)ptr = tgt->f0_s_counter;	ptr += 4;/* public ID */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
-	*(uint32_t *)ptr = color;		ptr += 4;/* color of the message */
-	*(uint8_t *)ptr = 2;			ptr += 1;/* type of msg (2 = private) */
-	*(uint8_t *)ptr = MIN(29, strlen(pl->name));	ptr += 1;/* length of the sender's name */
-	strncpy(ptr, pl->name, *(ptr - 1));		ptr += 29;/* sender's name */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_MESSAGE, &ptr);	/* */
+	wu32(tgt->private_id, &ptr);	/* private ID */
+	wu32(tgt->public_id, &ptr);	/* public ID */
+	wu32(tgt->f0_s_counter, &ptr);	/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(color, &ptr);		/* color of the message */
+	wu8(2, &ptr);			/* type of msg (2 = private) */
+	wstaticstring(pl->name, 29, &ptr);/* length of the sender's name */
 	strcpy(ptr, msg);
 
 	packet_add_crc_d(data, data_size);
@@ -180,16 +178,17 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 	uint32_t color;
 	char msg_type;
 	uint32_t dst_id;
-	char *msg;
+	char *msg, *ptr;
 	struct channel *ch;
 	struct player *tgt;
 	
-	send_acknowledge(pl);		/* ACK */
+	send_acknowledge(pl);	/* ACK */
 
-	memcpy(&color, data + 24, 4);
-	memcpy(&msg_type, data + 28, 1);
-	memcpy(&dst_id, data + 29, 4);
-	msg = strdup(data + 33);
+	ptr = data + 24;
+	color = ru32(&ptr);
+	msg_type = ru8(&ptr);
+	dst_id = ru32(&ptr);
+	msg = strdup(ptr);	/* fixme */
 
 	switch (msg_type) {
 	case 0:

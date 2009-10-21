@@ -66,6 +66,12 @@ char *ustrtohex (unsigned char *data, size_t len)
 	return dst;
 }
 
+void wu64(uint64_t val, char **ptr)
+{
+	*(uint64_t *)(*ptr) = GUINT64_TO_LE(val);
+	*ptr += 8;
+}
+
 void wu32(uint32_t val, char **ptr)
 {
 	*(uint32_t *)(*ptr) = GUINT32_TO_LE(val);
@@ -98,6 +104,12 @@ uint32_t ru32(char **ptr)
 {
 	*ptr += 4;
 	return GUINT32_FROM_LE(*(uint32_t *)(*ptr - 4));
+}
+
+uint64_t ru64(char **ptr)
+{
+	*ptr += 8;
+	return GUINT64_FROM_LE(*(uint64_t *)(*ptr - 8));
 }
 
 uint16_t ru16(char **ptr)

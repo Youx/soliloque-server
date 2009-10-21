@@ -130,14 +130,14 @@ void s_notify_player_left(struct player *p)
 
 	wu16(PKT_TYPE_CTL, &ptr);
 	wu16(CTL_PLAYERLEFT, &ptr);
-	ptr += 4;				/* private ID */
-	ptr += 4; 				/* public ID */
-	wu32(p->f0_s_counter, &ptr);		/* packet counter */
-	ptr += 4;				/* packet version */
-	ptr += 4;				/* empty checksum */
-	wu32(p->public_id, &ptr); 		/* ID of player who left */
-	wu32(1, &ptr);				/* visible notification */
-	ptr += 32;				/* 32 bytes of garbage?? */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(p->public_id, &ptr); 	/* ID of player who left */
+	wu32(1, &ptr);			/* visible notification */
+	ptr += 32;			/* 32 bytes of garbage?? */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);

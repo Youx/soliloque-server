@@ -49,26 +49,26 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = kicked->public_id;	ptr += 4;	/* ID of player who left */
-	*(uint16_t *)ptr = 2;			ptr += 2;	/* visible notification : kicked */
-	*(uint32_t *)ptr = kicker->public_id;	ptr += 4;	/* kicker ID */
-	*(uint8_t *)ptr = MIN(29, strlen(reason));	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_PLAYERLEFT, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(kicked->public_id, &ptr);	/* ID of player who left */
+	wu16(2, &ptr);	/* visible notification : kicked */
+	wu32(kicker->public_id, &ptr);	/* kicker ID */
+	wstaticstring(reason, 29, &ptr);
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -87,7 +87,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t target_id;
-	char *reason;
+	char *reason, *ptr;
 	struct player *target;
 	struct server *s = pl->in_chan->in_server;
 
@@ -96,13 +96,15 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 		return NULL;
 	}
 
-	memcpy(&target_id, data + 24, 4);
+	ptr = data + 24;
+	target_id = ru32(&ptr);
 	target = get_player_by_public_id(s, target_id);
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if(player_has_privilege(pl, SP_OTHER_SV_KICK, target->in_chan)) {
-			reason = strndup(data + 29, MIN(29, data[28]));
+			ptr = data + 28;
+			reason = rstaticstring(29, &ptr);
 			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_server(pl, target, reason);
 			remove_player(s, pl);
@@ -138,27 +140,27 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_CHKICK_PL;		ptr += 2;	/* */
-	/* private ID */				ptr += 4;	/* filled later */
-	/* public ID */					ptr += 4;	/* filled later */
-	/* packet counter */				ptr += 4;	/* filled later */
-	/* packet version */				ptr += 4;	/* not done yet */
-	/* empty checksum */				ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = kicked->public_id;		ptr += 4;	/* ID of player who was kicked */
-	*(uint32_t *)ptr = kicked_from->id;		ptr += 4;	/* channel the player was kicked from */
-	*(uint32_t *)ptr = kicker->public_id;		ptr += 4;	/* ID of the kicker */
-	*(uint16_t *)ptr = 0;				ptr += 2;	/* visible notification : kicked */
-	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, *(ptr - 1));		ptr += 29;	/* reason message */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_CHKICK_PL, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(kicked->public_id, &ptr);	/* ID of player who was kicked */
+	wu32(kicked_from->id, &ptr);	/* channel the player was kicked from */
+	wu32(kicker->public_id, &ptr);	/* ID of the kicker */
+	wu16(0, &ptr);	/* visible notification : kicked */
+	wstaticstring(reason, 29, &ptr);/* reason message */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
@@ -172,7 +174,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t target_id;
-	char *reason;
+	char *reason, *ptr;
 	struct player *target;
 	struct channel *def_chan;
 	struct server *s = pl->in_chan->in_server;
@@ -181,14 +183,16 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 		logger(LOG_WARN, "c_req_kick_channel, packet has invalid size : %i instead of %i.", len, 60);
 		return NULL;
 	}
-	memcpy(&target_id, data + 24, 4);
+	ptr = data + 24;
+	target_id = ru32(&ptr);
 	target = get_player_by_public_id(s, target_id);
 	def_chan = get_default_channel(s);
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if (player_has_privilege(pl, SP_OTHER_CH_KICK, target->in_chan)) {
-			reason = strndup(data + 29, MIN(29, data[28]));
+			ptr = data + 28;
+			reason = rstaticstring(29, &ptr);
 			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_channel(pl, target, reason, pl->in_chan);
 			move_player(pl, def_chan);
@@ -225,26 +229,26 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYERLEFT;	ptr += 2;	/* */
-	/* private ID */			ptr += 4;	/* filled later */
-	/* public ID */				ptr += 4;	/* filled later */
-	/* packet counter */			ptr += 4;	/* filled later */
-	/* packet version */			ptr += 4;	/* not done yet */
-	/* empty checksum */			ptr += 4;	/* filled later */
-	*(uint32_t *)ptr = target->public_id;	ptr += 4;	/* ID of player banned */
-	*(uint16_t *)ptr = 2;			ptr += 2;	/* kick */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* banner ID */
-	*(uint8_t *)ptr = MIN(29,strlen(reason));	ptr += 1;	/* length of reason message */
-	strncpy(ptr, reason, *(ptr - 1));	ptr += 29;	/* reason message */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_PLAYERLEFT, &ptr);	/* */
+	ptr += 4;			/* private ID */
+	ptr += 4; 			/* public ID */
+	ptr += 4;			/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* empty checksum */
+	wu32(target->public_id, &ptr);	/* ID of player banned */
+	wu16(2, &ptr);	/* kick */
+	wu32(pl->public_id, &ptr);	/* banner ID */
+	wstaticstring(reason, 29, &ptr);/* reason message */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
 
 	ar_each(struct player *, tmp_pl, iter, s->players)
-			*(uint32_t *)(data + 4) = tmp_pl->private_id;
-			*(uint32_t *)(data + 8) = tmp_pl->public_id;
-			*(uint32_t *)(data + 12) = tmp_pl->f0_s_counter;
+			ptr = data + 4;
+			wu32(tmp_pl->private_id, &ptr);
+			wu32(tmp_pl->public_id, &ptr);
+			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, pl);
 			tmp_pl->f0_s_counter++;
@@ -264,19 +268,20 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
 {
 	uint32_t ban_id;
 	struct player *target;
-	char *reason;
+	char *reason, *ptr;
 	uint16_t duration;
 	struct server *s = pl->in_chan->in_server;
 
-	memcpy(&ban_id, data + 24, 4);
-	memcpy(&duration, data + 28, 2);
+	ptr = data + 24;
+	ban_id = ru32(&ptr);
+	duration = ru16(&ptr);
 
 	target = get_player_by_public_id(s, ban_id);
 
 	if (target != NULL) {
 		send_acknowledge(pl);		/* ACK */
 		if(player_has_privilege(pl, SP_ADM_BAN_IP, target->in_chan)) {
-			reason = strndup(data + 29, MIN(29, data[28]));
+			reason = rstaticstring(29, &ptr);
 			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
 			logger(LOG_INFO, "Reason for banning player %s : %s", target->name, reason);
 			s_notify_ban(pl, target, duration, reason);
@@ -316,14 +321,14 @@ static void s_resp_bans(struct player *pl)
 	}
 	ptr = data;
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_BANLIST;		ptr += 2;	/* */
-	*(uint32_t *)ptr = pl->private_id;	ptr += 4;	/* private ID */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;	/* public ID */
-	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;	/* packet counter */
-	/* packet version */			ptr += 4;	/* filled later */
-	/* checksum */				ptr += 4;	/* filled at the end */
-	*(uint16_t *)ptr = s->bans->used_slots;	ptr += 4;	/* number of bans */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_BANLIST, &ptr);	/* */
+	wu32(pl->private_id, &ptr);	/* private ID */
+	wu32(pl->public_id, &ptr);	/* public ID */
+	wu32(pl->f0_s_counter, &ptr);	/* packet counter */
+	ptr += 4;			/* packet version */
+	ptr += 4;			/* checksum */
+	wu32(s->bans->used_slots, &ptr);/* number of bans */
 	logger(LOG_INFO, "number of bans : %zu", s->bans->used_slots);
 	ar_each(struct ban *, b, iter, s->bans)
 		tmp_size = ban_to_data(b, ptr);
@@ -369,7 +374,7 @@ void *c_req_remove_ban(char *data, unsigned int len, struct player *pl)
 
 	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
-		inet_aton(data+24, &ip);
+		inet_aton(data + 24, &ip);
 		b = get_ban_by_ip(s, ip);
 		if (b != NULL)
 			remove_ban(s, b);
@@ -390,11 +395,13 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
 	struct in_addr ip;
 	uint16_t duration;
 	struct server *s = pl->in_chan->in_server;
+	char *ptr;
 
 	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
-		duration = *(uint16_t *)(data + 24);
-		inet_aton(data+26, &ip);
+		ptr = data + 24;
+		duration = ru16(&ptr);
+		inet_aton(ptr, &ip);
 		add_ban(s, new_ban(duration, ip, "IP BAN"));
 	}
 	return NULL;

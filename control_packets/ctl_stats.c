@@ -46,28 +46,28 @@ static void s_resp_server_stats(struct player *pl)
 		return;
 	}
 	ptr = data;
-	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;/* */
-	*(uint16_t *)ptr = CTL_SERVSTATS;		ptr += 2;/* */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;/* packet counter */
-	/* packet version */				ptr += 4;
-	/* empty checksum */				ptr += 4;
-	*(uint64_t *)ptr = time(NULL) - s->stats->start_time;	ptr += 8;/* server uptime */
-	*(uint16_t *)ptr = 501;				ptr += 2;/* server version */
-	*(uint16_t *)ptr = 0;				ptr += 2;/* server version */
-	*(uint16_t *)ptr = 2;				ptr += 2;/* server version */
-	*(uint16_t *)ptr = 0;				ptr += 2;/* server version */
-	*(uint32_t *)ptr = s->players->used_slots;	ptr += 4;/* number of players connected */
-	*(uint64_t *)ptr = s->stats->pkt_sent;		ptr += 8;/* total bytes received */
-	*(uint64_t *)ptr = s->stats->size_sent;		ptr += 8;/* total bytes sent */
-	*(uint64_t *)ptr = s->stats->pkt_rec;		ptr += 8;/* total packets received */
-	*(uint64_t *)ptr = s->stats->size_rec;		ptr += 8;/* total packets sent */
-	*(uint32_t *)ptr = stats[0];			ptr += 4;/* bytes received/sec (last second) */
-	*(uint32_t *)ptr = stats[1];			ptr += 4;/* bytes sent/sec (last second) */
-	*(uint32_t *)ptr = stats[2]/60;			ptr += 4;/* bytes received/sec (last minute) */
-	*(uint32_t *)ptr = stats[3]/60;			ptr += 4;/* bytes sent/sec (last minute) */
-	*(uint64_t *)ptr = s->stats->total_logins;	ptr += 8;/* total logins */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_SERVSTATS, &ptr);
+	wu32(pl->private_id, &ptr);			/* player private id */
+	wu32(pl->public_id, &ptr);			/* player public id */
+	wu32(pl->f0_s_counter, &ptr);			/* packet counter */
+	ptr += 4;					/* packet version */
+	ptr += 4;					/* empty checksum */
+	wu64(time(NULL) - s->stats->start_time, &ptr);	/* server uptime */
+	wu16(501, &ptr);				/* server version */
+	wu16(0, &ptr);					/* server version */
+	wu16(2, &ptr);					/* server version */
+	wu16(0, &ptr);					/* server version */
+	wu32(s->players->used_slots, &ptr);		/* number of players connected */
+	wu64(s->stats->pkt_sent, &ptr);			/* total bytes received */
+	wu64(s->stats->size_sent, &ptr);		/* total bytes sent */
+	wu64(s->stats->pkt_rec, &ptr);			/* total packets received */
+	wu64(s->stats->size_rec, &ptr);			/* total packets sent */
+	wu32(stats[0], &ptr);				/* bytes received/sec (last second) */
+	wu32(stats[1], &ptr);				/* bytes sent/sec (last second) */
+	wu32(stats[2]/60, &ptr);			/* bytes received/sec (last minute) */
+	wu32(stats[3]/60, &ptr);			/* bytes sent/sec (last minute) */
+	wu64(s->stats->total_logins, &ptr);		/* total logins */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
@@ -114,37 +114,34 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	ptr = data;
 	ip = inet_ntoa(tgt->cli_addr->sin_addr);
 
-	*(uint16_t *)ptr = PKT_TYPE_CTL;	ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_PLAYERSTATS;	ptr += 2;	/* */
-	*(uint32_t *)ptr = pl->private_id;	ptr += 4;/* private ID */
-	*(uint32_t *)ptr = pl->public_id;	ptr += 4;/* public ID */
-	*(uint32_t *)ptr = pl->f0_s_counter;	ptr += 4;/* packet counter */
-	/* packet version */			ptr += 4;/* not done yet */
-	/* empty checksum */			ptr += 4;/* filled later */
+	wu16(PKT_TYPE_CTL, &ptr);
+	wu16(CTL_PLAYERSTATS, &ptr);
+	wu32(pl->private_id, &ptr);			/* private ID */
+	wu32(pl->public_id, &ptr);			/* public ID */
+	wu32(pl->f0_s_counter, &ptr);			/* packet counter */
+	ptr += 4;					/* packet version */
+	ptr += 4;					/* empty checksum */
 
-	*(uint32_t *)ptr = tgt->public_id;	ptr += 4;/* player we get the info of */
-	*(uint32_t *)ptr = time(NULL) - tgt->stats->start_time;	ptr += 4;/* time connected */
-	*(uint16_t *)ptr = tgt->stats->pkt_lost * 100 / (tgt->stats->pkt_sent + 1 + tgt->stats->pkt_rec); ptr += 2;
-	*(uint32_t *)ptr = 12;			ptr += 4;/* ping */
-	*(uint16_t *)ptr = time(NULL) - tgt->stats->activ_time;	ptr += 2;/* time iddle */
-	*(uint16_t *)ptr = pl->version[0];	ptr += 2;/* client version */
-	*(uint16_t *)ptr = pl->version[1];	ptr += 2;/* client version */
-	*(uint16_t *)ptr = pl->version[2];	ptr += 2;/* client version */
-	*(uint16_t *)ptr = pl->version[3];	ptr += 2;/* client version */
-	*(uint32_t *)ptr = tgt->stats->pkt_sent;ptr += 4;/* packets sent */
-	*(uint32_t *)ptr = tgt->stats->pkt_rec;	ptr += 4;/* packets received */
-	*(uint32_t *)ptr = tgt->stats->size_sent;	ptr += 4;/* bytes sent */
-	*(uint32_t *)ptr = tgt->stats->size_rec;ptr += 4;/* bytes received */
-	*ptr = MIN(strlen(ip), 29);		ptr += 1;/* size of ip */
-	strncpy(ptr, ip, *(ptr - 1));		ptr += 29;/* ip of client */
-	*(uint16_t *)ptr = 0;			ptr += 2;/* port of client */
-	*ptr = MIN(strlen(tgt->login), 29);	ptr += 1;/* size of login */
-	strncpy(ptr, tgt->login, *(ptr - 1));	ptr += 29;/* login */
-	*(uint32_t *)ptr = tgt->in_chan->id;	ptr += 4;/* id of channel */
-	*(uint16_t *)ptr = player_get_channel_privileges(tgt, tgt->in_chan);	ptr += 2;/* channel privileges */
-	*(uint16_t *)ptr = tgt->global_flags;	ptr += 2;/* global flags */
-	*ptr = MIN(strlen(tgt->machine), 29);	ptr += 1;/* size of platform */
-	strncpy(ptr, tgt->machine, *(ptr - 1));	ptr += 29;/*platform */
+	wu32(tgt->public_id, &ptr);			/* player we get the info of */
+	wu32(time(NULL) - tgt->stats->start_time, &ptr);/* time connected */
+	wu16(tgt->stats->pkt_lost * 100 / (tgt->stats->pkt_sent + 1 + tgt->stats->pkt_rec), &ptr);
+	wu32(12, &ptr);					/* ping */
+	wu16(time(NULL) - tgt->stats->activ_time, &ptr);/* time iddle */
+	wu16(pl->version[0], &ptr);			/* client version */
+	wu16(pl->version[1], &ptr);			/* client version */
+	wu16(pl->version[2], &ptr);			/* client version */
+	wu16(pl->version[3], &ptr);			/* client version */
+	wu32(tgt->stats->pkt_sent, &ptr);		/* packets sent */
+	wu32(tgt->stats->pkt_rec, &ptr);		/* packets received */
+	wu32(tgt->stats->size_sent, &ptr);		/* bytes sent */
+	wu32(tgt->stats->size_rec, &ptr);		/* bytes received */
+	wstaticstring(ip, 29, &ptr);			/* ip of client */
+	wu16(0, &ptr);					/* port of client */
+	wstaticstring(tgt->login, 29, &ptr);		/* login */
+	wu32(tgt->in_chan->id, &ptr);			/* id of channel */
+	wu16(player_get_channel_privileges(tgt, tgt->in_chan), &ptr);/* channel privileges */
+	wu16(tgt->global_flags, &ptr);			/* global flags */
+	wstaticstring(tgt->machine, 29, &ptr);		/* platform */
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
@@ -168,11 +165,13 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 	struct server *s;
 	uint32_t tgt_id;
 	struct player *tgt;
+	char *ptr;
 
 	s = pl->in_chan->in_server;
 	send_acknowledge(pl);
 
-	tgt_id = *(uint32_t *)(data + 24);
+	ptr = data + 24;
+	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);
 
 	if (tgt != NULL) {

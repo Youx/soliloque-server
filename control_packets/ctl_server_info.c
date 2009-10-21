@@ -58,14 +58,14 @@ static void s_resp_chans(struct player *pl)
 		return;
 	}
 	ptr = data;
-	*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
-	*(uint16_t *)ptr = CTL_LIST_CH;			ptr += 2;	/* */
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
+	wu16(PKT_TYPE_CTL, &ptr);	/* */
+	wu16(CTL_LIST_CH, &ptr);	/* */
+	wu32(pl->private_id, &ptr);	/* player private id */
+	wu32(pl->public_id, &ptr);	/* player public id */
+	wu32(pl->f0_s_counter, &ptr);	/* packet counter */
 	/* packet version */				ptr += 4;
 	/* empty checksum */				ptr += 4;
-	*(uint32_t *)ptr = s->chans->used_slots;	ptr += 4;	/* number of channels sent */
+	wu32(s->chans->used_slots, &ptr);	/* number of channels sent */
 	/* dump the channels to the packet */
 	ar_each(struct channel *, ch, iter, s->chans)
 		ch_size = channel_to_data_size(ch);
@@ -115,14 +115,14 @@ static void s_resp_players(struct player *pl)
 		bzero(data, data_size * sizeof(char));
 		ptr = data;
 		/* initialize the packet */
-		*(uint16_t *)ptr = PKT_TYPE_CTL;		ptr += 2;	/* */
-		*(uint16_t *)ptr = CTL_LIST_PL;			ptr += 2;	/* */
-		*(uint32_t *)ptr = pl->private_id;		ptr += 4;	/* player private id */
-		*(uint32_t *)ptr = pl->public_id;		ptr += 4;	/* player public id */
-		*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;	/* packet counter */
-		/* packet version */				ptr += 4;
-		/* empty checksum */				ptr += 4;
-		*(uint32_t *)ptr = MIN(10, nb_players);		ptr += 4;
+		wu16(PKT_TYPE_CTL, &ptr);	/* */
+		wu16(CTL_LIST_PL, &ptr);	/* */
+		wu32(pl->private_id, &ptr);	/* player private id */
+		wu32(pl->public_id, &ptr);	/* player public id */
+		wu32(pl->f0_s_counter, &ptr);	/* packet counter */
+		ptr += 4;			/* packet version */
+		ptr += 4;			/* empty checksum */
+		wu32(MIN(10, nb_players), &ptr);
 		/* dump the players to the packet */
 		bzero(pls, 10 * sizeof(struct player *));
 		players_copied = ar_get_n_elems_start_at(s->players, 10,
@@ -157,16 +157,16 @@ static void s_resp_unknown(struct player *pl)
 	}
 	ptr = data;
 	/* initialize the packet */
-	*(uint32_t *)ptr = 0x0008bef0;			ptr += 4;
-	*(uint32_t *)ptr = pl->private_id;		ptr += 4;		/* player private id */
-	*(uint32_t *)ptr = pl->public_id;		ptr += 4;		/* player public id */
-	*(uint32_t *)ptr = pl->f0_s_counter;		ptr += 4;		/* packet counter */
-	/* packet version */				ptr += 4;
-	/* empty checksum */				ptr += 4;
-	/* empty data ??? */				ptr += 256;
-	*ptr = 0x6e;					ptr += 1;
-	*ptr = 0x61;					ptr += 1;
-							ptr += 1;
+	wu32(0x0008bef0, &ptr);
+	wu32(pl->private_id, &ptr);		/* player private id */
+	wu32(pl->public_id, &ptr);		/* player public id */
+	wu32(pl->f0_s_counter, &ptr);		/* packet counter */
+	ptr += 4;				/* packet version */
+	ptr += 4;				/* empty checksum */
+	ptr += 256;				/* empty data ??? */
+	wu8(0x6e, &ptr);
+	wu8(0x61, &ptr);
+	ptr += 1;
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
