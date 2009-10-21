@@ -166,14 +166,15 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	uint16_t sent_version, ack_version;
 	uint32_t sent_counter, ack_counter;
 	uint32_t public_id, private_id;
-	char *sent;
+	char *sent, *ptr;
 
 	logger(LOG_INFO, "Packet : ACK.");
 	/* parse ACK packet */
-	public_id = *(uint32_t *)(data + 8);
-	private_id = *(uint32_t *)(data + 4);
-	ack_version = *(uint16_t *)(data + 2);
-	ack_counter = *(uint32_t *)(data + 12);
+	ptr = data + 2;
+	ack_version = ru16(&ptr);
+	private_id = ru32(&ptr);
+	public_id = ru32(&ptr);
+	ack_counter = ru32(&ptr);
 
 	pl = get_player_by_ids(s, public_id, private_id);
 	if (pl == NULL)
@@ -183,8 +184,9 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 
 		sent = peek_at_queue(pl->packets);
 		if (sent != NULL) {
-			sent_counter = *(uint32_t *)(sent + 12);
-			sent_version = *(uint16_t *)(sent + 16);
+			ptr = sent + 12;
+			sent_counter = ru32(&ptr);
+			sent_version = ru16(&ptr);
 
 			if (sent_counter == ack_counter && ack_version <= sent_version)
 				free(get_from_queue(pl->packets));
