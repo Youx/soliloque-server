@@ -187,16 +187,16 @@ int channel_to_data(struct channel *ch, char *data)
 
 	ptr = data;
 
-	*(uint32_t *)ptr = ch->id;		ptr += 4;
-	*(uint16_t *)ptr = ch->flags;		ptr += 2;
-	*(uint16_t *)ptr = ch->codec;		ptr += 2;
+	wu32(ch->id, &ptr);
+	wu16(ch->flags, &ptr);
+	wu16(ch->codec, &ptr);
 	if (ch->parent == NULL) {
-		*(uint32_t *)ptr = 0xFFFFFFFF;		ptr += 4;
+		wu32(0xFFFFFFFF, &ptr);
 	} else {
-		*(uint32_t *)ptr = ch->parent->id;	ptr += 4;
+		wu32(ch->parent->id, &ptr);
 	}
-	*(uint16_t *)ptr = ch->sort_order;	ptr += 2;
-	*(uint16_t *)ptr = ch->players->max_slots;	ptr += 2;
+	wu16(ch->sort_order, &ptr);
+	wu16(ch->players->max_slots, &ptr);
 	strcpy(ptr, ch->name);			ptr += (strlen(ch->name) +1);
 	strcpy(ptr, ch->topic);			ptr += (strlen(ch->topic) +1);
 	strcpy(ptr, ch->desc);			ptr += (strlen(ch->desc) +1);
@@ -232,14 +232,12 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 	uint32_t parent_id;
 	char *name, *topic, *desc, *ptr;
 
-	ptr = data;
-
-	/* ignore ID field */			ptr += 4;
-	flags = *(uint16_t *)ptr;		ptr += 2;
-	codec = *(uint16_t *)ptr;		ptr += 2;
-	parent_id = *(uint32_t *)ptr;		ptr += 4;
-	sort_order = *(uint16_t *)ptr;		ptr += 2;
-	max_users = *(uint16_t *)ptr;		ptr += 2;
+	ptr = data + 4;
+	flags = ru16(&ptr);
+	codec = ru16(&ptr);
+	parent_id = ru32(&ptr);
+	sort_order = ru16(&ptr);
+	max_users = ru16(&ptr);
 	/* TODO : check if the len - (ptr - data) - X formula is correct */
 	name = strndup(ptr, len - (ptr - data) - 3);		ptr += strlen(name) + 1;
 	topic = strndup(ptr, len - (ptr - data) - 2);		ptr += strlen(topic) + 1;

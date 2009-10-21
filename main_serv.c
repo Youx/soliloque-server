@@ -127,6 +127,7 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 	uint8_t code[4] = {0,0,0,0};
 	uint32_t public_id, private_id;
 	struct player *pl;
+	char *ptr;
 
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
@@ -145,8 +146,9 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 			return;
 		}
 		/* Check if player exists */
-		memcpy(&private_id, data + 4, 4);
-		memcpy(&public_id, data + 8, 4);
+		ptr = data + 4;
+		private_id = ru32(&ptr);
+		public_id = ru32(&ptr);
 		pl = get_player_by_ids(s, public_id, private_id);
 		/* Execute */
 		if (pl != NULL) {
