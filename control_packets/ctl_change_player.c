@@ -526,7 +526,7 @@ static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t o
 	ptr += 4;				/* packet version */
 	ptr += 4;				/* empty checksum */
 	wu32(tgt->public_id, &ptr);		/* ID of player who was muted */
-	wu8(on_off, &ptr);			ptr += 1;
+	wu8(on_off, &ptr);
 
 	/* check we filled all the packet */
 	assert((ptr - data) == data_size);
