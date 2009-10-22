@@ -631,7 +631,7 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 	}*/
 	send_acknowledge(pl);		/* ACK */
 	/* if the channel is not moderated or the player already has voice, refuse! */
-	if (!(player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
+	if ((player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
 		!(pl->in_chan->flags & CHANNEL_FLAG_MODERATED)) {
 		logger(LOG_WARN, "c_req_request_voice : player is already V or channel is not M.");
 		return NULL;
