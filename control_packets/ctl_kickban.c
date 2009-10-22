@@ -250,7 +250,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 			wu32(tmp_pl->public_id, &ptr);
 			wu32(tmp_pl->f0_s_counter, &ptr);
 			packet_add_crc_d(data, data_size);
-			send_to(s, data, data_size, 0, pl);
+			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
 	ar_end_each;
 	free(data);
