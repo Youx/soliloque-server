@@ -25,8 +25,14 @@
 #include "log.h"
 #include "configuration.h"
 
+#define LOG_COLOR_CANCEL "\x1b[0;37;40m"
+
 static struct config *c = NULL;
 static char *log_header[5] = {"", "(EE)", "(WW)", "(II)", "(DBG)"};
+static char *log_color[5] = {"", "\x1b[0;31;40m", "\x1b[0;33;40m",
+	"\x1b[0;32;40m", "\x1b[0;34;40m"};
+static char *log_color_dim[5] = {"", "\x1b[2;31;40m", "\x1b[2;33;40m",
+	"\x1b[2;32;40m", "\x1b[2;34;40m"};
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void logger(int loglevel, char *str, ...)
@@ -36,7 +42,7 @@ void logger(int loglevel, char *str, ...)
 	int lvl;
 	time_t t;
 	char time_fmt[26];
-	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 40);
+	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 40 + 30);
 
 	pthread_mutex_lock(&mutex);
 	if (c != NULL) {
@@ -55,7 +61,7 @@ void logger(int loglevel, char *str, ...)
 		time(&t);
 		ctime_r(&t, time_fmt);
 		time_fmt[24] = '\0';	/* remove the trailing \n */
-		sprintf(str2, "%s %s %s\n", log_header[loglevel], time_fmt, str);
+		sprintf(str2, "%s%s %s%s"LOG_COLOR_CANCEL" %s\n", log_color[loglevel], log_header[loglevel], log_color_dim[loglevel], time_fmt, str);
 		vfprintf(dst, str2, args);
 		fflush(dst);
 	}
