@@ -28,7 +28,7 @@
 #define LOG_COLOR_CANCEL "\x1b[0;37;40m"
 
 static struct config *c = NULL;
-static char *log_header[5] = {"", "(EE)", "(WW)", "(II)", "(DBG)"};
+static char *log_header[5] = {"", "(ERR)", "(WRN)", "(INF)", "(DBG)"};
 static char *log_color[5] = {"", "\x1b[0;31;40m", "\x1b[0;33;40m",
 	"\x1b[0;32;40m", "\x1b[0;34;40m"};
 static char *log_color_dim[5] = {"", "\x1b[2;31;40m", "\x1b[2;33;40m",
@@ -42,7 +42,7 @@ void logger(int loglevel, char *str, ...)
 	int lvl;
 	time_t t;
 	char time_fmt[26];
-	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 40 + 30);
+	char *str2 = (char *)calloc(sizeof(char), strlen(str) + 41 + 30);
 
 	pthread_mutex_lock(&mutex);
 	if (c != NULL) {
