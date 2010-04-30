@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 	struct config *c;
 	size_t iter;
 	struct server *s;
-	int i = 0;
+	int i;
 	int val;
 	int terminate = 0, wrongopt = 0, helpshown = 0;
 	char *configfile = NULL;
@@ -353,6 +353,7 @@ int main(int argc, char **argv)
 		/* default is only one launch then exit
 		 * (except if sigusr1 is received) */
 		reload = 0;
+		i = 0;
 		c = config_parse(configfile);
 
 		if (c == NULL) {
