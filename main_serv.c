@@ -48,6 +48,10 @@
 int nb_serv;
 struct array *ss;
 
+/* forced to be put as a global variable because
+ * it's used in main AND a signal interrupt */
+static int reload;
+
 /* functions */
 typedef void *(*packet_function)(char *data, unsigned int len, struct player *pl);
 packet_function f0_callbacks[2][255];
@@ -253,13 +257,17 @@ static void print_version()
 	printf("Soliloque Server version %s\n", VERSION);
 }
 
-void sigint()
+/**
+ * Makes the main function reach the end of the
+ * pthread_joins cleanly. This is used by sigint
+ * to exit cleanly, and sigusr1 to reload config
+ */
+void cleanup()
 {
 	size_t iter;
 	struct server *s;
 	struct config *cfg;
 
-	logger(LOG_INFO, "SIGINT received");
 	ar_each(struct server *, s, iter, ss)
 		cfg = s->conf;
 		ar_remove(ss, s);
@@ -272,9 +280,29 @@ void sigint()
 
 	/* destroy config */
 	destroy_config(cfg);
+}
 
+/**
+ * signal function to exit cleanly
+ */
+void sigint()
+{
+	logger(LOG_INFO, "SIGINT received - clean exit");
+	cleanup();
 	signal(SIGINT, sigint);
 }
+
+/**
+ * signal function to reload the config file
+ */
+void sigusr1()
+{
+	logger(LOG_INFO, "SIGUSR1 received - reloading configuration");
+	reload = 1;
+	cleanup();
+	signal(SIGUSR1, sigusr1);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -317,44 +345,51 @@ int main(int argc, char **argv)
 
 	if (configfile == NULL)
 		configfile = "sol-server.cfg";
-	c = config_parse(configfile);
-
-	if (c == NULL) {
-		logger(LOG_ERR, "Unable to read configuration file. Exiting.");
-		exit(0);
-	}
-	set_config(c);
-
-	init_db(c);
-	if (!connect_db(c)) {
-		logger(LOG_ERR, "Unable to connect to the database. Exiting.");
-		exit(0);
-	}
-	ss = ar_new(2);
-	db_create_servers(c, ss);
 
 	signal(SIGINT, sigint);
-	ar_each(struct server *, s, iter, ss)
-		db_create_channels(c, s);
-		db_create_subchannels(c, s);
-		db_create_registrations(c, s);
-		db_create_sv_privileges(c, s);
-		sp_print(s->privileges);
-		db_create_pl_ch_privileges(c, s);
-		logger(LOG_INFO, "Launching server %i", i);
-		server_start(s);
-		i++;
-	ar_end_each;
-	logger(LOG_INFO, "Servers initialized.");
+	signal(SIGUSR1, sigusr1);
+	reload = 1; /* first launch, always load */
+	while(reload) {
+		/* default is only one launch then exit
+		 * (except if sigusr1 is received) */
+		reload = 0;
+		c = config_parse(configfile);
 
-	ar_each(struct server *, s, iter, ss)
-		pthread_join(s->main_thread, NULL);
-		pthread_join(s->packet_sender, NULL);
-		free(s);
-	ar_end_each;
+		if (c == NULL) {
+			logger(LOG_ERR, "Unable to read configuration file. Exiting.");
+			exit(0);
+		}
+		set_config(c);
+
+		init_db(c);
+		if (!connect_db(c)) {
+			logger(LOG_ERR, "Unable to connect to the database. Exiting.");
+			exit(0);
+		}
+		ss = ar_new(2);
+		db_create_servers(c, ss);
+
+		ar_each(struct server *, s, iter, ss)
+			db_create_channels(c, s);
+			db_create_subchannels(c, s);
+			db_create_registrations(c, s);
+			db_create_sv_privileges(c, s);
+			sp_print(s->privileges);
+			db_create_pl_ch_privileges(c, s);
+			logger(LOG_INFO, "Launching server %i", i);
+			server_start(s);
+			i++;
+		ar_end_each;
+		logger(LOG_INFO, "Servers initialized.");
+
+		ar_each(struct server *, s, iter, ss)
+			pthread_join(s->main_thread, NULL);
+			pthread_join(s->packet_sender, NULL);
+			free(s);
+		ar_end_each;
+		ar_free(ss);
+	}
 	logger(LOG_INFO, "All server threads ended. Exiting.");
-
-	ar_free(ss);
 	/* exit */
 	return 0;
 }
