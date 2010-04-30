@@ -75,7 +75,7 @@ static void s_resp_chans(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	logger(LOG_INFO, "size of all channels : %i", data_size);
+	logger(LOG_DBG, "size of all channels : %i", data_size);
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
 	free(data);
@@ -134,7 +134,7 @@ static void s_resp_players(struct player *pl)
 		}
 		packet_add_crc_d(data, data_size);
 
-		logger(LOG_INFO, "size of all players : %i", data_size);
+		logger(LOG_DBG, "size of all players : %i", data_size);
 		send_to(s, data, data_size, 0, pl);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */

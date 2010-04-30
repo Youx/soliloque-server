@@ -595,7 +595,7 @@ static void *server_run(void *args)
 			if (n == -1) {
 				logger(LOG_ERR, "%s", strerror(errno));
 			} else {
-				logger(LOG_INFO, "%i bytes received.", n);
+				logger(LOG_DBG, "%i bytes received.", n);
 				handle_packet(data, n, &cli_addr, cli_len, s);
 			}
 		}

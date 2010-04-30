@@ -157,7 +157,7 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	memcpy(pl->cli_addr, cli_addr, cli_len);
 	pl->cli_len = cli_len;
 
-	logger(LOG_INFO, "machine : %s, login : %s, nickname : %s", pl->machine, pl->client, pl->name);
+	logger(LOG_INFO, "New connection : machine : %s, login : %s, nickname : %s", pl->machine, pl->client, pl->name);
 	free(client); free(machine); free(nickname); free(login); free(password);
 	return pl;
 }

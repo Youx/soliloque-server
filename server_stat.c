@@ -52,7 +52,7 @@ ssize_t send_to(struct server *s, const void *buf, size_t len, int flags,
 {
 	char *buf_copy = (char *)calloc(len, sizeof(char));
 
-	logger(LOG_INFO, "Adding to queue packet type 0x%x", *(uint32_t *)buf);
+	logger(LOG_DBG, "Adding to queue packet type 0x%x", *(uint32_t *)buf);
 	memcpy(buf_copy, buf, len);
 	add_to_queue(pl->packets, buf_copy, len);
 	return len;

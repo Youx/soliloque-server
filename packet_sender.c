@@ -43,7 +43,7 @@ static void send_curr_packet(struct player *p, struct server *s)
 
 		/* add packet to server statistics */
 		sstat_add_packet(s->stats, p_size, 1);
-		logger(LOG_INFO, "Really sending packet type 0x%x", *(uint32_t *)packet);
+		logger(LOG_DBG, "Really sending packet type 0x%x", *(uint32_t *)packet);
 		ret = sendto(s->socket_desc, packet, p_size, 0,
 				(struct sockaddr *)p->cli_addr, p->cli_len);
 		if (ret == -1)

@@ -100,7 +100,7 @@ static void handle_connection_type_packet(char *data, int len, struct sockaddr_i
 	char *ptr = data + 2;
 	uint16_t code = ru16(&ptr);
 
-	logger(LOG_INFO, "Packet : Connection.");
+	logger(LOG_DBG, "Packet : Connection.");
 	switch (code) {
 	/* Client requesting a connection */
 	case 3:
@@ -135,7 +135,7 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
-	logger(LOG_INFO, "Packet : Control (0x%x).", *(uint32_t *)code);
+	logger(LOG_DBG, "Packet : Control (0x%x).", *(uint32_t *)code);
 
 	func = get_f0_function(code);
 	if (func != NULL) {
@@ -172,7 +172,7 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	uint32_t public_id, private_id;
 	char *sent, *ptr;
 
-	logger(LOG_INFO, "Packet : ACK.");
+	logger(LOG_DBG, "Packet : ACK.");
 	/* parse ACK packet */
 	ptr = data + 2;
 	ack_version = ru16(&ptr);
@@ -202,9 +202,9 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
 	int res;
-	logger(LOG_INFO, "Packet : Audio data.");
+	logger(LOG_DBG, "Packet : Audio data.");
 	res = audio_received(data, len, s);
-	logger(LOG_INFO, "Return value : %i.", res);
+	logger(LOG_DBG, "Return value : %i.", res);
 }
 
 /* Manage an incoming packet */
