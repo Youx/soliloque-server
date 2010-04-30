@@ -250,7 +250,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 			free(topic);
 		if (desc != NULL)
 			free(desc);
-		logger(LOG_WARN, "channel_from_data, allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "channel_from_data, allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);

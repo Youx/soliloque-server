@@ -50,7 +50,7 @@ static void s_resp_chan_name_changed(struct player *pl, struct channel *ch, char
 	data_size = 24 + 4 + 4 + (strlen(name) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_name_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_chan_name_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -132,7 +132,7 @@ static void s_resp_chan_topic_changed(struct player *pl, struct channel *ch, cha
 	data_size = 24 + 4 + 4 + (strlen(topic) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_topic_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_chan_topic_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -214,7 +214,7 @@ static void s_resp_chan_desc_changed(struct player *pl, struct channel *ch, char
 	data_size = 24 + 4 + 4 + (strlen(desc) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chan_desc_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_chan_desc_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -289,7 +289,7 @@ static void s_notify_channel_flags_codec_changed(struct player *pl, struct chann
 	data_size = 24 + 4 + 4 + 2 + 2;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_flags_codec_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_channel_flags_codec_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -441,7 +441,7 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 
 		/* We either remove or change the password */
 		if (strlen(password) == 0) {
-			logger(LOG_ERR, "This should not happened. Password removal is done using the change flags/codec function.");
+			logger(LOG_WARN, "This should not happened. Password removal is done using the change flags/codec function.");
 			bzero(ch->password, 30 * sizeof(char));
 			ch->flags &= (~CHANNEL_FLAG_PASSWORD);
 		} else {
@@ -481,7 +481,7 @@ static void s_notify_channel_order_changed(struct player *pl, struct channel *ch
 	data_size = 24 + 4 + 2 + 4;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_order_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_channel_order_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -563,7 +563,7 @@ static void s_notify_channel_max_users_changed(struct player *pl, struct channel
 	data_size = 24 + 4 + 2 + 4;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_max_users_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_channel_max_users_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

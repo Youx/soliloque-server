@@ -44,7 +44,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_kick_server, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_kick_server, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -135,7 +135,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_kick_channel, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_kick_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -224,7 +224,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_ban, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -316,7 +316,7 @@ static void s_resp_bans(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_ban, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

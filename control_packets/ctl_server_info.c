@@ -54,7 +54,7 @@ static void s_resp_chans(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_chans, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_chans, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -108,7 +108,7 @@ static void s_resp_players(struct player *pl)
 	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_players, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_players, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	while (nb_players > 0) {
@@ -152,7 +152,7 @@ static void s_resp_unknown(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_unknown, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_unknown, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

@@ -80,7 +80,7 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 
 	res = dbi_conn_queryf(c->conn, req, s->id, r->global_flags, quoted_name, quoted_pass);
 	if (res == NULL) {
-		logger(LOG_WARN, "db_add_registration : SQL query failed");
+		logger(LOG_ERR, "db_add_registration : SQL query failed.");
 	} else {
 		r->db_id = dbi_conn_sequence_last(c->conn, NULL);
 		dbi_result_free(res);
@@ -107,13 +107,13 @@ int db_del_registration(struct config *c, struct server *s, struct registration 
 
 	res = dbi_conn_queryf(c->conn, q, r->db_id);
 	if (res == NULL)
-		logger(LOG_WARN, "db_del_registration : SQL query failed");
+		logger(LOG_ERR, "db_del_registration : SQL query failed");
 	else
 		dbi_result_free(res);
 
 	res = dbi_conn_queryf(c->conn, q2, r->db_id);
 	if (res == NULL)
-		logger(LOG_WARN, "db_del_registration : SQL query failed (2)");
+		logger(LOG_ERR, "db_del_registration : SQL query failed (2)");
 	else
 		dbi_result_free(res);
 	return 1;

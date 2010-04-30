@@ -44,7 +44,7 @@ void db_create_servers(struct config *c, struct array *ss)
 		return;
 	}
 	if (ss == NULL) {
-		logger(LOG_WARN, "db_create_server : calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "db_create_server : calloc failed : %s.", strerror(errno));
 		return;
 	}
 

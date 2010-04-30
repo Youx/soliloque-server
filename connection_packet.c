@@ -50,7 +50,7 @@ static void server_accept_connection(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "server_accept_connection : calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "server_accept_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -107,7 +107,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "server_refuse_connection : calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "server_refuse_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -232,7 +232,7 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_keepalive : calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_keepalive : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

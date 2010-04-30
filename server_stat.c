@@ -77,7 +77,7 @@ struct server_stat *new_sstat()
 
 	st = (struct server_stat *)calloc(1, sizeof(struct server_stat));
 	if (st == NULL) {
-		logger(LOG_WARN, "new_sstat, calloc of st failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_sstat, calloc of st failed : %s.", strerror(errno));
 		return NULL;
 	}
 	st->pkt_max = 10000;
@@ -87,7 +87,7 @@ struct server_stat *new_sstat()
 	st->start_time = time(NULL);
 
 	if (st->pkt_sizes == NULL || st->pkt_timestamps == NULL || st->pkt_io == NULL) {
-		logger(LOG_WARN, "new_sstat, calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_sstat, calloc failed : %s.", strerror(errno));
 		if (st->pkt_sizes != NULL)
 			free(st->pkt_sizes);
 		if (st->pkt_timestamps != NULL)
@@ -142,7 +142,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	/* reallocate and clean */
 	tmp_sizes = (size_t *)realloc(st->pkt_sizes, sizeof(size_t) * st->pkt_max);
 	if (tmp_sizes == NULL) {
-		logger(LOG_WARN, "sstat_add_packet, pkt_sizes realloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "sstat_add_packet, pkt_sizes realloc failed : %s.", strerror(errno));
 		st->pkt_max /= 2;	/* restore the old size */
 		return;
 	}
@@ -152,7 +152,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 	/* reallocate */
 	tmp_timestamps = (struct timeval *)realloc(st->pkt_timestamps, sizeof(struct timeval) * st->pkt_max);
 	if (tmp_timestamps == NULL) {
-		logger(LOG_WARN, "sstat_add_packet, pkt_timestamps realloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "sstat_add_packet, pkt_timestamps realloc failed : %s.", strerror(errno));
 		st->pkt_max /= 2;
 		return;
 	}
@@ -160,7 +160,7 @@ void sstat_add_packet(struct server_stat *st, size_t size, char in_out)
 
 	tmp_io = (char *)realloc(st->pkt_io, sizeof(char) * st->pkt_max);
 	if (tmp_io == NULL) {
-		logger(LOG_WARN, "sstat_add_packet, pkt_io realloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "sstat_add_packet, pkt_io realloc failed : %s.", strerror(errno));
 		st->pkt_max /= 2;
 		return;
 	}

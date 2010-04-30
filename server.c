@@ -88,7 +88,7 @@ struct server *new_server()
 	
 	serv = (struct server *)calloc(1, sizeof(struct server));
 	if (serv == NULL) {
-		logger(LOG_WARN, "new_server, calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_server, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 
@@ -127,7 +127,7 @@ int add_channel(struct server *serv, struct channel *chan)
 	
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_WARN, "add_channel, used_ids allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "add_channel, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 
@@ -269,7 +269,7 @@ int add_player(struct server *serv, struct player *pl)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_WARN, "add_player, used_ids allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "add_player, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	ar_each(struct player *, tmp_pl, iter, serv->players)
@@ -452,7 +452,7 @@ int add_ban(struct server *s, struct ban *b)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_WARN, "add_player, used_ids allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "add_player, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	ar_each(struct ban *, tmp_b, iter, s->bans)

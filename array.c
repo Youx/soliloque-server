@@ -190,7 +190,7 @@ void ar_remove(struct array *a, void *el)
 	}
 	pthread_mutex_unlock(&a->lock);
 	if (found == 0)
-		logger(LOG_ERR, "ar_remove : pointer 0x%x was not found in our array.\n", el);
+		logger(LOG_WARN, "ar_remove : pointer 0x%x was not found in our array.\n", el);
 }	
 
 /**
@@ -235,7 +235,7 @@ int ar_free(struct array *a)
 	pthread_mutex_lock(&a->lock);
 	/* if the array is not allocated, we cannot free it */
 	if (a == NULL || a->array == NULL) {
-		logger(LOG_ERR, "ar_free : Trying to free an unallocated array.");
+		logger(LOG_WARN, "ar_free : Trying to free an unallocated array.");
 		pthread_mutex_unlock(&a->lock);
 		return 0;
 	}
@@ -243,7 +243,7 @@ int ar_free(struct array *a)
 	/* if the array is not empty, we cannot free it */
 	for (i = 0 ; i < a->total_slots ; i++) {
 		if (a->array[i] != NULL) {
-			logger(LOG_ERR, "ar_free : Trying to free an array that is not empty.");
+			logger(LOG_WARN, "ar_free : Trying to free an array that is not empty.");
 			pthread_mutex_unlock(&a->lock);
 			return 0;
 		}

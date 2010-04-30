@@ -33,7 +33,7 @@ struct player_stat *new_plstat()
 
 	ps = (struct player_stat *)calloc(1, sizeof(struct player_stat));
 	if (ps == NULL) {
-		logger(LOG_WARN, "new_plstat, calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_plstat, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	return ps;

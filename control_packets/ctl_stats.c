@@ -42,7 +42,7 @@ static void s_resp_server_stats(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_server_stats, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_server_stats, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -108,7 +108,7 @@ static void s_res_player_stats(struct player *pl, struct player *tgt)
 	data_size = 164;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_res_player_stats, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_res_player_stats, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

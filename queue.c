@@ -39,7 +39,7 @@ struct queue *new_queue()
 void destroy_queue(struct queue *q)
 {
 	if (q->first != NULL)
-		logger(LOG_ERR, "destroy_queue : destroyed a queue that was NOT empty! That should not happen!");
+		logger(LOG_WARN, "destroy_queue : destroyed a queue that was NOT empty! That should not happen!");
 	pthread_mutex_destroy(&q->mutex);
 	free(q);
 }

@@ -66,7 +66,7 @@ struct server_privileges *new_sp()
 
 	sp = (struct server_privileges *)calloc(1, sizeof(struct server_privileges));
 	if (sp == NULL) {
-		logger(LOG_WARN, "new_sp, calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_sp, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	return sp;

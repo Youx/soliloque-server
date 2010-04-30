@@ -187,7 +187,7 @@ void db_create_pl_ch_privileges(struct config *c, struct server *s)
 				}
 				dbi_result_free(res);
 			} else {
-				logger(LOG_WARN, "db_create_pl_ch_privileges : SQL query failed.");
+				logger(LOG_ERR, "db_create_pl_ch_privileges : SQL query failed.");
 			}
 		}
 	ar_end_each;
@@ -223,8 +223,8 @@ void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *t
 			tmp_priv->ch->db_id);
 			
 	if (res == NULL) {
-		logger(LOG_WARN, "db_update_pl_chan_priv : SQL query failed.");
-		logger(LOG_WARN, q, tmp_priv->flags & CHANNEL_PRIV_CHANADMIN, tmp_priv->flags & CHANNEL_PRIV_OP,
+		logger(LOG_ERR, "db_update_pl_chan_priv : SQL query failed.");
+		logger(LOG_ERR, q, tmp_priv->flags & CHANNEL_PRIV_CHANADMIN, tmp_priv->flags & CHANNEL_PRIV_OP,
 			tmp_priv->flags & CHANNEL_PRIV_VOICE, tmp_priv->flags & CHANNEL_PRIV_AUTOOP,
 			tmp_priv->flags & CHANNEL_PRIV_AUTOVOICE,
 			tmp_priv->pl_or_reg.reg->db_id, tmp_priv->ch->db_id);
@@ -258,7 +258,7 @@ void db_add_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 			priv->flags & CHANNEL_PRIV_CHANADMIN, priv->flags & CHANNEL_PRIV_OP, priv->flags & CHANNEL_PRIV_VOICE,
 			priv->flags & CHANNEL_PRIV_AUTOOP, priv->flags & CHANNEL_PRIV_AUTOVOICE);
 	if (res == NULL)
-		logger(LOG_WARN, "db_add_pl_chan_priv : SQL query failed.");
+		logger(LOG_ERR, "db_add_pl_chan_priv : SQL query failed.");
 	else
 		dbi_result_free(res);
 }
@@ -285,7 +285,7 @@ void db_del_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 
 	res = dbi_conn_queryf(c->conn, q, priv->pl_or_reg.reg->db_id, priv->ch->db_id);
 	if (res == NULL)
-		logger(LOG_WARN, "db_del_pl_chan_priv : SQL query failed.");
+		logger(LOG_ERR, "db_del_pl_chan_priv : SQL query failed.");
 	else
 		dbi_result_free(res);
 }

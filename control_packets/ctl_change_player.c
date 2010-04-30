@@ -48,7 +48,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	new_priv = get_player_channel_privilege(pl, to);
@@ -142,7 +142,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -191,7 +191,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_ch_priv_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_ch_priv_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -301,7 +301,7 @@ void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, cha
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_sv_right_changed, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_sv_right_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -442,7 +442,7 @@ static void s_notify_player_moved(struct player *tgt, struct player *pl, struct 
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	new_priv = get_player_channel_privilege(tgt, to);
@@ -513,7 +513,7 @@ static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t o
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -594,7 +594,7 @@ void s_notify_player_requested_voice(struct player *pl, struct player *dest)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_player_requested_voice, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_player_requested_voice, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;

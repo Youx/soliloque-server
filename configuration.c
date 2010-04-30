@@ -72,7 +72,7 @@ static int config_parse_log(config_setting_t *log, struct config *cfg)
 			cfg->log.output = fopen(file, "a");
 			if (cfg->log.output == NULL) {
 				cfg->log.output = stderr;
-				logger(LOG_WARN, "config_parse_log : could not open file %s (%s)", file, strerror(errno));
+				logger(LOG_ERR, "config_parse_log : could not open file %s (%s)", file, strerror(errno));
 			}
 		}
 		free(file);

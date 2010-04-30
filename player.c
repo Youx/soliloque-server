@@ -64,7 +64,7 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
 	if (p == NULL) {
-		logger(LOG_WARN, "new_player, calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_player, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	/* create packet queue */
@@ -150,7 +150,7 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	/* Alloc adresses */
 	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
 	if (pl->cli_addr == NULL) {
-		logger(LOG_WARN, "new_player_from_data, client address calloc failed : %s.", strerror(errno));
+		logger(LOG_ERR, "new_player_from_data, client address calloc failed : %s.", strerror(errno));
 		destroy_player(pl);
 		return NULL;
 	}

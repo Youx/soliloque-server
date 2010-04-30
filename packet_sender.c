@@ -47,7 +47,7 @@ static void send_curr_packet(struct player *p, struct server *s)
 		ret = sendto(s->socket_desc, packet, p_size, 0,
 				(struct sockaddr *)p->cli_addr, p->cli_len);
 		if (ret == -1)
-			logger(LOG_WARN, "send_curr_packet failed : %s", strerror(errno));
+			logger(LOG_ERR, "send_curr_packet failed : %s", strerror(errno));
 		/* update packet version counter */
 		(*(uint16_t *)(packet + 16))++;
 		/* update checksum */

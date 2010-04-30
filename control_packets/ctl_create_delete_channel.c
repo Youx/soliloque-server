@@ -41,7 +41,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_deleted, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_channel_deleted, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -87,7 +87,7 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_resp_cannot_delete_channel, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_resp_cannot_delete_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -168,7 +168,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_WARN, "s_notify_channel_created, packet allocation failed : %s.", strerror(errno));
+		logger(LOG_ERR, "s_notify_channel_created, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
