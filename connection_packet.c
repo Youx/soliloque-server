@@ -174,7 +174,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	/* Check if the IP is banned */
 	if (get_ban_by_ip(s, cli_addr->sin_addr) != NULL) {
 		server_refuse_connection_ban(cli_addr, cli_len, s);
-		logger(LOG_INFO, "PLAYER BANNED TRIED TO CONNECT");
+		logger(LOG_INFO, "Banned player tried to connect");
 		return;
 	}
 	/* If registered, check if player exists, else check server password */
@@ -194,7 +194,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	} else {
 		r = get_registration(s, login, password);
 		if (r == NULL) {
-			logger(LOG_INFO, "Invalid credentials for a registered player");
+			logger(LOG_INFO, "Invalid credentials for a registered player (%s)", login);
 			destroy_player(pl);
 			return;	/* nobody found with those credentials */
 		}

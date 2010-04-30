@@ -77,7 +77,7 @@ void *packet_sender_thread(void *args)
 				packet = peek_at_queue(p->packets);
 				if (diff2.tv_sec > 10 || (packet != NULL && *(uint16_t *)(packet+16) > 50)) {
 					/* player seems to have timedout */
-					logger(LOG_INFO, "Player 0x%x seems to have timed out, removing him", p);
+					logger(LOG_INFO, "Player %s seems to have timed out, removing him", p->name);
 					/* do whateverittakes to notify that the player has left */
 					pthread_mutex_unlock(&p->packets->mutex);
 					s_notify_player_left(p);
@@ -107,11 +107,11 @@ void *packet_sender_thread(void *args)
 					/* player seems to have timedout and is
 					 * marked as leaving - we empty his queue
 					 * so he will be removed */
-					logger(LOG_INFO, "Emptying the player 0x%x 's packet queue.", p);
+					logger(LOG_DBG, "Emptying the player 0x%x 's packet queue.", p);
 					while ((packet2 = get_from_queue(p->packets))) {
 						free(packet2);
 					}
-					logger(LOG_INFO, "Queue empty.", p);
+					logger(LOG_DBG, "Queue empty.", p);
 				} else {
 					if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
 						queue_update_time(p->packets);

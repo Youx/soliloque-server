@@ -135,7 +135,7 @@ struct channel *new_predef_channel()
 void print_channel(struct channel *chan)
 {
 	if (chan == NULL) {
-		logger(LOG_INFO, "Channel NULL");
+		logger(LOG_WARN, "Channel NULL");
 	} else {
 		logger(LOG_INFO, "Channel ID %i", chan->id);
 		logger(LOG_INFO, "\t name    : %s", chan->name);

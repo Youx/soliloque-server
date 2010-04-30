@@ -202,11 +202,11 @@ int player_to_data_size(struct player *pl)
 
 void print_player(struct player *pl)
 {
-	logger(LOG_INFO, "Player : %s", pl->name);
-	logger(LOG_INFO, "\tpublic ID  : 0x%x", pl->public_id);
-	logger(LOG_INFO, "\tprivate ID : 0x%x", pl->private_id);
-	logger(LOG_INFO, "\tmachine    : %s", pl->machine);
-	logger(LOG_INFO, "\tclient     : %s", pl->client);
+	logger(LOG_DBG, "Player : %s", pl->name);
+	logger(LOG_DBG, "\tpublic ID  : 0x%x", pl->public_id);
+	logger(LOG_DBG, "\tprivate ID : 0x%x", pl->private_id);
+	logger(LOG_DBG, "\tmachine    : %s", pl->machine);
+	logger(LOG_DBG, "\tclient     : %s", pl->client);
 }
 
 /**
