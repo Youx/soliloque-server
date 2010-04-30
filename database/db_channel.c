@@ -213,7 +213,7 @@ int db_create_channels(struct config *c, struct server *s)
 			name = dbi_result_get_string_copy(res, "name");
 			topic = dbi_result_get_string_copy(res, "topic");
 			desc = dbi_result_get_string_copy(res, "description");
-			logger(LOG_INFO, "flag_hierarchical = %i", dbi_result_get_uint(res, "flag_hierarchical"));
+			logger(LOG_DBG, "flag_hierarchical = %i", dbi_result_get_uint(res, "flag_hierarchical"));
 			flags = (0 & ~CHANNEL_FLAG_UNREGISTERED);
 			if (dbi_result_get_uint(res, "flag_moderated"))
 				flags |= CHANNEL_FLAG_MODERATED;

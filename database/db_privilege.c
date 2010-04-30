@@ -46,7 +46,6 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 	res = dbi_conn_queryf(c->conn, q, s->id);
 	if (res) {
 		while (dbi_result_next_row(res)) {
-			logger(LOG_INFO, "sp row...");
 			/* Get the id of the group from the string */
 			group = dbi_result_get_string(res, "user_group");
 			if (strcmp(group, "server_admin") == 0) {
@@ -68,7 +67,7 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 						group);
 				continue;
 			}
-			logger(LOG_INFO, "GROUP : %i", g);
+			logger(LOG_DBG, "GROUP : %i", g);
 			/* Copy all privileges to the server... */
 			sp->priv[g][SP_ADM_DEL_SERVER] = dbi_result_get_uint(res, "adm_del_server");
 			sp->priv[g][SP_ADM_ADD_SERVER] = dbi_result_get_uint(res, "adm_add_server");

@@ -163,7 +163,7 @@ void sp_print(struct server_privileges *sp)
 		for (j = 0 ; j < SP_SIZE ; j++) {
 			sprintf(dst, "%s%i", dst, sp->priv[i][j]);
 		}
-		logger(LOG_INFO, dst);
+		logger(LOG_DBG, dst);
 		bzero(dst, 100);
 	}
 	free(dst);
