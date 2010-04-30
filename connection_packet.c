@@ -161,10 +161,11 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
  */
 void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli_addr, unsigned int cli_len, struct server *s)
 {
-	struct player *pl;
+	struct player *pl, *tmp_pl;
 	char password[30];
 	char login[30];
 	struct registration *r;
+	size_t iter;
 
 	/* Check crc */
 	if (!packet_check_crc(data, len, 16))
@@ -202,7 +203,6 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 		pl->reg = r;
 	}
 
-
 	/* Add player to the pool */
 	add_player(s, pl);
 	/* Send a message to the client indicating he has been accepted */
@@ -211,6 +211,11 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	server_accept_connection(pl);
 	/* Send a message to all players saying that a new player arrived (0xf0be6400) */
 	s_notify_new_player(pl);
+	/* Send the new player the list of all the Voice Requests */
+	ar_each(struct player *, tmp_pl, iter, s->players)
+		if (pl->player_attributes & PL_ATTR_REQUEST_VOICE)
+			s_notify_player_requested_voice(tmp_pl, pl);
+	ar_end_each;
 }
 
 /**

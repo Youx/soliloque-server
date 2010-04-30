@@ -70,6 +70,7 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl);
 void *c_req_server_stats(char *data, unsigned int len, struct player *pl);
 void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *pl);
 void *c_req_request_voice(char *data, unsigned int len, struct player *pl);
+void s_notify_player_requested_voice(struct player *pl, struct player *dest);
 void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *pl);
 void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl);
 void *c_req_send_message(char *data, unsigned int len, struct player *pl);

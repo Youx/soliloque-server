@@ -584,7 +584,7 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 	return NULL;
 }
 
-static void s_notify_player_requested_voice(struct player *pl)
+void s_notify_player_requested_voice(struct player *pl, struct player *dest)
 {
 	char *data, *ptr;
 	struct player *tmp_pl;
@@ -610,8 +610,8 @@ static void s_notify_player_requested_voice(struct player *pl)
 	wstaticstring(pl->voice_request, 29, &ptr);	/* length of reason */
 
 	assert(ptr - data == data_size);
-	
-	ar_each(struct player *, tmp_pl, iter, s->players)
+	if (dest == NULL) {
+		ar_each(struct player *, tmp_pl, iter, s->players)
 			ptr = data + 4;
 			wu32(tmp_pl->private_id, &ptr);
 			wu32(tmp_pl->public_id, &ptr);
@@ -619,7 +619,16 @@ static void s_notify_player_requested_voice(struct player *pl)
 			packet_add_crc_d(data, data_size);
 			send_to(s, data, data_size, 0, tmp_pl);
 			tmp_pl->f0_s_counter++;
-	ar_end_each;
+		ar_end_each;
+	} else {
+		ptr = data + 4;
+		wu32(dest->private_id, &ptr);
+		wu32(dest->public_id, &ptr);
+		wu32(dest->f0_s_counter, &ptr);
+		packet_add_crc_d(data, data_size);
+		send_to(s, data, data_size, 0, dest);
+		dest->f0_s_counter++;
+	}
 	free(data);
 }
 
@@ -642,7 +651,7 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 	strcpy(pl->voice_request, vr);
 	pl->player_attributes |= PL_ATTR_REQUEST_VOICE;
 
-	s_notify_player_requested_voice(pl);
+	s_notify_player_requested_voice(pl, NULL);
 	free(vr);
 	return NULL;
 }
