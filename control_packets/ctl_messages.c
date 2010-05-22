@@ -44,7 +44,7 @@ void send_message_to_all(struct player *pl, uint32_t color, char *msg)
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "send_message_to_all, packet allocation failed : %s.", strerror(errno));
+		ERROR("send_message_to_all, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -97,7 +97,7 @@ static void send_message_to_channel(struct player *pl, struct channel *ch, uint3
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "send_message_to_channel, packet allocation failed : %s.", strerror(errno));
+		ERROR("send_message_to_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -143,7 +143,7 @@ static void send_message_to_player(struct player *pl, struct player *tgt, uint32
 	data_size = 24 + 4 + 1 + 1 + 29 + (strlen(msg) + 1);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "send_message_to_player, packet allocation failed : %s.", strerror(errno));
+		ERROR("send_message_to_player, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -211,7 +211,7 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 				send_message_to_player(pl, tgt, color, msg);
 		break;
 	default:
-		logger(LOG_WARN, "c_req_send_message - wrong type of message : %i.", msg_type);
+		WARNING("c_req_send_message - wrong type of message : %i.", msg_type);
 	}
 	free(msg);
 	return NULL;

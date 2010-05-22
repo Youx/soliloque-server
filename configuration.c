@@ -72,7 +72,7 @@ static int config_parse_log(config_setting_t *log, struct config *cfg)
 			cfg->log.output = fopen(file, "a");
 			if (cfg->log.output == NULL) {
 				cfg->log.output = stderr;
-				logger(LOG_ERR, "config_parse_log : could not open file %s (%s)", file, strerror(errno));
+				ERROR("config_parse_log : could not open file %s (%s)", file, strerror(errno));
 			}
 		}
 		free(file);
@@ -179,37 +179,37 @@ struct config *config_parse(char *cfg_file)
 
 	config_init(&cfg);
 	if (config_read_file(&cfg, cfg_file) == CONFIG_FALSE) {
-		logger(LOG_ERR, "Error loading file %s", cfg_file);
+		ERROR("Error loading file %s", cfg_file);
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	db = config_lookup(&cfg, "db");
 	if (db == NULL) {
-		logger(LOG_ERR, "Error : no db tag.");
+		ERROR("Error : no db tag.");
 		config_destroy(&cfg);
 		return 0;
 	}
 	cfg_s = (struct config *)calloc(1, sizeof(struct config));
 	if (cfg_s == NULL) {
-		logger(LOG_ERR, "config_parse, calloc failed : %s.", strerror(errno));
+		ERROR("config_parse, calloc failed : %s.", strerror(errno));
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_db(db, cfg_s) == 0) {
-		logger(LOG_ERR, "config_parse_db failed.");
+		ERROR("config_parse_db failed.");
 		config_destroy(&cfg);
 		return 0;
 	}
 
 	log = config_lookup(&cfg, "log");
 	if (db == NULL) {
-		logger(LOG_ERR, "Error : no log tag.");
+		ERROR("Error : no log tag.");
 		config_destroy(&cfg);
 		return 0;
 	}
 	if (config_parse_log(log, cfg_s) == 0) {
-		logger(LOG_ERR, "config_parse_log failed.");
+		ERROR("config_parse_log failed.");
 		config_destroy(&cfg);
 		return 0;
 	}

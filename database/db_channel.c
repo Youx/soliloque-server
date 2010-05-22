@@ -75,8 +75,8 @@ int db_register_channel(struct config *c, struct channel *ch)
 			flag_default, flag_hierar, flag_mod,
 			parent_id, pass_clean);
 	if (res == NULL) {
-		logger(LOG_ERR, "Insertion request failed : ");
-		logger(LOG_ERR, q, ch->in_server->id, name_clean, topic_clean, desc_clean,
+		ERROR("Insertion request failed : ");
+		ERROR(q, ch->in_server->id, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			parent_id, pass_clean);
@@ -174,8 +174,8 @@ int db_update_channel(struct config *c, struct channel *ch)
 			flag_default, flag_hierar, flag_mod,
 			pass_clean, ch->db_id);
 	if (res == NULL) {
-		logger(LOG_ERR, "Insertion request failed : ");
-		logger(LOG_ERR, q, name_clean, topic_clean, desc_clean,
+		ERROR("Insertion request failed : ");
+		ERROR(q, name_clean, topic_clean, desc_clean,
 			ch->codec, ch->players->max_slots, ch->sort_order,
 			flag_default, flag_hierar, flag_mod,
 			pass_clean, ch->db_id);
@@ -213,7 +213,7 @@ int db_create_channels(struct config *c, struct server *s)
 			name = dbi_result_get_string_copy(res, "name");
 			topic = dbi_result_get_string_copy(res, "topic");
 			desc = dbi_result_get_string_copy(res, "description");
-			logger(LOG_DBG, "flag_hierarchical = %i", dbi_result_get_uint(res, "flag_hierarchical"));
+			DEBUG("flag_hierarchical = %i", dbi_result_get_uint(res, "flag_hierarchical"));
 			flags = (0 & ~CHANNEL_FLAG_UNREGISTERED);
 			if (dbi_result_get_uint(res, "flag_moderated"))
 				flags |= CHANNEL_FLAG_MODERATED;
@@ -264,14 +264,14 @@ int db_create_subchannels(struct config *c, struct server *s)
 
 			parent = get_channel_by_db_id(s, parent_db_id);
 			if (parent == NULL) {
-				logger(LOG_WARN, "db_create_subchannels, channel with db_id %i does not exist.",
+				WARNING("db_create_subchannels, channel with db_id %i does not exist.",
 						parent_db_id);
 				destroy_channel(ch);
 			} else if (parent->parent != NULL) {
-				logger(LOG_WARN, "db_create_subchannels, a subchannel can not have subchannels.");
+				WARNING("db_create_subchannels, a subchannel can not have subchannels.");
 				destroy_channel(ch);
 			} else if ((parent->flags & CHANNEL_FLAG_SUBCHANNELS) == 0) {
-				logger(LOG_WARN, "db_create_subchannels, channel %s can not have subchannel.",
+				WARNING("db_create_subchannels, channel %s can not have subchannel.",
 						parent->name);
 				destroy_channel(ch);
 			} else {

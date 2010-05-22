@@ -80,7 +80,7 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 
 	res = dbi_conn_queryf(c->conn, req, s->id, r->global_flags, quoted_name, quoted_pass);
 	if (res == NULL) {
-		logger(LOG_ERR, "db_add_registration : SQL query failed.");
+		ERROR("db_add_registration : SQL query failed.");
 	} else {
 		r->db_id = dbi_conn_sequence_last(c->conn, NULL);
 		dbi_result_free(res);
@@ -91,7 +91,7 @@ int db_add_registration(struct config *c, struct server *s, struct registration 
 	ar_each(struct channel *, ch, iter, s->chans)
 		ar_each(struct player_channel_privilege *, priv, iter2, ch->pl_privileges)
 			if (priv->reg == PL_CH_PRIV_REGISTERED && priv->pl_or_reg.reg == r) {
-				logger(LOG_INFO, "db_add_registration : adding a new pl_chan_priv");
+				INFO("db_add_registration : adding a new pl_chan_priv");
 				db_add_pl_chan_priv(c, priv);
 			}
 		ar_end_each;
@@ -107,13 +107,13 @@ int db_del_registration(struct config *c, struct server *s, struct registration 
 
 	res = dbi_conn_queryf(c->conn, q, r->db_id);
 	if (res == NULL)
-		logger(LOG_ERR, "db_del_registration : SQL query failed");
+		ERROR("db_del_registration : SQL query failed");
 	else
 		dbi_result_free(res);
 
 	res = dbi_conn_queryf(c->conn, q2, r->db_id);
 	if (res == NULL)
-		logger(LOG_ERR, "db_del_registration : SQL query failed (2)");
+		ERROR("db_del_registration : SQL query failed (2)");
 	else
 		dbi_result_free(res);
 	return 1;

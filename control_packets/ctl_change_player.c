@@ -48,7 +48,7 @@ static void s_notify_switch_channel(struct player *pl, struct channel *from, str
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_switch_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	new_priv = get_player_channel_privilege(pl, to);
@@ -110,11 +110,11 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 		if (!(ch_getflags(to) & CHANNEL_FLAG_PASSWORD)
 				|| player_has_privilege(pl, SP_CHA_JOIN_WO_PASS, to)
 				|| strcmp(pass, to->password) == 0) {
-			logger(LOG_INFO, "Player switching to channel %s.", to->name);
+			INFO("Player switching to channel %s.", to->name);
 			from = pl->in_chan;
 			if (move_player(pl, to)) {
 				s_notify_switch_channel(pl, from, to);
-				logger(LOG_INFO, "Player moved, notify sent.");
+				INFO("Player moved, notify sent.");
 				/* TODO change privileges */
 			}
 		}
@@ -142,7 +142,7 @@ static void s_notify_player_attr_changed(struct player *pl, uint16_t new_attr)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_attr_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -191,7 +191,7 @@ static void s_notify_player_ch_priv_changed(struct player *pl, struct player *tg
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_ch_priv_changed, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_ch_priv_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -265,7 +265,7 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
-		logger(LOG_INFO, "Player priv before : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
+		INFO("Player priv before : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		if (on_off == 2)
 			player_clr_channel_privilege(tgt, tgt->in_chan, (1 << right));
 		else if(on_off == 0) {
@@ -276,7 +276,7 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 				s_notify_player_attr_changed(tgt, tgt->player_attributes);
 			}
 		}
-		logger(LOG_INFO, "Player priv after  : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
+		INFO("Player priv after  : 0x%x", player_get_channel_privileges(tgt, tgt->in_chan));
 		s_notify_player_ch_priv_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
@@ -301,7 +301,7 @@ void s_notify_player_sv_right_changed(struct player *pl, struct player *tgt, cha
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_sv_right_changed, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_sv_right_changed, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -374,11 +374,11 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 		priv_required = (on_off == 0) ? SP_PL_ALLOW_SELF_REG : SP_PL_DEL_REGISTRATION;
 		break;
 	default:
-		logger(LOG_WARN, "c_req_change_player_sv_right : not implemented for privilege : %i", 1<<right);
+		WARNING("c_req_change_player_sv_right : not implemented for privilege : %i", 1<<right);
 		return NULL;
 	}
 	if (tgt != NULL && player_has_privilege(pl, priv_required, tgt->in_chan)) {
-		logger(LOG_INFO, "Player sv rights before : 0x%x", tgt->global_flags);
+		INFO("Player sv rights before : 0x%x", tgt->global_flags);
 		if (on_off == 2) {
 			tgt->global_flags &= (0xFF ^ (1 << right));
 			/* special case : removing a registration */
@@ -401,7 +401,7 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 		}
 
 		/* special case : registration */
-		logger(LOG_INFO, "Player sv rights after  : 0x%x", tgt->global_flags);
+		INFO("Player sv rights after  : 0x%x", tgt->global_flags);
 		s_notify_player_sv_right_changed(pl, tgt, right, on_off);
 	}
 	return NULL;
@@ -424,9 +424,9 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 	ptr = data + 24;
 
 	attributes = ru16(&ptr);
-	logger(LOG_INFO, "Player sv rights before : 0x%x", pl->player_attributes);
+	INFO("Player sv rights before : 0x%x", pl->player_attributes);
 	pl->player_attributes = attributes;
-	logger(LOG_INFO, "Player sv rights after  : 0x%x", pl->player_attributes);
+	INFO("Player sv rights after  : 0x%x", pl->player_attributes);
 	s_notify_player_attr_changed(pl, attributes);
 	return NULL;
 }
@@ -442,7 +442,7 @@ static void s_notify_player_moved(struct player *tgt, struct player *pl, struct 
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	new_priv = get_player_channel_privilege(tgt, to);
@@ -495,11 +495,11 @@ void *c_req_move_player(char *data, unsigned int len, struct player *pl)
 		send_acknowledge(pl);		/* ACK */
 		/* check privilege */
 		if (player_has_privilege(pl, SP_ADM_MOVE_PLAYER, to)) {
-			logger(LOG_INFO, "Player moving another one to channel %s.", to->name);
+			INFO("Player moving another one to channel %s.", to->name);
 			from = tgt->in_chan;
 			if (move_player(tgt, to)) {
 				s_notify_player_moved(tgt, pl, from, to);
-				logger(LOG_INFO, "Player moved, notify sent.");
+				INFO("Player moved, notify sent.");
 			}
 		}
 	}
@@ -513,7 +513,7 @@ static void s_resp_player_muted(struct player *by, struct player *tgt, uint8_t o
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_moved, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -553,11 +553,11 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);
 	if (pl == tgt) {
-		logger(LOG_WARN, "player tried to mute himself, that should not happen!");
+		WARNING("player tried to mute himself, that should not happen!");
 		return NULL;
 	}
 	if (tgt == NULL) {
-		logger(LOG_WARN, "player tried to unmute a player that does not exist, that should not happen!");
+		WARNING("player tried to unmute a player that does not exist, that should not happen!");
 		return NULL;
 	}
 
@@ -567,7 +567,7 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 			ar_insert(pl->muted, tgt);
 			s_resp_player_muted(pl, tgt, on_off);
 		} else {
-			logger(LOG_WARN, "player tried to mute a player he already muted!");
+			WARNING("player tried to mute a player he already muted!");
 		}
 	} else if (on_off == 0) {
 		/* UNMUTE */
@@ -575,10 +575,10 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 			ar_remove(pl->muted, tgt);
 			s_resp_player_muted(pl, tgt, on_off);
 		} else {
-			logger(LOG_WARN, "player tried to unmute a player he did not mute!");
+			WARNING("player tried to unmute a player he did not mute!");
 		}
 	} else {
-		logger(LOG_WARN, "c_req_mute_player : on_off != 0/1");
+		WARNING("c_req_mute_player : on_off != 0/1");
 	}
 
 	return NULL;
@@ -594,7 +594,7 @@ void s_notify_player_requested_voice(struct player *pl, struct player *dest)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_requested_voice, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_requested_voice, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -642,7 +642,7 @@ void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 	/* if the channel is not moderated or the player already has voice, refuse! */
 	if ((player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
 		!(pl->in_chan->flags & CHANNEL_FLAG_MODERATED)) {
-		logger(LOG_WARN, "c_req_request_voice : player is already V or channel is not M.");
+		WARNING("c_req_request_voice : player is already V or channel is not M.");
 		return NULL;
 	}
 	bzero(pl->voice_request, 30);

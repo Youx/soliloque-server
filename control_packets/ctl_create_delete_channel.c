@@ -41,7 +41,7 @@ static void s_notify_channel_deleted(struct server *s, uint32_t del_id)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_channel_deleted, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_channel_deleted, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -87,7 +87,7 @@ static void s_resp_cannot_delete_channel(struct player *pl, uint32_t pkt_cnt)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_cannot_delete_channel, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_resp_cannot_delete_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -139,7 +139,7 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 			s_resp_cannot_delete_channel(pl, pkt_cnt);
 		} else {
 			/* if the channel is registered, remove it from the db */
-			logger(LOG_INFO, "Flags : %i", ch_getflags(del));
+			INFO("Flags : %i", ch_getflags(del));
 			if ((ch_getflags(del) & CHANNEL_FLAG_UNREGISTERED) == 0)
 				db_unregister_channel(s->conf, del);
 			s_notify_channel_deleted(s, del_id);
@@ -168,7 +168,7 @@ static void s_notify_channel_created(struct channel *ch, struct player *creator)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_channel_created, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_channel_created, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -255,7 +255,7 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 				db_register_channel(s->conf, ch);
 			}
 		}
-		logger(LOG_INFO, "New channel created");
+		INFO("New channel created");
 		print_channel(ch);
 		if (! (ch_getflags(ch) & CHANNEL_FLAG_UNREGISTERED))
 			db_register_channel(s->conf, ch);

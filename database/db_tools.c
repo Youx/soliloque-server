@@ -61,9 +61,9 @@ int init_db(struct config *c)
  */
 int connect_db(struct config *c)
 {
-	logger(LOG_INFO, "Connecting to db");
+	INFO("Connecting to db");
 	if (dbi_conn_connect(c->conn) < 0) {
-		logger(LOG_ERR, "Could not connect. Please check the option settings");
+		ERROR("Could not connect. Please check the option settings");
 		return 0;
 	}
 	return 1;

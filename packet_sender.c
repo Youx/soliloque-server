@@ -43,11 +43,11 @@ static void send_curr_packet(struct player *p, struct server *s)
 
 		/* add packet to server statistics */
 		sstat_add_packet(s->stats, p_size, 1);
-		logger(LOG_DBG, "Really sending packet type 0x%x", *(uint32_t *)packet);
+		DEBUG("Really sending packet type 0x%x", *(uint32_t *)packet);
 		ret = sendto(s->socket_desc, packet, p_size, 0,
 				(struct sockaddr *)p->cli_addr, p->cli_len);
 		if (ret == -1)
-			logger(LOG_ERR, "send_curr_packet failed : %s", strerror(errno));
+			ERROR("send_curr_packet failed : %s", strerror(errno));
 		/* update packet version counter */
 		(*(uint16_t *)(packet + 16))++;
 		/* update checksum */
@@ -77,7 +77,7 @@ void *packet_sender_thread(void *args)
 				packet = peek_at_queue(p->packets);
 				if (diff2.tv_sec > 10 || (packet != NULL && *(uint16_t *)(packet+16) > 50)) {
 					/* player seems to have timedout */
-					logger(LOG_INFO, "Player %s seems to have timed out, removing him", p->name);
+					INFO("Player %s seems to have timed out, removing him", p->name);
 					/* do whateverittakes to notify that the player has left */
 					pthread_mutex_unlock(&p->packets->mutex);
 					s_notify_player_left(p);
@@ -107,11 +107,11 @@ void *packet_sender_thread(void *args)
 					/* player seems to have timedout and is
 					 * marked as leaving - we empty his queue
 					 * so he will be removed */
-					logger(LOG_DBG, "Emptying the player 0x%x 's packet queue.", p);
+					DEBUG("Emptying the player 0x%x 's packet queue.", p);
 					while ((packet2 = get_from_queue(p->packets))) {
 						free(packet2);
 					}
-					logger(LOG_DBG, "Queue empty.", p);
+					DEBUG("Queue empty.", p);
 				} else {
 					if (diff.tv_sec > 0 || diff.tv_usec > 500000) {
 						queue_update_time(p->packets);

@@ -64,7 +64,7 @@ struct player *new_player(char *nickname, char *login, char *machine)
 	
 	p = (struct player *)calloc(1, sizeof(struct player));
 	if (p == NULL) {
-		logger(LOG_ERR, "new_player, calloc failed : %s.", strerror(errno));
+		ERROR("new_player, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	/* create packet queue */
@@ -118,7 +118,7 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 
 	/* Verify fields */
 	if (len != 180) {
-		logger(LOG_WARN, "new_player_from_data, packet has invalid size.");
+		WARNING("new_player_from_data, packet has invalid size.");
 		return NULL;
 	}
 	
@@ -150,14 +150,14 @@ struct player *new_player_from_data(char *data, int len, struct sockaddr_in *cli
 	/* Alloc adresses */
 	pl->cli_addr = (struct sockaddr_in *)calloc(cli_len, sizeof(char));
 	if (pl->cli_addr == NULL) {
-		logger(LOG_ERR, "new_player_from_data, client address calloc failed : %s.", strerror(errno));
+		ERROR("new_player_from_data, client address calloc failed : %s.", strerror(errno));
 		destroy_player(pl);
 		return NULL;
 	}
 	memcpy(pl->cli_addr, cli_addr, cli_len);
 	pl->cli_len = cli_len;
 
-	logger(LOG_INFO, "New connection : machine : %s, login : %s, nickname : %s", pl->machine, pl->client, pl->name);
+	INFO("New connection : machine : %s, login : %s, nickname : %s", pl->machine, pl->client, pl->name);
 	free(client); free(machine); free(nickname); free(login); free(password);
 	return pl;
 }
@@ -202,11 +202,11 @@ int player_to_data_size(struct player *pl)
 
 void print_player(struct player *pl)
 {
-	logger(LOG_DBG, "Player : %s", pl->name);
-	logger(LOG_DBG, "\tpublic ID  : 0x%x", pl->public_id);
-	logger(LOG_DBG, "\tprivate ID : 0x%x", pl->private_id);
-	logger(LOG_DBG, "\tmachine    : %s", pl->machine);
-	logger(LOG_DBG, "\tclient     : %s", pl->client);
+	DEBUG("Player : %s", pl->name);
+	DEBUG("\tpublic ID  : 0x%x", pl->public_id);
+	DEBUG("\tprivate ID : 0x%x", pl->private_id);
+	DEBUG("\tmachine    : %s", pl->machine);
+	DEBUG("\tclient     : %s", pl->client);
 }
 
 /**

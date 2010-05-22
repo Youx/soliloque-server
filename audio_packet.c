@@ -77,14 +77,14 @@ int audio_received(char *in, size_t len, struct server *s)
 		ch_in = sender->in_chan;
 		/* Security checks */
 		if (data_codec != ch_in->codec) {
-			logger(LOG_WARN, "Player sent a wrong codec ID : %" PRIu8 ", expected : %" PRIu8 ".", data_codec, ch_in->codec);
+			WARNING("Player sent a wrong codec ID : %" PRIu8 ", expected : %" PRIu8 ".", data_codec, ch_in->codec);
 			return -1;
 		}
 
 		audio_block_size = codec_offset[(int)data_codec] + codec_audio_size[(int)data_codec];
 		expected_size = 16 + audio_block_size;
 		if (len != expected_size) {
-			logger(LOG_WARN, "Audio packet's size is incorrect : %zu bytes, expected : %zu.", len,
+			WARNING("Audio packet's size is incorrect : %zu bytes, expected : %zu.", len,
 					expected_size);
 			return -1;
 		}
@@ -93,7 +93,7 @@ int audio_received(char *in, size_t len, struct server *s)
 		data_size = len + 6; /* we will add the id of player sending */
 		data = (char *)calloc(data_size, sizeof(char));
 		if (data == NULL) {
-			logger(LOG_ERR, "audio_received, could not allocate packet : %s.", strerror(errno));
+			ERROR("audio_received, could not allocate packet : %s.", strerror(errno));
 			return -1;
 		}
 		ptr = data;
@@ -121,14 +121,14 @@ int audio_received(char *in, size_t len, struct server *s)
 				err = sendto(sender->in_chan->in_server->socket_desc, data, data_size, 0,
 						(struct sockaddr *)tmp_pl->cli_addr, tmp_pl->cli_len);
 				if (err == -1) {
-					logger(LOG_ERR, "audio_received, could not send packet : %s.", strerror(errno));
+					ERROR("audio_received, could not send packet : %s.", strerror(errno));
 				}
 			}
 		ar_end_each;
 		free(data);
 		return 0;
 	} else {
-		logger(LOG_WARN, "Wrong public/private ID pair : %x/%x.", pub_id, priv_id);
+		WARNING("Wrong public/private ID pair : %x/%x.", pub_id, priv_id);
 		return -1;
 	}
 }

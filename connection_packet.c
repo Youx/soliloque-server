@@ -50,7 +50,7 @@ static void server_accept_connection(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "server_accept_connection : calloc failed : %s.", strerror(errno));
+		ERROR("server_accept_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -107,7 +107,7 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "server_refuse_connection : calloc failed : %s.", strerror(errno));
+		ERROR("server_refuse_connection : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -174,7 +174,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	/* Check if the IP is banned */
 	if (get_ban_by_ip(s, cli_addr->sin_addr) != NULL) {
 		server_refuse_connection_ban(cli_addr, cli_len, s);
-		logger(LOG_INFO, "Banned player tried to connect");
+		INFO("Banned player tried to connect");
 		return;
 	}
 	/* If registered, check if player exists, else check server password */
@@ -194,7 +194,7 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	} else {
 		r = get_registration(s, login, password);
 		if (r == NULL) {
-			logger(LOG_INFO, "Invalid credentials for a registered player (%s)", login);
+			INFO("Invalid credentials for a registered player (%s)", login);
 			destroy_player(pl);
 			return;	/* nobody found with those credentials */
 		}
@@ -232,7 +232,7 @@ static void s_resp_keepalive(struct player *pl, uint32_t ka_id)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_keepalive : calloc failed : %s.", strerror(errno));
+		ERROR("s_resp_keepalive : calloc failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -280,7 +280,7 @@ void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 	ka_id = ru32(&ptr); 	/* Get the counter */
 	pl = get_player_by_ids(s, pub_id, priv_id);
 	if (pl == NULL) {
-		logger(LOG_WARN, "handle_player_keepalive : pl == NULL. Why????");
+		WARNING("handle_player_keepalive : pl == NULL. Why????");
 		return;
 	}
 	/* Send the keepalive response */

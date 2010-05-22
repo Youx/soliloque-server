@@ -54,7 +54,7 @@ static void s_resp_chans(struct player *pl)
 	/* initialize the packet */
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_chans, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_resp_chans, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -75,7 +75,7 @@ static void s_resp_chans(struct player *pl)
 
 	packet_add_crc_d(data, data_size);
 
-	logger(LOG_DBG, "size of all channels : %i", data_size);
+	DEBUG("size of all channels : %i", data_size);
 	send_to(s, data, data_size, 0, pl);
 	pl->f0_s_counter++;
 	free(data);
@@ -108,7 +108,7 @@ static void s_resp_players(struct player *pl)
 	nb_players = s->players->used_slots;
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_players, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_resp_players, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	while (nb_players > 0) {
@@ -134,7 +134,7 @@ static void s_resp_players(struct player *pl)
 		}
 		packet_add_crc_d(data, data_size);
 
-		logger(LOG_DBG, "size of all players : %i", data_size);
+		DEBUG("size of all players : %i", data_size);
 		send_to(s, data, data_size, 0, pl);
 		pl->f0_s_counter++;
 		/* decrement the number of players to send */
@@ -152,7 +152,7 @@ static void s_resp_unknown(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_unknown, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_resp_unknown, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -189,7 +189,7 @@ static void s_resp_unknown(struct player *pl)
 void *c_req_chans(char *data, unsigned int len, struct player *pl)
 {
 	if (len != 120) {
-		logger(LOG_WARN, "c_req_chans, packet has an invalid size : %i instead of %i.", len, 120);
+		WARNING("c_req_chans, packet has an invalid size : %i instead of %i.", len, 120);
 		return NULL;
 	}
 	send_acknowledge(pl);		/* ACK */

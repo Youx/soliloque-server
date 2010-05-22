@@ -36,7 +36,7 @@ struct registration *new_registration()
 
 	r = (struct registration *)calloc(1, sizeof(struct registration));
 	if (r == NULL) {
-		logger(LOG_ERR, "new_registration, calloc failed : %s.", strerror(errno));
+		ERROR("new_registration, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 

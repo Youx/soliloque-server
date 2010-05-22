@@ -100,7 +100,7 @@ static void handle_connection_type_packet(char *data, int len, struct sockaddr_i
 	char *ptr = data + 2;
 	uint16_t code = ru16(&ptr);
 
-	logger(LOG_DBG, "Packet : Connection.");
+	DEBUG("Packet : Connection.");
 	switch (code) {
 	/* Client requesting a connection */
 	case 3:
@@ -110,7 +110,7 @@ static void handle_connection_type_packet(char *data, int len, struct sockaddr_i
 		handle_player_keepalive(data, len, s);
 		break;
 	default:
-		logger(LOG_WARN, "Unknown connection packet : 0xf4be%x.", ((uint16_t *)data)[1]);
+		WARNING("Unknown connection packet : 0xf4be%x.", ((uint16_t *)data)[1]);
 	}
 }
 
@@ -135,18 +135,18 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 
 	/* Valid code (no overflow) */
 	memcpy(code, data, MIN(4, len));
-	logger(LOG_DBG, "Packet : Control (0x%x).", *(uint32_t *)code);
+	DEBUG("Packet : Control (0x%x).", *(uint32_t *)code);
 
 	func = get_f0_function(code);
 	if (func != NULL) {
 		/* Check header size */
 		if (len < 24) {
-			logger(LOG_WARN, "Control packet too small to be valid.");
+			WARNING("Control packet too small to be valid.");
 			return;
 		}
 		/* Check CRC */
 		if (!packet_check_crc_d(data, len)) {
-			logger(LOG_WARN, "Control packet (0x%x) has invalid CRC", *(uint32_t *)data);
+			WARNING("Control packet (0x%x) has invalid CRC", *(uint32_t *)data);
 			return;
 		}
 		/* Check if player exists */
@@ -160,7 +160,7 @@ static void handle_control_type_packet(char *data, int len, struct sockaddr_in *
 			(*func)(data, len, pl);
 		}
 	} else {
-		logger(LOG_WARN, "Function with code : 0x%"PRIx32" is invalid or is not implemented yet.", *(uint32_t *)code);
+		WARNING("Function with code : 0x%"PRIx32" is invalid or is not implemented yet.", *(uint32_t *)code);
 	}
 }
 
@@ -172,7 +172,7 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 	uint32_t public_id, private_id;
 	char *sent, *ptr;
 
-	logger(LOG_DBG, "Packet : ACK.");
+	DEBUG("Packet : ACK.");
 	/* parse ACK packet */
 	ptr = data + 2;
 	ack_version = ru16(&ptr);
@@ -202,9 +202,9 @@ static void handle_ack_type_packet(char *data, int len, struct sockaddr_in *cli_
 static void handle_data_type_packet(char *data, int len, struct sockaddr_in *cli_addr, struct server *s)
 {
 	int res;
-	logger(LOG_DBG, "Packet : Audio data.");
+	DEBUG("Packet : Audio data.");
 	res = audio_received(data, len, s);
-	logger(LOG_DBG, "Return value : %i.", res);
+	DEBUG("Return value : %i.", res);
 }
 
 /* Manage an incoming packet */
@@ -239,7 +239,7 @@ void handle_packet(char *data, int len, struct sockaddr_in *cli_addr, unsigned i
 		handle_connection_type_packet(data, len, cli_addr, cli_len, s);
 		break;
 	default:
-		logger(LOG_WARN, "Unvalid packet type field : 0x%x.", ((uint16_t *)data)[0]);
+		WARNING("Unvalid packet type field : 0x%x.", ((uint16_t *)data)[0]);
 	}
 }
 
@@ -287,7 +287,7 @@ void cleanup()
  */
 void sigint()
 {
-	logger(LOG_INFO, "SIGINT received - clean exit");
+	INFO("SIGINT received - clean exit");
 	cleanup();
 	signal(SIGINT, sigint);
 }
@@ -297,7 +297,7 @@ void sigint()
  */
 void sigusr1()
 {
-	logger(LOG_INFO, "SIGUSR1 received - reloading configuration");
+	INFO("SIGUSR1 received - reloading configuration");
 	reload = 1;
 	cleanup();
 	signal(SIGUSR1, sigusr1);
@@ -357,14 +357,14 @@ int main(int argc, char **argv)
 		c = config_parse(configfile);
 
 		if (c == NULL) {
-			logger(LOG_ERR, "Unable to read configuration file. Exiting.");
+			ERROR("Unable to read configuration file. Exiting.");
 			exit(0);
 		}
 		set_config(c);
 
 		init_db(c);
 		if (!connect_db(c)) {
-			logger(LOG_ERR, "Unable to connect to the database. Exiting.");
+			ERROR("Unable to connect to the database. Exiting.");
 			exit(0);
 		}
 		ss = ar_new(2);
@@ -377,11 +377,11 @@ int main(int argc, char **argv)
 			db_create_sv_privileges(c, s);
 			sp_print(s->privileges);
 			db_create_pl_ch_privileges(c, s);
-			logger(LOG_INFO, "Launching server %i", i);
+			INFO("Launching server %i", i);
 			server_start(s);
 			i++;
 		ar_end_each;
-		logger(LOG_INFO, "Servers initialized.");
+		INFO("Servers initialized.");
 
 		ar_each(struct server *, s, iter, ss)
 			pthread_join(s->main_thread, NULL);
@@ -390,7 +390,7 @@ int main(int argc, char **argv)
 		ar_end_each;
 		ar_free(ss);
 	}
-	logger(LOG_INFO, "All server threads ended. Exiting.");
+	INFO("All server threads ended. Exiting.");
 	/* exit */
 	return 0;
 }

@@ -79,7 +79,7 @@ struct channel *new_channel(char *name, char *topic, char *desc, uint16_t flags,
 	struct channel *chan;
 	chan = (struct channel *)calloc(1, sizeof(struct channel));
 	if (chan == NULL) {
-		logger(LOG_ERR, "new_channel, calloc failed : %s.", strerror(errno));
+		ERROR("new_channel, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 	
@@ -135,14 +135,14 @@ struct channel *new_predef_channel()
 void print_channel(struct channel *chan)
 {
 	if (chan == NULL) {
-		logger(LOG_WARN, "Channel NULL");
+		WARNING("Channel NULL");
 	} else {
-		logger(LOG_INFO, "Channel ID %i", chan->id);
-		logger(LOG_INFO, "\t name    : %s", chan->name);
-		logger(LOG_INFO, "\t topic   : %s", chan->topic);
-		logger(LOG_INFO, "\t desc    : %s", chan->desc);
+		INFO("Channel ID %i", chan->id);
+		INFO("\t name    : %s", chan->name);
+		INFO("\t topic   : %s", chan->topic);
+		INFO("\t desc    : %s", chan->desc);
 		if(ch_getflags(chan) & CHANNEL_FLAG_DEFAULT)
-			logger(LOG_INFO, "\t default : y");
+			INFO("\t default : y");
 	}
 }
 
@@ -250,7 +250,7 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 			free(topic);
 		if (desc != NULL)
 			free(desc);
-		logger(LOG_ERR, "channel_from_data, allocation failed : %s.", strerror(errno));
+		ERROR("channel_from_data, allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	*dst = new_channel(name, topic, desc, flags, codec, sort_order, max_users);
@@ -264,11 +264,11 @@ size_t channel_from_data(char *data, int len, struct channel **dst)
 int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
 {
 	if (ch != subchannel->parent) {
-		logger(LOG_WARN, "channel_remove_subchannel, subchannel's parent is not the same as passed parent.");
+		WARNING("channel_remove_subchannel, subchannel's parent is not the same as passed parent.");
 		return 0;
 	}
 	if (ch == NULL) {
-		logger(LOG_WARN, "channel_remove_subchannel, parent is null.");
+		WARNING("channel_remove_subchannel, parent is null.");
 		return 0;
 	}
 	ar_remove(ch->subchannels, subchannel);
@@ -280,7 +280,7 @@ int channel_remove_subchannel(struct channel *ch, struct channel *subchannel)
 int channel_add_subchannel(struct channel *ch, struct channel *subchannel)
 {
 	if ((ch_getflags(ch) & CHANNEL_FLAG_SUBCHANNELS) == 0) {
-		logger(LOG_WARN, "channel_add_subchannel, channel %i:%s can not have subchannels.", ch->id, ch->name);
+		WARNING("channel_add_subchannel, channel %i:%s can not have subchannels.", ch->id, ch->name);
 		return 0;
 	}
 	if (subchannel->parent != NULL)
@@ -332,7 +332,7 @@ char *ch_getpass(struct channel *ch)
 	if (ch->flags & CHANNEL_FLAG_PASSWORD) {
 		return ch->password;
 	} else {
-		logger(LOG_WARN, "channel_getpassword, asked for the password of a channel that is not protected.");
+		WARNING("channel_getpassword, asked for the password of a channel that is not protected.");
 		return NULL;
 	}
 }
@@ -379,7 +379,7 @@ struct player_channel_privilege *get_player_channel_privilege(struct player *pl,
 			return tmp_priv;
 	ar_end_each;
 
-	logger(LOG_INFO, "Could not find privileges for this channel-player couple... Creating a new one");
+	INFO("Could not find privileges for this channel-player couple... Creating a new one");
 	/* if there is no existing privileges, we create them */
 	tmp_priv = new_player_channel_privilege();
 	tmp_priv->ch = tmp_ch;
@@ -388,7 +388,7 @@ struct player_channel_privilege *get_player_channel_privilege(struct player *pl,
 		tmp_priv->pl_or_reg.reg = pl->reg;
 		/* register the privilege in the DB */
 		if (!(tmp_ch->flags & CHANNEL_FLAG_UNREGISTERED)) {
-			logger(LOG_INFO, "get_player_channel_privilege : adding a new priv to the DB");
+			INFO("get_player_channel_privilege : adding a new priv to the DB");
 			db_add_pl_chan_priv(tmp_ch->in_server->conf, tmp_priv);
 		}
 	} else {

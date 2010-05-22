@@ -28,7 +28,40 @@
 #define LOG_INFO 3
 #define LOG_DBG 4
 
+#ifndef LOG_LEVEL
+#define LOG_LEVEL 3
+#endif
+
 void logger(int loglevel, char *str, ...);
 void set_config(struct config *cfg);
+
+/* define log at compile time */
+#if LOG_LEVEL >= LOG_ERR
+#define ERROR(args...) \
+logger(LOG_ERR, ## args)
+#else /* do nothing */
+#define ERROR(args...)
+#endif
+
+#if LOG_LEVEL >= LOG_WARN
+#define WARNING(args...) \
+logger(LOG_WARN, ## args)
+#else /* do nothing */
+#define WARNING(args...)
+#endif
+
+#if LOG_LEVEL >= LOG_INFO
+#define INFO(args...) \
+logger(LOG_INFO, ## args)
+#else /* do nothing */
+#define INFO(args...)
+#endif
+
+#if LOG_LEVEL >= LOG_DBG
+#define DEBUG(args...) \
+logger(LOG_DBG, ## args)
+#else
+#define DEBUG(...) /* do nothing */
+#endif
 
 #endif

@@ -88,7 +88,7 @@ struct server *new_server()
 	
 	serv = (struct server *)calloc(1, sizeof(struct server));
 	if (serv == NULL) {
-		logger(LOG_ERR, "new_server, calloc failed : %s.", strerror(errno));
+		ERROR("new_server, calloc failed : %s.", strerror(errno));
 		return NULL;
 	}
 
@@ -127,7 +127,7 @@ int add_channel(struct server *serv, struct channel *chan)
 	
 	used_ids = (char *)calloc(serv->chans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_ERR, "add_channel, used_ids allocation failed : %s.", strerror(errno));
+		ERROR("add_channel, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 
@@ -269,7 +269,7 @@ int add_player(struct server *serv, struct player *pl)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(serv->players->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_ERR, "add_player, used_ids allocation failed : %s.", strerror(errno));
+		ERROR("add_player, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	ar_each(struct player *, tmp_pl, iter, serv->players)
@@ -452,7 +452,7 @@ int add_ban(struct server *s, struct ban *b)
 	/* Find the next available public ID */
 	used_ids = (char *)calloc(s->bans->total_slots, sizeof(char));
 	if (used_ids == NULL) {
-		logger(LOG_ERR, "add_player, used_ids allocation failed : %s.", strerror(errno));
+		ERROR("add_player, used_ids allocation failed : %s.", strerror(errno));
 		return 0;
 	}
 	ar_each(struct ban *, tmp_b, iter, s->bans)
@@ -583,19 +583,19 @@ static void *server_run(void *args)
 		pollres = poll(&s->socket_poll, 1, -1);
 		switch(pollres) {
 		case 0:
-			logger(LOG_ERR, "Time limit expired");
+			ERROR("Time limit expired");
 			break;
 		case -1:
-			logger(LOG_ERR, "Error occured while polling : %s", strerror(errno));
+			ERROR("Error occured while polling : %s", strerror(errno));
 			break;
 		default:
 			cli_len = sizeof(cli_addr);
 			n = recvfrom(s->socket_desc, data, MAX_MSG, 0,
 					(struct sockaddr *) &cli_addr, &cli_len);
 			if (n == -1) {
-				logger(LOG_ERR, "%s", strerror(errno));
+				ERROR("%s", strerror(errno));
 			} else {
-				logger(LOG_DBG, "%i bytes received.", n);
+				DEBUG("%i bytes received.", n);
 				handle_packet(data, n, &cli_addr, cli_len, s);
 			}
 		}

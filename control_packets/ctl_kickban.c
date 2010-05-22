@@ -44,7 +44,7 @@ static void s_notify_kick_server(struct player *kicker, struct player *kicked, c
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_kick_server, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_kick_server, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -92,7 +92,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 
 	if (len != 60) {
-		logger(LOG_WARN, "c_req_kick_server, packet has invalid size : %i instead of %i.", len, 60);
+		WARNING("c_req_kick_server, packet has invalid size : %i instead of %i.", len, 60);
 		return NULL;
 	}
 
@@ -105,7 +105,7 @@ void *c_req_kick_server(char *data, unsigned int len, struct player *pl)
 		if(player_has_privilege(pl, SP_OTHER_SV_KICK, target->in_chan)) {
 			ptr = data + 28;
 			reason = rstaticstring(29, &ptr);
-			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
+			INFO("Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_server(pl, target, reason);
 			remove_player(s, pl);
 			free(reason);
@@ -135,7 +135,7 @@ static void s_notify_kick_channel(struct player *kicker, struct player *kicked,
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_kick_channel, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_kick_channel, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -180,7 +180,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 
 	if (len != 60) {
-		logger(LOG_WARN, "c_req_kick_channel, packet has invalid size : %i instead of %i.", len, 60);
+		WARNING("c_req_kick_channel, packet has invalid size : %i instead of %i.", len, 60);
 		return NULL;
 	}
 	ptr = data + 24;
@@ -193,7 +193,7 @@ void *c_req_kick_channel(char *data, unsigned int len, struct player *pl)
 		if (player_has_privilege(pl, SP_OTHER_CH_KICK, target->in_chan)) {
 			ptr = data + 28;
 			reason = rstaticstring(29, &ptr);
-			logger(LOG_INFO, "Reason for kicking player %s : %s", target->name, reason);
+			INFO("Reason for kicking player %s : %s", target->name, reason);
 			s_notify_kick_channel(pl, target, reason, pl->in_chan);
 			move_player(pl, def_chan);
 			/* TODO update player channel privileges etc... */
@@ -224,7 +224,7 @@ static void s_notify_ban(struct player *pl, struct player *target, uint16_t dura
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_ban, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -283,7 +283,7 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
 		if(player_has_privilege(pl, SP_ADM_BAN_IP, target->in_chan)) {
 			reason = rstaticstring(29, &ptr);
 			add_ban(s, new_ban(0, target->cli_addr->sin_addr, reason));
-			logger(LOG_INFO, "Reason for banning player %s : %s", target->name, reason);
+			INFO("Reason for banning player %s : %s", target->name, reason);
 			s_notify_ban(pl, target, duration, reason);
 			remove_player(s, target);
 			free(reason);
@@ -316,7 +316,7 @@ static void s_resp_bans(struct player *pl)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_resp_ban, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_resp_ban, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -329,14 +329,14 @@ static void s_resp_bans(struct player *pl)
 	ptr += 4;			/* packet version */
 	ptr += 4;			/* checksum */
 	wu32(s->bans->used_slots, &ptr);/* number of bans */
-	logger(LOG_INFO, "number of bans : %zu", s->bans->used_slots);
+	INFO("number of bans : %zu", s->bans->used_slots);
 	ar_each(struct ban *, b, iter, s->bans)
 		tmp_size = ban_to_data(b, ptr);
 		ptr += tmp_size;
 	ar_end_each;
 	
 	packet_add_crc_d(data, data_size);
-	logger(LOG_INFO, "list of bans : sending %i bytes", data_size);
+	INFO("list of bans : sending %i bytes", data_size);
 	send_to(s, data, data_size, 0, pl);
 
 	pl->f0_s_counter++;

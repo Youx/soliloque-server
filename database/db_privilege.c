@@ -41,7 +41,7 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 	int g;
 	struct server_privileges *sp = s->privileges;
 
-	logger(LOG_INFO, "Loading server privileges.");
+	INFO("Loading server privileges.");
 
 	res = dbi_conn_queryf(c->conn, q, s->id);
 	if (res) {
@@ -61,13 +61,13 @@ int db_create_sv_privileges(struct config *c, struct server *s)
 			} else if (strcmp(group, "anonymous") == 0) {
 				g = PRIV_ANONYMOUS;
 			} else {
-				logger(LOG_ERR, "server_privileges.user_group = %s, \
+				ERROR("server_privileges.user_group = %s, \
 						expected : server_admin, channel_admin, \
 						operator, voice, registered, anonymous.",
 						group);
 				continue;
 			}
-			logger(LOG_DBG, "GROUP : %i", g);
+			DEBUG("GROUP : %i", g);
 			/* Copy all privileges to the server... */
 			sp->priv[g][SP_ADM_DEL_SERVER] = dbi_result_get_uint(res, "adm_del_server");
 			sp->priv[g][SP_ADM_ADD_SERVER] = dbi_result_get_uint(res, "adm_add_server");
@@ -154,7 +154,7 @@ void db_create_pl_ch_privileges(struct config *c, struct server *s)
 	char *q = "SELECT * FROM player_channel_privileges WHERE channel_id = %i;";
 
 
-	logger(LOG_INFO, "Reading player channel privileges...");
+	INFO("Reading player channel privileges...");
 	ar_each(struct channel *, ch, iter, s->chans)
 		if (!(ch->flags & CHANNEL_FLAG_UNREGISTERED)) {
 			res = dbi_conn_queryf(c->conn, q, ch->db_id);
@@ -187,7 +187,7 @@ void db_create_pl_ch_privileges(struct config *c, struct server *s)
 				}
 				dbi_result_free(res);
 			} else {
-				logger(LOG_ERR, "db_create_pl_ch_privileges : SQL query failed.");
+				ERROR("db_create_pl_ch_privileges : SQL query failed.");
 			}
 		}
 	ar_end_each;
@@ -200,17 +200,17 @@ void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *t
 			SET channel_admin = %i, operator = %i, voice = %i, auto_operator = %i, auto_voice = %i \
 			WHERE player_id = %i AND channel_id = %i;" ;
 
-	logger(LOG_INFO, "db_update_pl_chan_priv");
+	INFO("db_update_pl_chan_priv");
 	if (tmp_priv->reg != PL_CH_PRIV_REGISTERED) {
-		logger(LOG_WARN, "db_update_pl_chan_priv : trying to update a pl_ch_priv that is marked as unregistered. This should not happen!");
+		WARNING("db_update_pl_chan_priv : trying to update a pl_ch_priv that is marked as unregistered. This should not happen!");
 		return;
 	}
 	if (tmp_priv->pl_or_reg.reg == NULL) {
-		logger(LOG_WARN, "db_update_pl_chan_priv : registration is NULL. This should not happen!");
+		WARNING("db_update_pl_chan_priv : registration is NULL. This should not happen!");
 		return;
 	}
 	if (tmp_priv->ch == NULL) {
-		logger(LOG_WARN, "db_update_pl_chan_priv : channel is NULL. This should not happen!");
+		WARNING("db_update_pl_chan_priv : channel is NULL. This should not happen!");
 		return;
 	}
 	res = dbi_conn_queryf(c->conn, q,
@@ -223,8 +223,8 @@ void db_update_pl_chan_priv(struct config *c, struct player_channel_privilege *t
 			tmp_priv->ch->db_id);
 			
 	if (res == NULL) {
-		logger(LOG_ERR, "db_update_pl_chan_priv : SQL query failed.");
-		logger(LOG_ERR, q, tmp_priv->flags & CHANNEL_PRIV_CHANADMIN, tmp_priv->flags & CHANNEL_PRIV_OP,
+		ERROR("db_update_pl_chan_priv : SQL query failed.");
+		ERROR(q, tmp_priv->flags & CHANNEL_PRIV_CHANADMIN, tmp_priv->flags & CHANNEL_PRIV_OP,
 			tmp_priv->flags & CHANNEL_PRIV_VOICE, tmp_priv->flags & CHANNEL_PRIV_AUTOOP,
 			tmp_priv->flags & CHANNEL_PRIV_AUTOVOICE,
 			tmp_priv->pl_or_reg.reg->db_id, tmp_priv->ch->db_id);
@@ -241,24 +241,24 @@ void db_add_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 		   VALUES (%i, %i, %i, %i, %i, %i, %i)";
 
 	if (priv->reg != PL_CH_PRIV_REGISTERED) {
-		logger(LOG_WARN, "db_add_pl_chan_priv : trying to add a pl_ch_priv that is marked as unregistered. This should not happen!");
+		WARNING("db_add_pl_chan_priv : trying to add a pl_ch_priv that is marked as unregistered. This should not happen!");
 		return;
 	}
 	if (priv->pl_or_reg.reg == NULL) {
-		logger(LOG_WARN, "db_add_pl_chan_priv : registration is NULL. This should not happen!");
+		WARNING("db_add_pl_chan_priv : registration is NULL. This should not happen!");
 		return;
 	}
 	if (priv->ch == NULL) {
-		logger(LOG_WARN, "db_add_pl_chan_priv : channel is NULL. This should not happen!");
+		WARNING("db_add_pl_chan_priv : channel is NULL. This should not happen!");
 		return;
 	}
-	logger(LOG_INFO, "registering a new player channel privilege.");
+	INFO("registering a new player channel privilege.");
 
 	res = dbi_conn_queryf(c->conn, q, priv->pl_or_reg.reg->db_id, priv->ch->db_id,
 			priv->flags & CHANNEL_PRIV_CHANADMIN, priv->flags & CHANNEL_PRIV_OP, priv->flags & CHANNEL_PRIV_VOICE,
 			priv->flags & CHANNEL_PRIV_AUTOOP, priv->flags & CHANNEL_PRIV_AUTOVOICE);
 	if (res == NULL)
-		logger(LOG_ERR, "db_add_pl_chan_priv : SQL query failed.");
+		ERROR("db_add_pl_chan_priv : SQL query failed.");
 	else
 		dbi_result_free(res);
 }
@@ -270,22 +270,22 @@ void db_del_pl_chan_priv(struct config *c, struct player_channel_privilege *priv
 			WHERE player_id = %i AND channel_id = %i;";
 
 	if (priv->reg != PL_CH_PRIV_REGISTERED) {
-		logger(LOG_WARN, "db_del_pl_chan_priv : trying to delete a pl_ch_priv that is marked as unregistered. This should not happen!");
+		WARNING("db_del_pl_chan_priv : trying to delete a pl_ch_priv that is marked as unregistered. This should not happen!");
 		return;
 	}
 	if (priv->pl_or_reg.reg == NULL) {
-		logger(LOG_WARN, "db_del_pl_chan_priv : registration is NULL. This should not happen!");
+		WARNING("db_del_pl_chan_priv : registration is NULL. This should not happen!");
 		return;
 	}
 	if (priv->ch == NULL) {
-		logger(LOG_WARN, "db_del_pl_chan_priv : channel is NULL. This should not happen!");
+		WARNING("db_del_pl_chan_priv : channel is NULL. This should not happen!");
 		return;
 	}
-	logger(LOG_INFO, "unregistering a player channel privilege");
+	INFO("unregistering a player channel privilege");
 
 	res = dbi_conn_queryf(c->conn, q, priv->pl_or_reg.reg->db_id, priv->ch->db_id);
 	if (res == NULL)
-		logger(LOG_ERR, "db_del_pl_chan_priv : SQL query failed.");
+		ERROR("db_del_pl_chan_priv : SQL query failed.");
 	else
 		dbi_result_free(res);
 }

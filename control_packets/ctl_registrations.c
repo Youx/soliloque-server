@@ -54,7 +54,7 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 		pass = rstaticstring(29, &ptr);
 		server_admin = ru8(&ptr);
 		if (name == NULL || pass == NULL) {
-			logger(LOG_ERR, "c_req_create_registration, strndup failed : %s.", strerror(errno));
+			ERROR("c_req_create_registration, strndup failed : %s.", strerror(errno));
 			if (name != NULL)
 				free(name);
 			if (pass != NULL)
@@ -102,17 +102,17 @@ void *c_req_register_player(char *data, unsigned int len, struct player *pl)
 
 	s = pl->in_chan->in_server;
 
-	logger(LOG_INFO, "c_req_register_player : registering player");
+	INFO("c_req_register_player : registering player");
 	send_acknowledge(pl);
 	if (player_has_privilege(pl, SP_PL_ALLOW_SELF_REG, NULL)
 			|| (pl->global_flags & GLOBAL_FLAG_ALLOWREG)) {
-		logger(LOG_INFO, "c_req_register_player : privileges OK");
+		INFO("c_req_register_player : privileges OK");
 		ptr = data + 24;
 		name = rstaticstring(29, &ptr);
 		pass = rstaticstring(29, &ptr);
 
 		if (name == NULL || pass == NULL) {
-			logger(LOG_ERR, "c_req_register_player, strndup failed : %s.", strerror(errno));
+			ERROR("c_req_register_player, strndup failed : %s.", strerror(errno));
 			if (name != NULL)
 				free(name);
 			if (pass != NULL)

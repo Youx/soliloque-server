@@ -44,7 +44,7 @@ void s_notify_new_player(struct player *pl)
 	data_size = 24 + player_to_data_size(pl);
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_new_player, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_new_player, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ptr = data;
@@ -81,7 +81,7 @@ void s_notify_server_stopping(struct server *s)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_left, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_left, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
 	ar_each(struct player *, tmp_pl, iter, s->players)
@@ -123,10 +123,10 @@ void s_notify_player_left(struct player *p)
 
 	data = (char *)calloc(data_size, sizeof(char));
 	if (data == NULL) {
-		logger(LOG_ERR, "s_notify_player_left, packet allocation failed : %s.", strerror(errno));
+		ERROR("s_notify_player_left, packet allocation failed : %s.", strerror(errno));
 		return;
 	}
-	logger(LOG_INFO, "Player %s left.", p->name);
+	INFO("Player %s left.", p->name);
 	ptr = data;
 
 	wu16(PKT_TYPE_CTL, &ptr);
@@ -168,7 +168,7 @@ void s_notify_player_left(struct player *p)
 void *c_req_leave(char *data, unsigned int len, struct player *pl)
 {
 	if (len != 24) {
-		logger(LOG_WARN, "c_req_leave, packet has invalid size : %i instead of %i.", len, 24);
+		WARNING("c_req_leave, packet has invalid size : %i instead of %i.", len, 24);
 		return NULL;
 	}
 	send_acknowledge(pl);		/* ACK */
