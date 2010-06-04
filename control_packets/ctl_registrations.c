@@ -48,6 +48,11 @@ void *c_req_create_registration(char *data, unsigned int len, struct player *pl)
 	s = pl->in_chan->in_server;
 
 	send_acknowledge(pl);
+	if (len != 85) {
+		WARNING("c_req_create_registration, packet has "
+				"invalid size (%i instead of %i)", len, 85);
+		return NULL;
+	}
 	if (player_has_privilege(pl, SP_PL_REGISTER_PLAYER, NULL)) {
 		ptr = data + 24;
 		name = rstaticstring(29, &ptr);
@@ -104,6 +109,11 @@ void *c_req_register_player(char *data, unsigned int len, struct player *pl)
 
 	INFO("c_req_register_player : registering player");
 	send_acknowledge(pl);
+	if (len != 84) {
+		WARNING("c_req_register_player, packet has "
+				"invalid size (%i instead of %i)", len, 84);
+		return NULL;
+	}
 	if (player_has_privilege(pl, SP_PL_ALLOW_SELF_REG, NULL)
 			|| (pl->global_flags & GLOBAL_FLAG_ALLOWREG)) {
 		INFO("c_req_register_player : privileges OK");

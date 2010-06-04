@@ -9,7 +9,7 @@ APPNAME='soliloque-server'
 srcdir = '.'
 blddir = 'output'
 SOURCES='main_serv.c server.c channel.c player.c array.c connection_packet.c crc.c packet_tools.c acknowledge_packet.c toolbox.c audio_packet.c ban.c server_stat.c configuration.c registration.c server_privileges.c player_stat.c log.c queue.c packet_sender.c player_channel_privilege.c'
-flags_dbg1= ['-Wall', '-Werror', '-ggdb', '-DLOG_LEVEL=4']
+flags_dbg1= ['-Wall', '-Werror', '-ggdb', '-DLOG_LEVEL=5']
 flags_dbg2= ['-Wno-unused-parameter', '-Wstrict-prototypes', '-Wmissing-prototypes', '-Wpointer-arith']
 flags_dbg2.extend(flags_dbg1)
 flags_dbg3= ['-Wreturn-type', '-Wcast-qual', '-Wswitch', '-Wshadow', '-Wcast-align']

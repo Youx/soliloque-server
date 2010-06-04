@@ -93,13 +93,21 @@ void *c_req_change_chan_name(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);
 
+	if (len < 29) {
+		WARNING("c_req_change_chan_name, packet has invalid size (<29 bytes)");
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("c_req_change_chan_name, string not NULL terminated");
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
 		if (player_has_privilege(pl, SP_CHA_CHANGE_NAME, ch)) {
-			name = strdup(data + 28);
+			name = strndup(data + 28, len - 28);
 			free(ch->name);
 			ch->name = name;
 			/* Update the channel in the db if it is registered */
@@ -175,13 +183,21 @@ void *c_req_change_chan_topic(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);
 
+	if (len < 29) { /* at least 1 character ('\0') for the topic */
+		WARNING("c_req_change_chan_topic, packet has invalid size (<29 bytes)");
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("c_req_change_chan_topic, TOPIC string not NULL terminated");
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
 		if (player_has_privilege(pl, SP_CHA_CHANGE_TOPIC, ch)) {
-			topic = strdup(data + 28); /* FIXME : possible exploit */
+			topic = strndup(data + 28, len - 28);
 			free(ch->topic);
 			ch->topic = topic;
 			/* Update the channel in the db if it is registered */
@@ -258,13 +274,21 @@ void *c_req_change_chan_desc(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);
 
+	if (len < 29) { /* at least 1 character ('\0') for the topic */
+		WARNING("c_req_change_chan_desc, packet has invalid size (<29 bytes)");
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("c_req_change_chan_desc, DESC string not NULL terminated");
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	ch = get_channel_by_id(pl->in_chan->in_server, ch_id);
 
 	if (ch != NULL) {
 		if (player_has_privilege(pl, SP_CHA_CHANGE_DESC, ch)) {
-			desc = strdup(data + 28);	/* FIXME : possible exploit */
+			desc = strndup(data + 28, len - 28);
 			free(ch->desc);
 			ch->desc = desc;
 			/* Update the channel in the db if it is registered */
@@ -340,6 +364,12 @@ void *c_req_change_chan_flag_codec(char *data, unsigned int len, struct player *
 	char *ptr;
 
 	send_acknowledge(pl);
+	
+	if (len != 32) {
+		WARNING("c_req_change_chan_flag_codec, "
+			"packet has invalid size (%i instead of %i)", len, 32);
+		return NULL;
+	}
 	s =  pl->in_chan->in_server;
 	priv_nok = 0;
 
@@ -429,6 +459,11 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 
 	s = pl->in_chan->in_server;
 
+	if (len != 58) {
+		WARNING("c_req_change_chan_pass, packet has invalid "
+				"size (%i instead of %i)", len, 58);
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	password = rstaticstring(29, &ptr);
@@ -441,7 +476,8 @@ void *c_req_change_chan_pass(char *data, unsigned int len, struct player *pl)
 
 		/* We either remove or change the password */
 		if (strlen(password) == 0) {
-			WARNING("This should not happened. Password removal is done using the change flags/codec function.");
+			WARNING("This should not happened. Password removal is done "
+					"using the change flags/codec function.");
 			bzero(ch->password, 30 * sizeof(char));
 			ch->flags &= (~CHANNEL_FLAG_PASSWORD);
 		} else {
@@ -529,6 +565,11 @@ void *c_req_change_chan_order(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 	char *ptr;
 
+	if (len != 30) {
+		WARNING("c_req_change_chan_order, "
+			"packet has invalid size (%i instead of %i)", len, 30);
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	order = ru16(&ptr);
@@ -611,6 +652,11 @@ void *c_req_change_chan_max_users(char *data, unsigned int len, struct player *p
 	struct server *s = pl->in_chan->in_server;
 	char *ptr;
 
+	if (len != 30) {
+		WARNING("c_req_change_chan_max_users, "
+			"packet has invalid size (%i instead of %i)", len, 30);
+		return NULL;
+	}
 	ptr = data + 24;
 	ch_id = ru32(&ptr);
 	max_users = ru16(&ptr);

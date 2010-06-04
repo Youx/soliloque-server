@@ -88,6 +88,11 @@ static void s_resp_server_stats(struct player *pl)
  */
 void *c_req_server_stats(char *data, unsigned int len, struct player *pl)
 {
+	if (len != 24) {
+		WARNING("c_req_server_stats, packet has "
+				"invalid size (%i instead of %i)", len, 24);
+		return NULL;
+	}
 	send_acknowledge(pl);		/* ACK */
 	s_resp_server_stats(pl);
 	return NULL;
@@ -170,6 +175,11 @@ void *c_req_player_stats(char *data, unsigned int len, struct player *pl)
 	s = pl->in_chan->in_server;
 	send_acknowledge(pl);
 
+	if (len != 28) {
+		WARNING("c_req_player_stats, packet has "
+				"invalid size (%i instead of %i)", len, 28);
+		return NULL;
+	}
 	ptr = data + 24;
 	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);

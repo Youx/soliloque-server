@@ -34,11 +34,11 @@
 #include <assert.h>
 
 /** The size of the raw audio block (in bytes) */
-size_t codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};
+static size_t codec_audio_size[13] = {153, 51, 165, 132, 0, 27, 50, 75, 100, 138, 188, 228, 308};
 /** The number of frames contained in one block */
-size_t codec_nb_frames[13] = { 9, 3, 5, 4,	0, 5, 5, 5, 5, 5, 5, 5, 5};
+static size_t codec_nb_frames[13] = { 9, 3, 5, 4,	0, 5, 5, 5, 5, 5, 5, 5, 5};
 /** The offset of the audio block after the 16 bytes of header */
-size_t codec_offset[13] = {6, 6, 6, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1};
+static size_t codec_offset[13] = {6, 6, 6, 6, 0, 1, 1, 1, 1, 1, 1, 1, 1};
 
 
 /**
@@ -64,11 +64,19 @@ int audio_received(char *in, size_t len, struct server *s)
 	size_t iter;
 	char *data, *ptr, *ptrin;
 	
+	if (len < 12) {
+		WARNING("audio_received, size is not enough for metadata (%i)", len);
+		return -1;
+	}
 	ptrin = in;
 	ptrin += 3;
 	data_codec = ru8(&ptrin);
 	priv_id = ru32(&ptrin);
 	pub_id = ru32(&ptrin);
+	if (data_codec > 12) {
+		WARNING("invalid codec ID sent : %i", data_codec);
+		return -1;
+	}
 	
 	sender = get_player_by_ids(s, pub_id, priv_id);
 

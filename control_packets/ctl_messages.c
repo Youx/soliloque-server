@@ -184,11 +184,19 @@ void *c_req_send_message(char *data, unsigned int len, struct player *pl)
 	
 	send_acknowledge(pl);	/* ACK */
 
+	if (len < 34) {
+		WARNING("c_req_send_message, packet has invalid size (<%i)", 34);
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("c_req_send_message, message is not NULL terminated");
+		return NULL;
+	}
 	ptr = data + 24;
 	color = ru32(&ptr);
 	msg_type = ru8(&ptr);
 	dst_id = ru32(&ptr);
-	msg = strdup(ptr);	/* fixme */
+	msg = strndup(ptr, len - 33);
 
 	switch (msg_type) {
 	case 0:

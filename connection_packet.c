@@ -147,11 +147,11 @@ static void server_refuse_connection_ban(struct sockaddr_in *cli_addr, int cli_l
 /**
  * Handle a connection attempt from a player :
  * - check the crc
- * - check server/user password (TODO)
+ * - check server/user password
  * - check if the player is already connected (TODO)
  * - initialize the player, add it to the pool
  * - notify the player if he has been accepted (or not TODO)
- * - notify the other players (TODO)
+ * - notify the other players
  * - move the player to the default channel (TODO)
  *
  * @param data the connection packet
@@ -167,6 +167,10 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 	struct registration *r;
 	size_t iter;
 
+	if (len != 180) {
+		WARNING("handler_player_connect : invalid packet size (%i instead of %i)", len, 180);
+		return;
+	}
 	/* Check crc */
 	if (!packet_check_crc(data, len, 16))
 		return;
@@ -178,10 +182,10 @@ void handle_player_connect(char *data, unsigned int len, struct sockaddr_in *cli
 		return;
 	}
 	/* If registered, check if player exists, else check server password */
-	bzero(password, 30 * sizeof(char));
-	strncpy(password, data + 121, MIN(29, data[120]));
 	bzero(login, 30 * sizeof(char));
 	strncpy(login, data + 91, MIN(29, data[90]));
+	bzero(password, 30 * sizeof(char));
+	strncpy(password, data + 121, MIN(29, data[120]));
  
 	pl = new_player_from_data(data, len, cli_addr, cli_len);
 	if (data[90] == 0) {	/* no login = anonymous mode */
@@ -271,8 +275,12 @@ void handle_player_keepalive(char *data, unsigned int len, struct server *s)
 	char *ptr = data;
 	uint32_t pub_id, priv_id, ka_id;
 	/* Check crc */
-	if(!packet_check_crc(data, len, 16))
+	if (!packet_check_crc(data, len, 16))
 		return;
+	if (len != 20) {
+		WARNING("handle_player_keepalive, invalid size (%i instead of %i)", len, 20);
+		return;
+	}
 	/* Retrieve the player */
 	ptr += 4;
 	priv_id = ru32(&ptr);

@@ -128,6 +128,11 @@ void *c_req_delete_channel(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 	char *ptr = data + 12;
 
+	if (len != 28) {
+		WARNING("c_req_delete_channel, "
+			"packet has invalid size (%i instead of %i)", len, 28);
+		return NULL;
+	}
 	pkt_cnt = ru32(&ptr);
 	ptr = data + 24;
 	del_id = ru32(&ptr);
@@ -216,6 +221,12 @@ void *c_req_create_channel(char *data, unsigned int len, struct player *pl)
 	s = pl->in_chan->in_server;
 	send_acknowledge(pl);
 
+	/* NB min channel data size is 19bytes - see channel_from_data() */
+	if (len < 44) {
+		WARNING("c_req_create_channel, "
+			"packet has invalid size (%i<%i)", len, 44);
+		return NULL;
+	}
 	ptr = data + 24;
 	bytes_read = channel_from_data(ptr, len - (ptr - data), &ch);
 	ptr += bytes_read;

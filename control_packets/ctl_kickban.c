@@ -272,6 +272,10 @@ void *c_req_ban(char *data, unsigned int len, struct player *pl)
 	uint16_t duration;
 	struct server *s = pl->in_chan->in_server;
 
+	if (len != 30) {
+		WARNING("c_req_ban, packet has invalid size : %i instead of %i.", len, 30);
+		return NULL;
+	}
 	ptr = data + 24;
 	ban_id = ru32(&ptr);
 	duration = ru16(&ptr);
@@ -354,6 +358,10 @@ static void s_resp_bans(struct player *pl)
 void *c_req_list_bans(char *data, unsigned int len, struct player *pl)
 {
 	send_acknowledge(pl);		/* ACK */
+	if (len != 24) {
+		WARNING("c_req_list_bans, packet has invalid size : %i instead of %i.", len, 24);
+		return NULL;
+	}
 	s_resp_bans(pl);
 	return NULL;
 }
@@ -372,6 +380,15 @@ void *c_req_remove_ban(char *data, unsigned int len, struct player *pl)
 	struct ban *b;
 	struct server *s = pl->in_chan->in_server;
 
+	/* ipv4 adress is at least 7 characters + \0 */
+	if (len < 32) {
+		WARNING("c_req_remove_bans, packet has invalid size (<%i)", 24);
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("IP adress was not NULL terminated");
+		return NULL;
+	}
 	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
 		inet_aton(data + 24, &ip);
@@ -397,6 +414,14 @@ void *c_req_ip_ban(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 	char *ptr;
 
+	if (len < 34) {
+		WARNING("c_req_ip_ban, packet has invalid size (<%i)", 34);
+		return NULL;
+	}
+	if (data[len - 1] != '\0') {
+		WARNING("IP adress was not NULL terminated");
+		return NULL;
+	}
 	if(player_has_privilege(pl, SP_ADM_BAN_IP, NULL)) {
 		send_acknowledge(pl);		/* ACK */
 		ptr = data + 24;

@@ -96,6 +96,11 @@ void *c_req_switch_channel(char *data, unsigned int len, struct player *pl)
 	char *pass, *ptr;
 	struct server *s = pl->in_chan->in_server;
 
+	if (len != 58) {
+		WARNING("c_req_switch_channel, "
+			"packet has invalid size (%i instead of %i)", len, 58);
+		return NULL;
+	}
 	ptr = data + 24;
 	to_id = ru32(&ptr);
 	to = get_channel_by_id(s, to_id);
@@ -239,6 +244,11 @@ void *c_req_change_player_ch_priv(char *data, unsigned int len, struct player *p
 
 	send_acknowledge(pl);		/* ACK */
 
+	if (len != 30) {
+		WARNING("c_req_change_player_ch_priv, "
+			"packet has invalid size (%i instead of %i)", len, 30);
+		return NULL;
+	}
 	ptr = data + 24;
 	tgt_id = ru32(&ptr);
 	on_off = ru8(&ptr);
@@ -356,6 +366,11 @@ void *c_req_change_player_sv_right(char *data, unsigned int len, struct player *
 	char *ptr;
 
 	send_acknowledge(pl);		/* ACK */
+	if (len != 30) {
+		WARNING("c_req_change_player_sv_right, "
+			"packet has invalid size (%i instead of %i)", len, 30);
+		return NULL;
+	}
 
 	ptr = data + 24;
 	tgt_id = ru32(&ptr);
@@ -421,6 +436,11 @@ void *c_req_change_player_attr(char *data, unsigned int len, struct player *pl)
 
 	send_acknowledge(pl);		/* ACK */
 
+	if (len != 26) {
+		WARNING("c_req_change_player_attr, "
+			"packet has invalid size (%i instead of %i)", len, 26);
+		return NULL;
+	}
 	ptr = data + 24;
 
 	attributes = ru16(&ptr);
@@ -485,6 +505,11 @@ void *c_req_move_player(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 	char *ptr;
 
+	if (len != 32) {
+		WARNING("c_req_move_player, "
+			"packet has invalid size (%i instead of %i)", len, 32);
+		return NULL;
+	}
 	ptr = data + 24;
 	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);
@@ -547,6 +572,11 @@ void *c_req_mute_player(char *data, unsigned int len, struct player *pl)
 	struct server *s = pl->in_chan->in_server;
 	char *ptr = data + 24;
 
+	if (len != 29) {
+		WARNING("c_req_mute_player, "
+			"packet has invalid size (%i instead of %i)", len, 29);
+		return NULL;
+	}
 	tgt_id = ru32(&ptr);
 	tgt = get_player_by_public_id(s, tgt_id);
 	on_off = ru8(&ptr);
@@ -635,10 +665,13 @@ void s_notify_player_requested_voice(struct player *pl, struct player *dest)
 void *c_req_request_voice(char *data, unsigned int len, struct player *pl)
 {
 	char *vr, *ptr;
-	/*if (len != 54) {
-		TODO
-	}*/
+
 	send_acknowledge(pl);		/* ACK */
+	if (len != 54) {
+		WARNING("c_req_request_voice, "
+			"packet has invalid size (%i instead of %i)", len, 54);
+		return NULL;
+	}
 	/* if the channel is not moderated or the player already has voice, refuse! */
 	if ((player_get_channel_privileges(pl, pl->in_chan) & CHANNEL_PRIV_VOICE) ||
 		!(pl->in_chan->flags & CHANNEL_FLAG_MODERATED)) {
