@@ -1,0 +1,25 @@
+# Contributor: Hugo Camboulive <hugo DOT camboulive AT gmail DOT com>
+pkgname=soliloque-server
+pkgver=0.8.2
+pkgrel=1
+pkgdesc="an open source implementation of Teamspeak v2 server."
+arch=(i686 x86_64)
+url="http://youx.github.com/soliloque-server"
+license=('GPL3')
+groups=()
+provides=()
+depends=('libdbi', 'libbsd', 'libconfig', 'openssl')
+makedepends=()
+conflicts=()
+replaces=()
+backup=('etc/sol-server.cfg')
+install=()
+source=(http://github.com/Youx/$pkgname/tarball/$pkgver)
+md5sums=('f0b4794791181f3023ff12ec1bd62fcc')
+
+build() {
+  cd $srcdir/Youx-$pkgname-*
+  ./waf configure --prefix=$pkgdir
+  ./waf build -p || return 1
+  ./waf install
+}
