@@ -10,3 +10,4 @@ ctl_packets.target = "control_packets"
 ctl_packets.includes = ' . .. '
 ctl_packets.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
 ctl_packets.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
+ctl_packets.install_path = None

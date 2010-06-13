@@ -101,3 +101,6 @@ def build(bld):
   sol_serv.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
   sol_serv.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL LIBBSD'
   sol_serv.uselib_local = 'control_packets database'
+  # install files
+  bld.install_as('${PREFIX}/share/soliloque-server/soliloque-server.cfg.sample', 'sol-server.cfg')
+  bld.install_files('${PREFIX}/share/soliloque-server/', ['gen_db.sh', 'db_generator.sql', 'db_sample.sql', 'README', 'COPYING'])

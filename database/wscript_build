@@ -3,10 +3,11 @@
 
 SOURCES='db_channel.c db_privilege.c db_registration.c db_server.c db_tools.c'
 
-ctl_packets = bld.new_task_gen()
-ctl_packets.features = "cc cstaticlib"
-ctl_packets.source = SOURCES
-ctl_packets.target = "database"
-ctl_packets.includes = ' . .. '
-ctl_packets.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
-ctl_packets.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
+database = bld.new_task_gen()
+database.features = "cc cstaticlib"
+database.source = SOURCES
+database.target = "database"
+database.includes = ' . .. '
+database.defines = ['_GNU_SOURCE', '_BSD_SOURCE']
+database.uselib = 'LIBCONFIG PTHREAD LIBDBI OPENSSL'
+database.install_path = None
